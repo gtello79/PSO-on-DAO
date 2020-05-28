@@ -13,7 +13,7 @@
 
 ### ¿Qué representa Collimator?
 - Tiene coordenadas.
-- beam_cood[x}[y] ordenados como en todos los archivos, donde x es fila e y es columna
+- beam_cood(x)(y) ordenados como en todos los archivos, donde x es fila e y es columna
 - Información general de la configuración del beamlet
 
 
@@ -21,7 +21,7 @@
 - Información de los organos
 - Contiene Dose Deposition Matrix para cada angulo
 - Tiene el numero de voxels
-- D[a](k,b): Dosis suministrada a el voxel K de los organos por el beamlet b en el angulo A
+- D(a)(k,b): Dosis suministrada a el voxel K de los organos por el beamlet b en el angulo A
 
 ## Detalles archivos:
 1. testinstance0_70_141_210_280
@@ -34,3 +34,4 @@
 3. Coordinates Beam_angulo
 
 4. DM
+
