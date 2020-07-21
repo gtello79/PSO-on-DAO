@@ -1,5 +1,7 @@
 package Swarms;
 import SRCDAO.*;
+import source.Collimator;
+import source.Volumen;
 
 import java.util.Vector;
 
@@ -9,8 +11,10 @@ public class Particle {
     private Plan BPersonal;
     private Plan Pcurrent;
 
-    public Particle(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, int max_apertures, int max_intensity,int initial_intensity, int step_intensity, int open_apertures, int setup){
-        Pcurrent = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup);
+    public Particle(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, int max_apertures, int max_intensity,int initial_intensity, int step_intensity,
+                    int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator)
+    {
+        Pcurrent = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
         this.BPersonal = Pcurrent;
         this.fitness = Pcurrent.getEval();
         this.Bfitness = Pcurrent.getEval();

@@ -17,6 +17,10 @@ public class Collimator {
     private SortedMap< Integer, Integer> nbAngleBeamlets =  new TreeMap<>();
     private SortedMap< Double , Vector< Double> > beamCoord = new TreeMap<>();
     private SortedMap< Integer, Vector< Pair< Double, Double> > > angleCoord = new TreeMap<>();
+
+    // Range (i,j) of active beamlets of angle "a" row "r":
+    //  angle_row_beam_active[a][r](i,j)
+    //  (-1,-1) indicates a full row is not active
     private SortedMap< Integer, Vector< Pair< Integer, Integer> > > angleRowActive = new TreeMap<>();
 
     public Collimator(String coord_filename, Vector<Integer> angles) throws FileNotFoundException {
@@ -189,9 +193,11 @@ public class Collimator {
     public Pair<Integer,Integer> indexToPos(int index,int angle){
         double x = (angleCoord.get(angle)).get(index).getKey();
         double y= (angleCoord.get(angle)).get(index).getValue();
-        int posx = (int)(xCoord.get((int)x) - xCoord.firstElement());
-        int posy = (int)(yCoord.get((int)y) - yCoord.firstElement());
-        return new Pair(posx,posy);
+        int posx = (int)(x - xCoord.firstElement());
+        int posy = (int)(y - yCoord.firstElement());
+        //System.out.println(x + " -- " + posx);
+        Pair <Integer,Integer> r = new Pair(posx,posy);
+        return r;
     }
 
     public boolean isActiveBeamAngle(int x, int y, int angle){
@@ -204,6 +210,10 @@ public class Collimator {
 
     public int getxDim() {
         return xDim;
+    }
+
+    public int getNbAngles(){
+        return nAngles;
     }
 
     public int getAngle(int i) {

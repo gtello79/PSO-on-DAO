@@ -41,96 +41,47 @@ public class EvaluationFunction {
     //number of voxels for each organ
     private Vector<Integer> nb_voxels;
 
-    private Set<Pair<Double, Pair<Integer, Integer>>> tumor_voxels;
+    private HashSet<Pair<Double, Pair<Integer, Integer>>> tumor_voxels;
 
-    private Set<Pair<Double, Pair<Integer, Integer>>> voxels;
+    private HashSet<Pair<Double, Pair<Integer, Integer>>> voxels;
 
     private ArrayList< Pair< Pair<Integer,Integer>, Double > > Z_diff;
 
 
     public EvaluationFunction(Vector<Volumen> volumes) {
         this.n_evaluations = 0;
-        prev_F = 0.0;
-        F = 0.0;
+        this.prev_F = 0.0;
+        this.F = 0.0;
+        this.Z = new Vector<>();
+        this.D = new Vector<>();
+        this.nb_voxels = new Vector<>();
+        this.voxels = new HashSet<>();
         this.Z_diff = new ArrayList<>();
-        nb_organs = volumes.size();
-        nVolumes = volumes.size();
+        this.nb_organs = volumes.size();
+        this.nVolumes = volumes.size();
         for (int i = 0; i < nb_organs; i++) {
-            (this.nb_voxels).set(i, volumes.get(i).getNb_voxels());
-            Z.add(new Vector<Double>(nb_voxels.get(i)));
-            D.add(new Vector<Double>(nb_voxels.get(i)));
+            this.nb_voxels.add(volumes.get(i).getNb_voxels());
         }
-    }
-/*
-    public void generateLineaSystem(Plan p, Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax) {
-        boolean flag = false;
-        for (int o = 0; o < nb_organs; o++) {
-            double pen = 0.0;
-            for (int k = 0; k < nb_voxels.get(o); k++) {
-                if (flag) System.out.println(" + ");
-                flag = true;
-                if (k == 0) System.out.println("(");
-                if (Zmin.get(o) == 0) System.out.print("max(Z_" + o + "_" + k + "-" + Zmax.get(o) + ",0)^2");
-                else System.out.print("max(Z_" + Zmin.get(o) + "- Z_" + o + "_" + k + ",0)^2");
-                if (k == nb_voxels.get(o) - 1) System.out.print(")");
+        D = new Vector<>(nb_organs);
+        Z = new Vector<>(nb_organs);
+        for(int i = 0; i < nb_organs; i++){
+            Vector this_arrow = new Vector<Double>();
+            for(int j = 0; j < nb_voxels.get(i) ; j++){
+                this_arrow.add(0.0);
             }
-            System.out.print("/" + nb_voxels.get(o));
+            (this.Z).add(this_arrow);
+            (this.D).add(this_arrow);
         }
-        System.out.println("");
-        for (int o = 0; o < nb_organs; o++) {
-            for (int k = 0; k < nb_voxels.get(o); k++) {
-                System.out.print("Z_" + o + "_" + k + "=");
-                //Aperture variable id
-                int ap = 0;
-                flag = false;
-                for (Beam s : p.getBeams()) {
-                    Matrix D = s.getDepositionMatrix(o);
-                    for (int a = 0; a < s.getNbApertures(); a++) {
-                        double apDosePerIntensity = 0.0;
-                        for (Integer b : s.openBeamlets(a))
-                            apDosePerIntensity += D.getPos(k, b);
-                        if (apDosePerIntensity > 0.0) {
-                            if (flag) System.out.print('+');
-                            System.out.print(apDosePerIntensity + "* I_" + ap);
-                            flag = true;
-                        }
-                    }
-                }
-                System.out.println("");
+
+        voxel_dose = new Vector<>(volumes.size());
+        for(int v = 0; v < volumes.size(); v++){
+            Vector thisArrow = new Vector<>(150);
+            for(int k = 0; k < 150; k++){
+                thisArrow.add(0.0);
             }
-        }
-    }
-
-    public void generate_Z(Plan p) {
-        ArrayList<Beam> stations = p.getBeams();
-
-        for (int o = 0; o < nb_organs; o++) {
-            Vector toAdd = new Vector<>();
-            for (int i = 0; i < Z.get(o).size(); i++) {
-                toAdd.add(i, 0.0);
-            }
-            Z.add(o, toAdd);
+            voxel_dose.add(thisArrow);
         }
 
-        for (Beam station : stations) {
-            //considering 2*Xmid, Xext
-            //we update the dose distribution matrices Z with the dose delivered by the station
-            for (int o = 0; o < nb_organs; o++) {
-                Matrix D = station.getDepositionMatrix(o);
-                for (int k = 0; k < nb_voxels.get(o); k++) {
-                    double dose = 0.0;
-                    for (int b = 0; b < station.getNbBeamlets(); b++) {
-                        dose += D.getPos(k, b) * station.getIntensity(b);
-                    }
-                    double d = dose + Z.get(o).get(k);
-
-                    Vector pivote = Z.get(o);
-                    pivote.set(k,d);
-                    Z.set(o, pivote);
-
-                }
-            }
-        }
     }
 
     public double eval(Plan p, Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax) {
@@ -154,30 +105,57 @@ public class EvaluationFunction {
         return F;
     }
 
-    public void update_sorted_voxels(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, int o, int k, boolean erase) {
-        boolean flag = true;
-        if (!erase) {
-            flag = false;
+    public void generate_Z(Plan p) {
+        ArrayList<Beam> stations = p.getBeams();
+        for (int o = 0; o < nb_organs; o++) {
+            Vector toAdd = new Vector(nb_voxels.get(o));
+            for (int i = 0; i < nb_voxels.get(o); i++){
+                toAdd.add(0.0);
+            }
+            Z.setElementAt(toAdd,o);
         }
-        Vector pivote = D.get(o);
-        /*Falta corroborar la sentencia con el Profesor Ignacio Araya
-        if (Zmin.get(o) > 0) {
+        for (Beam station : stations) {
+            //considering 2*Xmid, Xext
+            //we update the dose distribution matrices Z with the dose delivered by the station
+            for (int o = 0; o < nb_organs; o++) {
+                Matrix Depo = station.getDepositionMatrix(o);
+                for (int k = 0; k < nb_voxels.get(o); k++) {
+                    double dose = 0.0;
+                    for (int b = 0; b < station.getNbBeamlets(); b++) {
+                        dose += Depo.getPos(k, b) * station.getIntensity(b);
+                    }
+                    double d = dose + Z.get(o).get(k);
 
+                    Vector pivote = Z.get(o);
+
+                    pivote.setElementAt(d,k);
+                    Z.setElementAt(pivote,o);
+                }
+            }
+
+        }
+    }
+
+    public void update_sorted_voxels(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, int o, int k, boolean erase) {
+        if(erase) voxels.remove(new Pair(abs(D.get(o).get(k)),new Pair(o,k)));
+
+        Vector pivote = D.get(o);
+        if (Zmin.get(o) > 0) {
             if (Z.get(o).get(k) < Zmin.get(o)) {
                 double val = w.get(o) * (Z.get(o).get(k) - Zmin.get(o)) / (nb_voxels.get(o));
-                pivote.set(k,val);
-                D.set(o,pivote);
+                pivote.setElementAt(val,k);
+                D.setElementAt(pivote,o);
             } else {
-                pivote.set(o,0.0);
+                pivote.setElementAt(0.0,o);
                 D.set(o,pivote);
             }
         } else {
             if (Z.get(o).get(k) > Zmax.get(o)) {
                 double val = w.get(o) * (Z.get(o).get(k) - Zmax.get(o)) / (nb_voxels.get(o));
-                pivote.set(k,val);
+                pivote.setElementAt(val,k);
                 D.set(o, pivote);
             } else {
-                pivote.set(o,0.0);
+                pivote.setElementAt(0.0,o);
                 D.set(o,pivote);
             }
         }
@@ -260,9 +238,8 @@ public class EvaluationFunction {
         for(int o = 0; o < nb_organs; o++){
             Vector<Double> dose = new Vector<Double>();
             Vector<Double> to_fill = new Vector<Double>();
-            //std::set<double, std::greater<double> > dose;
             for(int i = 0; i < voxel_dose.get(o).size(); i++){
-                to_fill.add((double) 0.0);
+                to_fill.add(0.0);
             }
             voxel_dose.add(o,to_fill);
             for(int k = 0; k < nb_voxels.get(o); k++){
@@ -318,9 +295,44 @@ public class EvaluationFunction {
                 }
             }
         }
-
-
-
     }
-*/
+
+    public void generateLineaSystem(Plan p, Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax) {
+        boolean flag = false;
+        for (int o = 0; o < nb_organs; o++) {
+            double pen = 0.0;
+            for (int k = 0; k < nb_voxels.get(o); k++) {
+                if (flag) System.out.println(" + ");
+                flag = true;
+                if (k == 0) System.out.println("(");
+                if (Zmin.get(o) == 0) System.out.print("max(Z_" + o + "_" + k + "-" + Zmax.get(o) + ",0)^2");
+                else System.out.print("max(Z_" + Zmin.get(o) + "- Z_" + o + "_" + k + ",0)^2");
+                if (k == nb_voxels.get(o) - 1) System.out.print(")");
+            }
+            System.out.print("/" + nb_voxels.get(o));
+        }
+        System.out.println("");
+        for (int o = 0; o < nb_organs; o++) {
+            for (int k = 0; k < nb_voxels.get(o); k++) {
+                System.out.print("Z_" + o + "_" + k + "=");
+                //Aperture variable id
+                int ap = 0;
+                flag = false;
+                for (Beam s : p.getBeams()) {
+                    Matrix D = s.getDepositionMatrix(o);
+                    for (int a = 0; a < s.getNbApertures(); a++) {
+                        double apDosePerIntensity = 0.0;
+                        for (Integer b : s.openBeamlets(a))
+                            apDosePerIntensity += D.getPos(k, b);
+                        if (apDosePerIntensity > 0.0) {
+                            if (flag) System.out.print('+');
+                            System.out.print(apDosePerIntensity + "* I_" + ap);
+                            flag = true;
+                        }
+                    }
+                }
+                System.out.println("");
+            }
+        }
+    }
 }

@@ -22,7 +22,6 @@ public class Volumen {
         String ss;
         String bladder_dates = null;
         int count = 0;
-        System.out.println(collimator.getxDim() + " " + collimator.getyDim());
         nb_voxels=-1;
         if(!coord.exists()){
             System.out.println("NO SE ENCUENTRA EL ARCHIVO "+data);
@@ -42,7 +41,7 @@ public class Volumen {
             nb_voxels = lines.size()-1;
 
             for(Integer angle: collimator.getAngles()){
-                D.put(angle, new Matrix( collimator.getxDim() , collimator.getyDim() ) );
+                D.put(angle, new Matrix( nb_voxels , collimator.getNangleBeamlets(angle) ) );
             }
             for(int i = 0; i < nb_voxels; i++){
                 int a = 0;
@@ -50,7 +49,6 @@ public class Volumen {
                 boolean nb_flag = false;
                 String actual_voxels = lines.get(i);
                 String [] ArrayLinea = actual_voxels.split("\t");
-                //System.out.println(ArrayLinea[0]);
 
                 for(String actual: ArrayLinea){
                     if(nb_flag){
@@ -59,7 +57,6 @@ public class Volumen {
                             j=0;
                         }
                         double toAdd = Double.parseDouble(actual);
-                        //System.out.println(i +" "+ j);
                         (D.get(collimator.getAngle(a))).setPos(i,j,toAdd);
                         j++;
                     }else{
@@ -71,5 +68,9 @@ public class Volumen {
     }
     public int getNb_voxels(){
         return nb_voxels;
+    }
+
+    public Matrix getDepositionMatrix(int angle){
+        return D.get(angle);
     }
 }

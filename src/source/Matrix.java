@@ -45,12 +45,7 @@ public class Matrix {
     }
 
     public void setPos(int x, int y, double val){
-        if(x < this.rows && y < this.cols)
-
-            p[x][y] = val;
-        else {
-            System.out.println(x +" "+ y);
-        }
+        p[x][y] = val;
     }
 
     public double getPos(int x, int y){
