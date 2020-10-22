@@ -1,7 +1,8 @@
 package com.company;
 import Swarms.*;
+import javafx.util.Pair;
 import source.*;
-
+import java.util.Random;
 import java.io.FileNotFoundException;
 import java.io.File;
 import java.util.Vector;
@@ -89,20 +90,35 @@ public class Main {
         String file2 = "src/data/test_instance_coordinates.txt";
         String sDirectorioTrabajo = System.getProperty("user.dir");
         System.out.println("El directorio de trabajo es " + sDirectorioTrabajo);
+        int max_apertures = 5;
+        int max_intensity = 28;
+        int initial_intensity = 4;
+        int step_intensity = 2;
+        int open_apertures = -1;
+        int setup = 0;
+        /*  OPEN_MIN_SETUP = 0;
+            OPEN_MAX_SETUP = 1;
+            CLOSED_MIN_SETUP = 2 ;
+            CLOSED_MAX_SETUP = 3;
+            RAND_RAND_SETUP = 4;
+        * */
+
         int size = 1;
-        int iter = 1;
+        int iter = 0;
         double c1 = 1;
         double c2 = 1;
         double iner = 1;
-        Vector <Double> w  = new Vector<Double>();
+
+        Vector <Double> w  = new Vector<>();
         w.add(1.0);
         w.add(1.0);
         w.add(1.0);
 
-        Vector <Double> Zmin = new Vector<Double>();
+        Vector <Double> Zmin = new Vector<>();
         Zmin.add(0.0);
         Zmin.add(0.0);
         Zmin.add(76.0);
+
 
         Vector <Double> Zmax =  new Vector<Double>();
         Zmax.add(65.0);
@@ -112,13 +128,6 @@ public class Main {
         Vector <Integer> angles = get_angles(file);
         Collimator collimator = new Collimator(file2,angles);
         Vector <Volumen> volumes = createVolumes(file,collimator);
-        int max_apertures = 5;
-        int max_intensity = 28;
-        int initial_intensity = 4;
-        int step_intensity = 2;
-        int open_apertures = -1;
-        int setup = 0;
-
         Swarm poblacion = new Swarm(w, Zmin, Zmax, max_apertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, volumes, collimator,c1, c2, iner, size, iter);
         //poblacion.MoveSwarms();
 

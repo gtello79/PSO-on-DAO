@@ -11,23 +11,47 @@ public class Particle {
     private Plan BPersonal;
     private Plan Pcurrent;
 
+    /*-------------------------------------------------------------METHODS -------------------------------------------*/
     public Particle(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, int max_apertures, int max_intensity,int initial_intensity, int step_intensity,
                     int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator)
     {
         Pcurrent = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
-        this.BPersonal = Pcurrent;
-        this.fitness = Pcurrent.getEval();
-        this.Bfitness = Pcurrent.getEval();
-    };
+        setBPersonal(Pcurrent);
+        setFitness(Pcurrent.getEval());
+        setBfitness(Pcurrent.getEval());
+        Pcurrent.printIdBeamtoVector();
+    }
 
     public void CalculateVelocity(double c1, double c2, double w, Particle Bglobal){
-        Pcurrent.CalculateVelocity(c1, c2, w, Bglobal.getBPersonal() , BPersonal);
-    };
+        Pcurrent.CalculateVelocity(c1, c2, w, Bglobal.getPcurrent(), BPersonal);
+    }
 
     public void CalculatePosition(){
         Pcurrent.CalculatePosition();
-    };
+        setFitness(Pcurrent.getEval());
+    }
 
+    public void CalculateBestPersonal(){
+        if(Pcurrent.getEval() < Bfitness){
+            setBPersonal(Pcurrent);
+            setBfitness(Pcurrent.getEval());
+        }
+    }
+    /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
+
+    public void printIntensityMatrix(){
+        Pcurrent.printIntensityMatrix();
+    }
+
+    public void printAperture(){
+        Pcurrent.printApertures();
+    }
+
+    public void printApertureBeam(int x){
+        Pcurrent.printAperturesBeam(x);
+    }
+
+    /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public double getFitness() {
         return fitness;
     }
@@ -55,10 +79,5 @@ public class Particle {
     public Plan getPcurrent() {
         return Pcurrent;
     }
-
-    public void setPcurrent(Plan pcurrent) {
-        Pcurrent = pcurrent;
-    }
-
 
 }

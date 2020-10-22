@@ -51,4 +51,18 @@ public class Matrix {
     public double getPos(int x, int y){
         return p[x][y];
     }
+
+    public void printMatrix(){
+        for(int i = 0; i < rows ; i++){
+            for(int j = 0; j < cols; j++){
+                System.out.print(p[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    public void printShape(){
+        System.out.println("("+rows + "," + cols + ")");
+    }
+
 }

@@ -1,3 +1,4 @@
+
 package source;
 
 import javafx.util.Pair;
@@ -9,202 +10,204 @@ public class Collimator {
     private int nbBeamlets;
     private int xDim;
     private int yDim;
+    private int gDim;
     private int nAngles;
-    private ArrayList<Integer> angles = new ArrayList<>();
-    private Vector< Double> xCoord = new Vector<>();
-    private Vector< Double> yCoord = new Vector<>();
-    private Vector< Pair< Integer, String> > coord_file = new Vector<Pair<Integer, String>>();
-    private SortedMap< Integer, Integer> nbAngleBeamlets =  new TreeMap<>();
-    private SortedMap< Double , Vector< Double> > beamCoord = new TreeMap<>();
-    private SortedMap< Integer, Vector< Pair< Double, Double> > > angleCoord = new TreeMap<>();
+    //------------------------------------------------- NUEVAS ESTRUCTURAS -----------------------------------------------------------------------
+    //Vector con los pares <angle, FilePath> de cada BeamAngle
+    private Vector< Pair< Integer, String> > coord_file;
+    //Contiene todos los angulos
+    private Vector<Integer> angles;
+
+    //Contiene la misma estructura de angleCoord, pero ahora los pasa indices matriciales
+    private SortedMap< Integer, Vector< Pair< Integer, Integer> > > angleCoord;
+
+    //Map Global ID Beamlet - <ID beam, ID Local Beamlet >
+    private SortedMap<Integer, Pair<Integer, Integer>> allBeamletIndex;
+
+    //Coordenadas originales (centradas en el tumor o cartesianas)
+    private SortedMap< Integer, Vector< Pair< Double, Double> > > angleCoordMatr;
 
     // Range (i,j) of active beamlets of angle "a" row "r":
-    //  angle_row_beam_active[a][r](i,j)
+    //  Usando angleRowActive.get(a).get(r) obtengo el rango de apertura de la fila r en el angulo a
     //  (-1,-1) indicates a full row is not active
     private SortedMap< Integer, Vector< Pair< Integer, Integer> > > angleRowActive = new TreeMap<>();
 
+    //Obtengo la cantidad de Beamlets por cada beam
+    private SortedMap< Integer, Integer> nbAngleBeamlets =  new TreeMap<>();
+
+    //------------------------------------------------- ESTRUCTURA ANTERIORES --------------------------------------------------------------------
+    //Usa un vector con todos los valores de X desde los archivos de CoordinatesBeam
+    private Vector< Double> xCoord = new Vector<>();
+
+    //Usa un vector con todos los valores de Y desde los archivos de CoordinatesBeam
+    private Vector< Double> yCoord = new Vector<>();
+
+    //Agrega el valor de X con sus valores en Y
+    private SortedMap< Double , Vector<Double> > beamCoord = new TreeMap<>();
+
+    /*---------------------------------------------------- ALL METHODS ------------------------------------------------------------------------------------ */
+
+    //Constructor del Collimator, esta en orden, no tocar
     public Collimator(String coord_filename, Vector<Integer> angles) throws FileNotFoundException {
-        File archivo = new File(coord_filename);
         int angle;
-        String delimiter = ";";
         String aux;
+        File archivo = new File(coord_filename);
+        String delimiter = ";";
+
+        this.coord_file = new Vector<>();
+        this.angles = new Vector<>();
+        this.angleCoord = new TreeMap<>();
+        this.allBeamletIndex = new TreeMap<>();
+        this.angleCoordMatr = new TreeMap<>();
+
+        //Lectura del archivo test_instance_coords
         if(!archivo.exists()) {
             System.out.println("ERROR: NO SE ENCUENTRA EL ARCHIVO "+coord_filename);
         }else{
             System.out.println("##READING COLLIMATOR COORDINATES INFO ");
             Scanner reading = new Scanner(archivo);
-            while(reading.hasNextLine()){
+
+            while( reading.hasNextLine() ) {
                 String actual = reading.nextLine();
-                if(actual.isEmpty()) continue;
-                String [] actualArray = actual.split(delimiter);
+                if (actual.isEmpty())
+                    continue;
+                String[] actualArray = actual.split(delimiter);
                 angle = Integer.parseInt(actualArray[0]);
+
                 aux = actualArray[1];
-                if(!angles.contains(angle)) continue;
-                Pair <Integer, String> to_add = new Pair<Integer,String>(angle,aux);
+                if (!angles.contains(angle))
+                    continue;
+
+                // <angle, path_of_coordinateBeam_angle>
+                Pair<Integer, String> to_add = new Pair(angle, aux);
                 coord_file.add(to_add);
             }
             reading.close();
             this.nAngles = coord_file.size();
-            initializeCoordinates();
+            initializeCoordinates2();
             System.out.println("##  READ " + coord_file.size() + " FILES");
         }
     }
 
-    public Collimator(Collimator collimator){
-        this.beamCoord = collimator.getBeamCoord();
-        this.angleCoord = collimator.getAngleCoord();
-        this.xCoord = collimator.getxCoord();
-        this.yCoord = collimator.getyCoord();
-        this.nbBeamlets = collimator.getNbBeamlets();
-        this.xDim = collimator.getxDim();
-        this.yDim = collimator.getyDim();
-        this.angleRowActive = collimator.getAngleRowActive();
-        this.nbAngleBeamlets = collimator.getNbAngleBeamlets();
-        this.angles = collimator.getAngles();
-        this.coord_file = collimator.getCoord_file();
-    }
-
-    private void initializeCoordinates() throws FileNotFoundException {
+    //Se inicializan las coordenadas de cada beam del collimator
+    private void initializeCoordinates2() throws  FileNotFoundException{
+        double max = -99999;
+        int globalID = 0;
+        int localID;
         double x;
         double y;
-        boolean flag;
 
-        for(Pair<Integer, String> temp : coord_file ){
+        //Se lee la estructura con ID_Beam - Path Coordinates Beamlet
+        for(Pair<Integer,String> temp: coord_file){
             int angle = temp.getKey();
-            angles.add(angle);
-            String dir_beam = temp.getValue();
-            File coord = new File("src/"+dir_beam);
-            if(!coord.exists()){
-                System.out.println("NO SE ENCUENTRA EL ARCHIVO "+dir_beam);
+            this.angles.add(angle);
+            String CoordinatePath = temp.getValue();
+            File coordFile = new File("src/"+CoordinatePath);
+
+            //Se procede a leer el archivo temp
+            if(!coordFile.exists()){
+                System.out.println("NO SE ENCUENTRA EL ARCHIVO "+CoordinatePath);
             }else{
-                Scanner lectura = new Scanner(coord);
-                Vector<Pair< Double, Double>> toAdd = new Vector<Pair< Double, Double>>();
-                while(lectura.hasNextLine()) {
-                    flag = false;
-                    String linea_actual = lectura.nextLine();
-                    String [] ArrayLinea = linea_actual.split("\t");
-                    x = Double.parseDouble(ArrayLinea[1]);
-                    y = Double.parseDouble(ArrayLinea[2]);
-                    toAdd.add(new Pair(x,y));
+                //Contiene la posicion (original) de todos los beamlets de un beam
+                Vector<Pair<Double,Double>> AngleBeamlet = new Vector<>();
+                Scanner lect = new Scanner(coordFile);
+                Set<Double> filter = new HashSet<>();
 
-                    angleCoord.put(angle,toAdd);
-                    if(!beamCoord.containsKey(x)){
-                        //New x coordinate
-                        Vector<Double> local = new Vector<Double>();
-                        local.add(y);
-                        beamCoord.put(x,local);
-                        insertXorder(x);
-                        insertYorder(y);
-                    }else{
-                        if((beamCoord.get(x)).contains(y))
-                        flag=true;
-                        //New Y coordinate: insert in order
-                        for(int j = 0; j < beamCoord.get(x).size() && !flag; j++){
-                            if((beamCoord.get(x)).get(j) > y){
-                                beamCoord.get(x).add(j,y);
-                                flag=true;
-                            }
-                        }
-                        if(!flag)
-                            beamCoord.get(x).add(y);
-                        insertYorder(y);
+                //Se recorren todos los beamlets de 1 beam contenidos en el archivo
+                while(lect.hasNextLine()) {
+                    String lineaActual = lect.nextLine();
+                    String[] arrayLinea = lineaActual.split("\t");
+
+                    localID =  Integer.parseInt(arrayLinea[0]);
+                    //Coordenadas originales a nivel cartesiano
+                    x = Double.parseDouble(arrayLinea[1]);
+                    y = Double.parseDouble(arrayLinea[2]);
+                    filter.add(x);
+                    filter.add(y);
+
+                    this.allBeamletIndex.put(globalID, new Pair(angle, localID));
+                    AngleBeamlet.add(new Pair(x, y));
+                    globalID++;
+                }
+                //Se busca actualizar el mayor elemento de los beamlets para tener referencia de la dimension
+                for(Double indexRow : filter){
+                    if(Math.abs(indexRow) > max){
+                        max = Math.abs(indexRow);
                     }
                 }
-                toAdd = null;
-                lectura.close();
-            }
-            nbAngleBeamlets.put(angle, angleCoord.get(angle).size());
-        }
-        xDim = xCoord.size();
-        yDim = yCoord.size();
-        nbBeamlets = xDim*yDim;
-        setActiveBeamlets(angleCoord);
-
-    }
-
-    // Insert a new X coordinate in the xcoord vector
-    private void insertXorder(double x) {
-        Boolean flag = false;
-        if(xCoord.contains(x))
-            flag=true;
-        for(int i = 0; i < xCoord.size() && !flag; i++){
-            if(xCoord.get(i) > x){
-                xCoord.add(i,x);
-                flag=true;
+                lect.close();
+                this.angleCoordMatr.put(angle,AngleBeamlet);
             }
         }
-        if(!flag)
-            xCoord.add(x);
-    }
+        //Se asegura la dimension total del colimator
+        gDim = (int)(max*2);
+        this.xDim = gDim;
+        this.yDim = gDim;
+        this.nbBeamlets = globalID;
 
-    // Insert a new Y coordinate in the ycoord vector
-    private void insertYorder(double y) {
-        Boolean flag = false;
-        if(yCoord.contains(y))
-            flag=true;
-        for(int i = 0; i < yCoord.size() && !flag; i++){
-            if(yCoord.get(i) > y){
-                yCoord.add(i,y);
-                flag = true;
+        //Se realiza la transformación de las coordenadas cartesianas a coordenadas matriciales
+        for ( Integer idBeam : angleCoordMatr.keySet() ){
+            int blperBeam = 0;
+            Vector<Pair<Double,Double>> beamletsBeam = angleCoordMatr.get(idBeam);
+            Vector<Pair<Integer,Integer>> newCoords = new Vector<>();
+
+            for( Pair<Double,Double> row : beamletsBeam ) {
+                blperBeam++;
+                int newX = (int)(row.getKey() + max);
+                int newY = (int)(row.getValue() + max);
+                newCoords.add(new Pair(newX,newY));
             }
+            this.nbAngleBeamlets.put(idBeam, blperBeam);
+            this.angleCoord.put(idBeam, newCoords);
         }
-        if(!flag)
-            yCoord.add(y);
+        setActiveRows();
     }
 
-    void setActiveBeamlets(SortedMap<Integer, Vector<Pair<Double,Double>>> coord){
-        double nmax, nmin;
-        int selmax = 0, selmin = 0;
-        boolean flag;
+    //Metodo que obtiene el rango de apertura activo del collimator, si el rango es <a,b>
+    //Significa que el rnago esta abierto desde a hasta b (resalto que lo incluye)
+    void setActiveRows() {
+        for (Integer idBeam : angleCoord.keySet())
+        {
+            Vector<Pair<Integer, Integer>> beamletsBeam = angleCoord.get(idBeam);
+            Vector<Pair<Integer, Integer>> activeRange = new Vector<>();
 
-        for(Map.Entry<Integer,Vector<Pair<Double,Double>>> angle : coord.entrySet()){
-            int i = angle.getKey();
-            Vector<Pair<Integer,Integer>> to_add = new Vector<Pair<Integer,Integer>>();
-            for(int j = 0; j < xCoord.size(); j++){
-                flag = false;
-                nmax = -9999999;
-                nmin = 9999999;
-                for(int s = 0; s < (coord.get(i)).size(); s++){
-                    if((angle.getValue()).get(s).getKey() == xCoord.get(j)){
-                        if((angle.getValue()).get(s).getValue() < nmin)
-                            nmin = (angle.getValue()).get(s).getValue();
-                        if((angle.getValue()).get(s).getValue() > nmax)
-                            nmax = (angle.getValue()).get(s).getValue();
-                        flag = true;
+            //A partir de la fila r, obtengo todos los valores para las filas
+            for (int r = 0; r < gDim; r++) {
+                Set<Integer> filter = new HashSet<>();
+
+                for (Pair<Integer, Integer> beamRow : beamletsBeam) {
+                    if ( Integer.compare(r , beamRow.getKey()) == 0 ) {
+                        filter.add(beamRow.getValue());
                     }
                 }
-                if(flag){
-                    for(int s = 0; s < yCoord.size(); s++){
-                        if(yCoord.get(s) == nmin) selmin = s;
-
-                        if(yCoord.get(s) == nmax) selmax = s;
+                if(filter.size() == 0){
+                    activeRange.add(new Pair(-1,-1));
+                }else{
+                    Vector<Integer> orderItems = new Vector<>();
+                    for (Integer index: filter){
+                        orderItems.add(index);
                     }
-                }else {
-                    selmin = -1;
-                    selmax = -1;
+                    Collections.sort(orderItems);
+                    int first = orderItems.get(0);
+                    int last = orderItems.get(orderItems.size()-1);
+                    activeRange.add(new Pair(first,last));
                 }
-                to_add.add(new Pair(selmin,selmax));
             }
-            angleRowActive.put(i,to_add);
+            angleRowActive.put(idBeam,activeRange);
         }
-
     }
 
+    //Transformar la identificacion local del beam, a una identificacion global
     public Pair<Integer,Integer> indexToPos(int index,int angle){
-        double x = (angleCoord.get(angle)).get(index).getKey();
-        double y= (angleCoord.get(angle)).get(index).getValue();
-        int posx = (int)(x - xCoord.firstElement());
-        int posy = (int)(y - yCoord.firstElement());
-        //System.out.println(x + " -- " + posx);
-        Pair <Integer,Integer> r = new Pair(posx,posy);
+        int x = (angleCoord.get(angle)).get(index).getKey();
+        int y= (angleCoord.get(angle)).get(index).getValue();
+        Pair <Integer,Integer> r = new Pair(x,y);
         return r;
     }
 
-    public boolean isActiveBeamAngle(int x, int y, int angle){
-        return angleRowActive.get(angle).get(x).getKey() <= y && angleRowActive.get(angle).get(x).getValue() >= y;
-    }
-
+    //Obtengo el rango activo de la fila x en el angulo 'angle'
     public Pair<Integer,Integer> getActiveRange(int x, int angle){
+        //x es la fila del collimator
         return (angleRowActive.get(angle).get(x));
     }
 
@@ -232,36 +235,16 @@ public class Collimator {
         return yDim;
     }
 
-    public ArrayList<Integer> getAngles() {
+    public Vector<Integer> getAngles() {
         return angles;
     }
 
-    public Vector<Double> getxCoord() {
-        return xCoord;
+    /*--------------------------------------------------- PRINT ALL COORDINATES ------------------------------------------------------------*/
+    public void printActiveRange(){
+        int angle = 0;
+        System.out.println("Angle: "+ angle);
+        for(int i = 0; i < gDim ; i++){
+            System.out.println(getActiveRange(i,angle));
+        }
     }
-
-    public Vector<Double> getyCoord() {
-        return yCoord;
-    }
-
-    public Vector<Pair<Integer, String>> getCoord_file() {
-        return coord_file;
-    }
-
-    public SortedMap<Double, Vector<Double>> getBeamCoord() {
-        return beamCoord;
-    }
-
-    public SortedMap<Integer, Vector<Pair<Double, Double>>> getAngleCoord() {
-        return angleCoord;
-    }
-
-    public SortedMap<Integer, Vector<Pair<Integer, Integer>>> getAngleRowActive() {
-        return angleRowActive;
-    }
-
-    public SortedMap<Integer, Integer> getNbAngleBeamlets() {
-        return nbAngleBeamlets;
-    }
-
 }
