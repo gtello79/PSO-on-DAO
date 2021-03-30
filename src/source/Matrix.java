@@ -1,4 +1,10 @@
 package source;
+import SRCDAO.Beam;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Vector;
 
 public class Matrix {
     private int rows;
@@ -61,8 +67,37 @@ public class Matrix {
         }
     }
 
+
     public void printShape(){
         System.out.println("("+rows + "," + cols + ")");
     }
 
+    //Metodo para exportar matriz
+    public void exportMatrix(String dataFile){
+        FileWriter data = null;
+        PrintWriter pw = null;
+        try{
+            data = new FileWriter(dataFile+".txt");
+            pw = new PrintWriter(data);
+            for(int i = 0; i < rows ; i++){
+                String sRows = "";
+                for(int j = 0; j < cols; j++){
+                    sRows += p[i][j] + " ";
+                }
+                sRows += "\n";
+                pw.write(sRows);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally{
+            // Nuevamente aprovechamos el finally para
+            // asegurarnos que se cierra el fichero.
+            try {
+                if (data != null)
+                    data.close();
+            }catch (Exception e2){
+                e2.printStackTrace();
+            }
+        }
+    }
 }

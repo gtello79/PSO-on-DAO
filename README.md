@@ -81,12 +81,8 @@
 	- El par estará en un rango de [-1, max_eje], recalcar que es inclusive.
 	- El valor <-2,-2> para el par de hojas desde ahora representa que no se pueden abrir jamás
 
-- Se procede a cambiar la clase Collimator para 
-
 
 ## Proximas preguntas
-- ¿A que se refiere con la clase apertura? ¿Se refiere a la matriz de 0 y 1 junto a su adecuada intensidad? Si, la intensidad va 
-dentro de la misma apertura como un atributo
 
 ## Parametros asociados y experimentos interesantes
 - Observar la inicializacion de las aperturas 

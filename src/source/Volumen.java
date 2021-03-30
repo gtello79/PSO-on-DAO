@@ -7,17 +7,17 @@ import java.util.*;
 public class Volumen {
     /* Information of the general beamlet configuration */
     private Collimator collimator;
-
     /*D[a](k,b): Dose delivered to voxel k of the organ by the beamlet b and angle a */
-    private SortedMap <Integer, Matrix> D ;
-
+    private SortedMap <Integer, Matrix> D;
+    //Tiene dimension voxels x beamlets, contiene la DDM del organo
     private Matrix DDM;
-
+    // Tiene asociado el numero de voxels asociado al organo
     private int nb_voxels;
-
+    // Tiene el numero de beamlets que influyen en el organo
     private int nb_beamlets;
 
-    public Volumen(Collimator  collimator,String data) throws FileNotFoundException {
+    //Constructor del volumen asociado
+    public Volumen(Collimator collimator,String data) throws FileNotFoundException {
         D = new TreeMap<>();
         this.nb_beamlets = collimator.getNbBeamlets();
         this.collimator = collimator;
@@ -60,14 +60,14 @@ public class Volumen {
             //Cantidad total de voxels
             nb_voxels = lines.size()-1;
 
-            //Se crea una una matriz para cada angulo de la actual DDM
+            //Se crea una matriz para cada angulo de la actual DDM
             for(Integer angle: collimator.getAngles())
                 D.put(angle, new Matrix( nb_voxels , collimator.getNangleBeamlets(angle) ) );
             this.DDM = new Matrix(nb_voxels,nb_beamlets);
 
             //Recorre por voxel(fila) y luego por beamlet (columna)
             for(int i = 0; i < nb_voxels; i++){
-                int a = 0;
+                int a = 0; //angulo
                 int j = 0;
                 int k = 0;
                 boolean nb_flag = false;
@@ -97,6 +97,7 @@ public class Volumen {
             }
         }
     }
+
     public int getNb_voxels(){
         return nb_voxels;
     }
@@ -107,6 +108,10 @@ public class Volumen {
 
     public Matrix getDDM(){
         return DDM;
+    }
+
+    public int getNb_beamlets(){
+        return this.nb_beamlets;
     }
     //------------------------------------------------------------------- PRINTERS -------------------------------------------------
     public void printNbbeamlets(){
@@ -121,7 +126,6 @@ public class Volumen {
             Matrix x = D.get(angle);
             x.printMatrix();
         }
-
     }
 
 }

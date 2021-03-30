@@ -19,16 +19,16 @@ public class Particle {
         setBPersonal(Pcurrent);
         setFitness(Pcurrent.getEval());
         setBfitness(Pcurrent.getEval());
-        Pcurrent.printIdBeamtoVector();
     }
 
-    public void CalculateVelocity(double c1, double c2, double w, Particle Bglobal){
-        Pcurrent.CalculateVelocity(c1, c2, w, Bglobal.getPcurrent(), BPersonal);
+    public void CalculateVelocity(double c1, double c2, double w, Particle bGlobal){
+        Pcurrent.CalculateVelocity(c1, c2, w, bGlobal.getPcurrent(), BPersonal);
     }
 
     public void CalculatePosition(){
         Pcurrent.CalculatePosition();
         setFitness(Pcurrent.getEval());
+
     }
 
     public void CalculateBestPersonal(){
@@ -80,4 +80,7 @@ public class Particle {
         return Pcurrent;
     }
 
+    public void printFluenceMap(){
+        Pcurrent.printFluenceMap();
+    }
 }

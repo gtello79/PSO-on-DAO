@@ -1,9 +1,9 @@
 package SRCDAO;
 
-import javafx.util.Pair;
-import source.Collimator;
 
-import java.util.Random;
+import source.Collimator;
+import source.Pair;
+
 import java.util.Vector;
 
 public class Aperture {
@@ -24,62 +24,53 @@ public class Aperture {
     public Aperture(Collimator collimator, int angle){
         setAngle(angle);
         setIntensity(0);
-        setVeloc_intensity(0);
+        setVeloc_intensity(1);
         this.collimator = collimator;
         this.velo_A = new Vector<>();
         this.A = new Vector<>();
 
         for(int i = 0; i < collimator.getxDim(); i++)
-            velo_A.add(new Pair(0,0));
+            velo_A.add(new Pair(1,1));
     }
 
     public void initializeAperture(int type, int open_apertures){
         Vector<Pair<Integer,Integer>> aux = new Vector<>();
 
-        if(type == OPEN_MAX_SETUP || type == OPEN_MIN_SETUP){
-            for(int i = 0; i < collimator.getxDim(); i++){
-                int fLeaf = collimator.getActiveRange(i,angle).getKey()-1;
-                int sLeaf = collimator.getActiveRange(i,angle).getValue()+1;
-                if(collimator.getActiveRange(i,angle).getKey() < 0) {
-                    //Cerrada completamente por inactividad
-                    aux.add(new Pair(-2, -2));
-                } else{
-                    //Habilitada solo con los beamlet Activos
+        for(int i = 0; i < collimator.getxDim(); i++){
+            if(collimator.getActiveRange(i,angle).getFirst() < 0){
+                //Cerrada completamente por inactividad
+                aux.add(new Pair(-2, -2));
+            }
+            else{
+                //Todos los beamlets de la fila i en el angulo 'angle'
+                int fLeaf = collimator.getActiveRange(i,angle).getFirst() - 1;
+                int sLeaf = collimator.getActiveRange(i,angle).getSecond() + 1;
+
+                if(type == OPEN_MAX_SETUP || type == OPEN_MIN_SETUP){
+                    //Abierta completamente para los beamlets activos
                     aux.add(new Pair(fLeaf,sLeaf));
-                }
-            }
-        }else if (type == CLOSED_MAX_SETUP || type == CLOSED_MIN_SETUP){
-            for(int i = 0; i < collimator.getxDim(); i++){
-                //Cerrada completamente
-                aux.add(new Pair(-2,-2));
-            }
-        }else if (type == RAND_RAND_SETUP){
-            for(int i = 0; i < collimator.getxDim(); i++){
-                int fLeaf = collimator.getActiveRange(i,angle).getKey()-1 ;
-                int sLeaf = collimator.getActiveRange(i,angle).getValue()+1;
-                if(collimator.getActiveRange(i,angle).getKey() < 0){
-                    //Cerrada completamente por inactividad
-                    aux.add(new Pair(-2,-2));
-                }else{
-                    Random r =  new Random(System.currentTimeMillis());
-                    int index1 = fLeaf + r.nextInt( sLeaf - fLeaf);
+
+                }else if(type == CLOSED_MAX_SETUP || type == CLOSED_MIN_SETUP) {
+                    //Cerrada completamente (MEJORAR)
+                    aux.add(new Pair(fLeaf,fLeaf+1));
+
+                }else if(type == RAND_RAND_SETUP){
+                    //Se abre aleatoriamente las hojas
+                    int index1 = fLeaf + (int)(Math.random()*(sLeaf - fLeaf));
+
                     if( index1 == sLeaf ){
                         aux.add(new Pair(fLeaf, sLeaf));
                     }else{
-                        int index2 = index1 + r.nextInt(sLeaf-index1+1);
+                        int index2 = index1 + (int)(Math.random()*(sLeaf-index1+1));
                         aux.add(new Pair(index1,index2));
                     }
-                }
-            }
-        }else{
-            for(int i = 0; i < collimator.getxDim(); i++){
-                if(open_apertures > 0){
-                    int fLeaf = collimator.getActiveRange(i,angle).getKey()-1;
-                    int sLeaf = collimator.getActiveRange(i,angle).getValue()+1;
-                    aux.add(new Pair(fLeaf,sLeaf));
                 }else{
-                    //Cerrada completamente por inactividad
-                    aux.add(new Pair(-2,-2));
+                    if(open_apertures > 0){
+                        aux.add(new Pair(fLeaf,sLeaf));
+                    }else{
+                        //Cerrada completamente por inactividad
+                        aux.add(new Pair(-2,-2));
+                    }
                 }
             }
         }
@@ -87,9 +78,9 @@ public class Aperture {
     }
 
     public void initializeIntensity(int type, int min_intensity, int max_intensity, int initial_intensity, int r_intensity){
-        if(type==OPEN_MIN_SETUP || type==CLOSED_MIN_SETUP){
+        if( type==OPEN_MIN_SETUP || type==CLOSED_MIN_SETUP ){
             setIntensity(min_intensity);
-        }else if(type==OPEN_MAX_SETUP || type==CLOSED_MAX_SETUP){
+        }else if( type==OPEN_MAX_SETUP || type==CLOSED_MAX_SETUP ){
             setIntensity(max_intensity);
         }else if( type == RAND_RAND_SETUP){
             setIntensity(r_intensity);
@@ -100,48 +91,41 @@ public class Aperture {
 
     /*----------------------------------------------------PSO METHODS--------------------------------------------------------------------------------*/
     public void velAperture(double w, double c1, double c2, Aperture BGlobal, Aperture BPersonal){
-        Random r =  new Random(System.currentTimeMillis());
-        int counter = 0;
-        double r1 = r.nextDouble();
-        double r2 = r.nextDouble();
+        double r1 = Math.random();
+        double r2 = Math.random();
 
         Vector<Pair<Integer,Integer>> BG = BGlobal.getApertures();
         Vector<Pair<Integer,Integer>> BP = BPersonal.getApertures();
-
         for(int i = 0; i < collimator.getxDim(); i++){
             Pair<Integer,Integer> aux_G = BG.get(i);
             Pair<Integer,Integer> aux_P = BP.get(i);
-            if(collimator.getActiveRange(i,angle).getKey() < 0) continue;
 
-            int first = (int)(w*velo_A.get(i).getKey() + c1*r1*(A.get(i).getKey()-aux_G.getKey())  +  c2*r2*(A.get(i).getKey()-aux_P.getKey()) );
-            int second = (int)(w*velo_A.get(i).getValue() + c1*r1*(A.get(i).getValue()-aux_G.getValue())  +  c2*r2*(A.get(i).getValue()-aux_P.getValue()) );
-
-            velo_A.set(i, new Pair(first,second));
-
+            if(collimator.getActiveRange(i,angle).getFirst() < 0) continue;
+            int first = (int)(w*velo_A.get(i).getFirst() + c1*r1*(A.get(i).getFirst()-aux_G.getFirst())  +  c2*r2*(A.get(i).getFirst() - aux_P.getFirst()) );
+            int second = (int)(w*velo_A.get(i).getSecond() + c1*r1*(A.get(i).getSecond()-aux_G.getSecond())  +  c2*r2*(A.get(i).getSecond() - aux_P.getSecond()) );
+            velo_A.set(i, new Pair(first, second));
         }
+
     }
 
     public void velIntensity(double w, double c1, double c2, Aperture BGlobal, Aperture BPersonal){
-        Random r =  new Random(System.currentTimeMillis());
         int bG = BGlobal.getIntensity();
         int bP = BPersonal.getIntensity();
-        double r1 = r.nextDouble();
-        double r2 = r.nextDouble();
+        double r1 = Math.random();
+        double r2 = Math.random();
 
         int val = (int)(w*veloc_intensity + r1*c1*(intensity-bG) + r2*c2*(intensity-bP));
         setVeloc_intensity(val);
     }
 
     public void movAperture(){
-        for(int i = 0; i < velo_A.size(); i++){
-            if(A.get(i).getKey() < 0) continue;
-            int limit_inf = collimator.getActiveRange(i,angle).getKey();
-            int limit_sup = collimator.getActiveRange(i,angle).getValue();
+        for(int i = 0; i < A.size(); i++){
+            if(A.get(i).getFirst() < -1) continue;
+            int limit_inf = collimator.getActiveRange(i,angle).getFirst();
+            int limit_sup = collimator.getActiveRange(i,angle).getSecond();
 
-            int first = velo_A.get(i).getKey() + A.get(i).getKey();
-            int second = velo_A.get(i).getValue() + A.get(i).getValue();
-
-            System.out.println(A.get(i).getKey() + " " + velo_A.get(i).getKey() + "  ---  " + A.get(i).getValue() + " " + velo_A.get(i).getValue());
+            int first = velo_A.get(i).getFirst() + A.get(i).getFirst();
+            int second = velo_A.get(i).getSecond() + A.get(i).getSecond();
 
             if(first > second) {
                 int val = (first + second)/2;
@@ -149,14 +133,12 @@ public class Aperture {
                 second = (val) + 1;
             }
 
-
             if(first < limit_inf ) first = limit_inf;
+            if(second > limit_sup ) second = limit_sup;
 
-            if(second > limit_sup) second = limit_sup;
+            Pair<Integer, Integer> newApertures = new Pair(first, second);
+            A.set(i, newApertures);
 
-            System.out.println(first + " " + second);
-
-            A.set(i, new Pair(first,second));
         }
     }
 
@@ -170,10 +152,6 @@ public class Aperture {
     public Pair<Integer,Integer> getOpBeam(int i){
         return A.get(i);
     };
-
-    public int getAngle() {
-        return angle;
-    }
 
     public void setAngle(int angle) {
         this.angle = angle;
@@ -207,13 +185,12 @@ public class Aperture {
         return A;
     }
 
-
     /*------------------------------------------PRINTERS -----------------------------------------------------------------*/
     public void printAperture(){
         System.out.println("Intensity: "+ intensity);
         int x = 0;
         for(Pair<Integer,Integer> aperture : A){
-            System.out.println(x + " (" +aperture.getKey() + " , " + aperture.getValue() + ") ");
+            System.out.println(x + " (" +aperture.getFirst() + " , " + aperture.getSecond() + ") ");
             x++;
         }
     }

@@ -1,10 +1,10 @@
 
 package source;
 
-import javafx.util.Pair;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-import java.io.File;
+
 
 public class Collimator {
     private int nbBeamlets;
@@ -12,9 +12,11 @@ public class Collimator {
     private int yDim;
     private int gDim;
     private int nAngles;
+
     //------------------------------------------------- NUEVAS ESTRUCTURAS -----------------------------------------------------------------------
     //Vector con los pares <angle, FilePath> de cada BeamAngle
-    private Vector< Pair< Integer, String> > coord_file;
+    private Vector<Pair< Integer, String>> coord_file;
+
     //Contiene todos los angulos
     private Vector<Integer> angles;
 
@@ -28,25 +30,15 @@ public class Collimator {
     private SortedMap< Integer, Vector< Pair< Double, Double> > > angleCoordMatr;
 
     // Range (i,j) of active beamlets of angle "a" row "r":
-    //  Usando angleRowActive.get(a).get(r) obtengo el rango de apertura de la fila r en el angulo a
-    //  (-1,-1) indicates a full row is not active
+    //  Usando angleRowActive.get(a).get(r) obtengo el rango de apertura de la fila r en el angulo
+    //  (-1,-1) indica que esta inactiva, es decir, que no tiene beamlets
     private SortedMap< Integer, Vector< Pair< Integer, Integer> > > angleRowActive = new TreeMap<>();
 
     //Obtengo la cantidad de Beamlets por cada beam
     private SortedMap< Integer, Integer> nbAngleBeamlets =  new TreeMap<>();
 
-    //------------------------------------------------- ESTRUCTURA ANTERIORES --------------------------------------------------------------------
-    //Usa un vector con todos los valores de X desde los archivos de CoordinatesBeam
-    private Vector< Double> xCoord = new Vector<>();
 
-    //Usa un vector con todos los valores de Y desde los archivos de CoordinatesBeam
-    private Vector< Double> yCoord = new Vector<>();
-
-    //Agrega el valor de X con sus valores en Y
-    private SortedMap< Double , Vector<Double> > beamCoord = new TreeMap<>();
-
-    /*---------------------------------------------------- ALL METHODS ------------------------------------------------------------------------------------ */
-
+    /*----------------------------------------------------------- ALL METHODS -------------------------------------------------------------------------------- */
     //Constructor del Collimator, esta en orden, no tocar
     public Collimator(String coord_filename, Vector<Integer> angles) throws FileNotFoundException {
         int angle;
@@ -78,19 +70,20 @@ public class Collimator {
                 if (!angles.contains(angle))
                     continue;
 
-                // <angle, path_of_coordinateBeam_angle>
+                //<angle, path_of_coordinateBeam_angle>
                 Pair<Integer, String> to_add = new Pair(angle, aux);
                 coord_file.add(to_add);
             }
+
             reading.close();
             this.nAngles = coord_file.size();
-            initializeCoordinates2();
+            initializeCoordinates();
             System.out.println("##  READ " + coord_file.size() + " FILES");
         }
     }
 
     //Se inicializan las coordenadas de cada beam del collimator
-    private void initializeCoordinates2() throws  FileNotFoundException{
+    private void initializeCoordinates() throws  FileNotFoundException{
         double max = -99999;
         int globalID = 0;
         int localID;
@@ -99,9 +92,9 @@ public class Collimator {
 
         //Se lee la estructura con ID_Beam - Path Coordinates Beamlet
         for(Pair<Integer,String> temp: coord_file){
-            int angle = temp.getKey();
+            int angle = temp.getFirst();
             this.angles.add(angle);
-            String CoordinatePath = temp.getValue();
+            String CoordinatePath = temp.getSecond();
             File coordFile = new File("src/"+CoordinatePath);
 
             //Se procede a leer el archivo temp
@@ -136,16 +129,17 @@ public class Collimator {
                     }
                 }
                 lect.close();
+                //Se agrega la lista de los indices cartesianos de cada beamlet pertenecientes a un angulo 'angle'
                 this.angleCoordMatr.put(angle,AngleBeamlet);
             }
         }
-        //Se asegura la dimension total del colimator
+        //Se define la dimension total del colimator
         gDim = (int)(max*2);
         this.xDim = gDim;
         this.yDim = gDim;
         this.nbBeamlets = globalID;
 
-        //Se realiza la transformación de las coordenadas cartesianas a coordenadas matriciales
+        //Transformación de las coordenadas cartesianas a coordenadas matriciales
         for ( Integer idBeam : angleCoordMatr.keySet() ){
             int blperBeam = 0;
             Vector<Pair<Double,Double>> beamletsBeam = angleCoordMatr.get(idBeam);
@@ -153,8 +147,8 @@ public class Collimator {
 
             for( Pair<Double,Double> row : beamletsBeam ) {
                 blperBeam++;
-                int newX = (int)(row.getKey() + max);
-                int newY = (int)(row.getValue() + max);
+                int newX = (int)(row.getFirst() + max);
+                int newY = (int)(row.getSecond() + max);
                 newCoords.add(new Pair(newX,newY));
             }
             this.nbAngleBeamlets.put(idBeam, blperBeam);
@@ -164,7 +158,7 @@ public class Collimator {
     }
 
     //Metodo que obtiene el rango de apertura activo del collimator, si el rango es <a,b>
-    //Significa que el rnago esta abierto desde a hasta b (resalto que lo incluye)
+    //Significa que el rango esta abierto desde a hasta b (resalto que lo incluye)
     void setActiveRows() {
         for (Integer idBeam : angleCoord.keySet())
         {
@@ -175,14 +169,17 @@ public class Collimator {
             for (int r = 0; r < gDim; r++) {
                 Set<Integer> filter = new HashSet<>();
 
+                //A partir de un indice r asociado a cada fila, se busca los beamlets en ella
                 for (Pair<Integer, Integer> beamRow : beamletsBeam) {
-                    if ( Integer.compare(r , beamRow.getKey()) == 0 ) {
-                        filter.add(beamRow.getValue());
+                    if ( Integer.compare(r , beamRow.getFirst()) == 0 ) {
+                        filter.add(beamRow.getSecond());
                     }
                 }
                 if(filter.size() == 0){
+                    // Significa que la fila no esta activa, que no tiene beamlets en ella
                     activeRange.add(new Pair(-1,-1));
                 }else{
+                    //
                     Vector<Integer> orderItems = new Vector<>();
                     for (Integer index: filter){
                         orderItems.add(index);
@@ -193,16 +190,16 @@ public class Collimator {
                     activeRange.add(new Pair(first,last));
                 }
             }
+            //Se agrega un vector de rangos para cada fila de un angulo 'angle' que sera la llave del diccionario
             angleRowActive.put(idBeam,activeRange);
         }
     }
 
-    //Transformar la identificacion local del beam, a una identificacion global
+    //Transformar la identificacion local (del beam), a una identificador global
     public Pair<Integer,Integer> indexToPos(int index,int angle){
-        int x = (angleCoord.get(angle)).get(index).getKey();
-        int y= (angleCoord.get(angle)).get(index).getValue();
-        Pair <Integer,Integer> r = new Pair(x,y);
-        return r;
+        int x = (angleCoord.get(angle)).get(index).getFirst();
+        int y = (angleCoord.get(angle)).get(index).getSecond();
+        return new Pair(x,y);
     }
 
     //Obtengo el rango activo de la fila x en el angulo 'angle'

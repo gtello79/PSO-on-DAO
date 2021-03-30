@@ -16,23 +16,27 @@ public class Swarm {
 
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
     public Swarm(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, int max_apertures, int max_intensity , int initial_intensity, int step_intensity,
-                 int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator, double c1, double c2, double iner, int size, int iter) {
+                 int open_apertures, int setup, int diffSetup ,Vector<Volumen> volumen, Collimator collimator, double c1, double c2, double iner, int size, int iter) {
         setC1(c1);
         setC2(c2);
         setIner(iner);
         setIter(iter);
-
+        Particle newParticle;
         this.Poblacion = new ArrayList<>();
+
         /*A set of particles will be created*/
         for(int i = 0; i < size ; i++){
             System.out.println("Creating Particle: "+ i);
-            Particle NewParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
-            Poblacion.add(NewParticle);
             if(i == 0){
-                setBest_global(NewParticle);
-                setBest_solution(NewParticle.getFitness());
-                //NewParticle.printIntensityMatrix();
-                //NewParticle.printAperture();
+                newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
+            }else{
+                newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
+            }
+            Poblacion.add(newParticle);
+
+            if(i == 0){
+                setBest_global(newParticle);
+                setBest_solution(newParticle.getFitness());
             }
             System.out.println();
         }
@@ -41,7 +45,7 @@ public class Swarm {
     /*Running PSO Algorithm*/
     public void MoveSwarms(){
         CalculateNewBestGlobal();
-        System.out.println("MOVING SWARM");
+        System.out.println("MOVING SWARMS");
         for(int i = 0; i < getIter(); i++){
             CalculateVelocity();
             CalculatePosition();
@@ -53,34 +57,33 @@ public class Swarm {
     };
 
     public void CalculateVelocity(){
-        for (Particle particula : Poblacion) {
-            particula.CalculateVelocity(getC1(), getC2(), getIner(), getBest_global() );
+        for (Particle particle : Poblacion) {
+            particle.CalculateVelocity(getC1(), getC2(), getIner(), getBest_global() );
         }
     }
 
     public void CalculatePosition(){
+        int i = 0;
         for(Particle particula: Poblacion){
             particula.CalculatePosition();
+            System.out.println("Particle "+i+": "+particula.getFitness());
+            i++;
         }
     }
 
     public void CalculateNewBestGlobal() {
         for (int i = 0; i < Poblacion.size() ; i++) {
-            Particle particula = Poblacion.get(i);
-            //System.out.println(particula.getFitness() +" " + getBest_solution());
-            if (Double.compare(particula.getFitness(), getBest_solution()) == - 1) {
-                System.out.println(particula.getFitness() + " " + getBest_solution() +" DENTRO");
-                setBest_global(particula);
-                setBest_solution(particula.getFitness());
-                //System.out.println(best_global.getFitness() + " " + getBest_solution() +" CAMBIADA");
+            Particle particle = Poblacion.get(i);
+            if (particle.getFitness() < getBest_solution() ) {
+                setBest_global(particle);
+                setBest_solution(particle.getFitness());
             };
         };
     };
 
-
     public void CalculateNewBestPersonal() {
-        for(Particle particula: Poblacion){
-            particula.CalculateBestPersonal();
+        for(Particle particle: Poblacion){
+            particle.CalculateBestPersonal();
         }
     }
     /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
