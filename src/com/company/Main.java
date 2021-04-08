@@ -3,6 +3,7 @@ import Swarms.*;
 import source.*;
 import java.io.FileNotFoundException;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.Scanner;
 
@@ -24,14 +25,14 @@ public class Main {
 
     public static Vector<Integer> get_angles(String nameFile) throws FileNotFoundException {
         File testInstance = new File(nameFile);
-        Vector<Integer> angles = new Vector<Integer>();
+        Vector<Integer> angles = new Vector<>();
         Scanner reading = new Scanner(testInstance);
         int nLine = 0;
         while(reading.hasNextLine()){
             String linea = reading.nextLine();
             char [] arreglo = linea.toCharArray();
             String to_add = "";
-            Integer angle = 0;
+            int angle;
             if (nLine == 0){
                 for(char index : arreglo){
                     if (index == ' '){
@@ -51,12 +52,12 @@ public class Main {
         }
         reading.close();
         return angles;
-    };
+    }
 
     //Se pasa el archivo src/data/test_instance_0_70_140_210_280.txt
-    public static Vector<Volumen> createVolumes(String org_filename, Collimator collimator) throws FileNotFoundException {
-        Vector<String> orgn_files = new Vector<String>();
-        Vector<Volumen> Volumes = new Vector<Volumen>();
+    public static Vector<Volumen> createVolumes(String org_filename) throws FileNotFoundException {
+        Vector<String> orgFiles = new Vector<>();
+        Vector<Volumen> Volumes = new Vector<>();
         String line;
         int nline = 0;
         File of = new File(org_filename);
@@ -68,16 +69,17 @@ public class Main {
             line = reading.nextLine();
             if(nline > 0){
                 if(line.isEmpty()) continue;
-                orgn_files.add(line);
+                orgFiles.add(line);
             }
             nline++;
         }
         reading.close();
-        for(int i = 0; i < orgn_files.size(); i++){
-            String actual_file = orgn_files.get(i);
-                Volumen to_add = new Volumen(collimator,actual_file);
+
+        for(String orgFile: orgFiles){
+            Volumen to_add = new Volumen(orgFile);
             Volumes.add(to_add);
         }
+
         return Volumes;
     }
 
@@ -85,14 +87,17 @@ public class Main {
         String file = "src/data/test_instance_0_70_140_210_280.txt";
         String file2 = "src/data/test_instance_coordinates.txt";
 
-        int max_apertures = 5;
         int max_intensity = 28;
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;
-        int setup = 0;
+
+        ArrayList<Integer> maxApertures = new ArrayList<>();
+
+        int setup = 4;
         int diffSetup = 4;
-        /**
+
+        /*
             OPEN_MIN_SETUP = 0;
             OPEN_MAX_SETUP = 1;
             CLOSED_MIN_SETUP = 2 ;
@@ -101,10 +106,10 @@ public class Main {
         */
 
         int size = 10; //Particle size
-        int iter = 20; //Pso Iterations
-        double c1 = 1;
-        double c2 = 1;
-        double iner = 1;
+        int iter = 30; //Pso Iterations
+        double c1 = 10;
+        double c2 = 10;
+        double iner = 0.001;
 
         Vector <Double> w  = new Vector<>();
         w.add(1.0);
@@ -117,17 +122,23 @@ public class Main {
         Zmin.add(76.0);
 
 
-        Vector <Double> Zmax =  new Vector<Double>();
+        Vector <Double> Zmax =  new Vector<>();
         Zmax.add(65.0);
         Zmax.add(60.0);
-        Zmax.add(1000.0);
+        Zmax.add(76.0);
 
         Vector <Integer> angles = get_angles(file);
         Collimator collimator = new Collimator(file2,angles);
-        Vector <Volumen> volumes = createVolumes(file,collimator);
+        Vector <Volumen> volumes = createVolumes(file);
 
-        Swarm poblacion = new Swarm(w, Zmin, Zmax, max_apertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,c1, c2, iner, size, iter);
-        poblacion.MoveSwarms();
+
+        for(int a = 0; a < angles.size(); a++){
+            maxApertures.add(5);
+        }
+
+
+        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,c1, c2, iner, size, iter);
+        swarm.MoveSwarms();
 
 
     }

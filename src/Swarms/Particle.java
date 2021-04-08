@@ -3,84 +3,88 @@ import SRCDAO.*;
 import source.Collimator;
 import source.Volumen;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 public class Particle {
     private double fitness;
-    private double Bfitness;
-    private Plan BPersonal;
-    private Plan Pcurrent;
+    private double bestFitness;
+    private Plan bestPersonal;
+    private Plan currentPlan;
 
     /*-------------------------------------------------------------METHODS -------------------------------------------*/
-    public Particle(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, int max_apertures, int max_intensity,int initial_intensity, int step_intensity,
+    public Particle(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity, int initial_intensity, int step_intensity,
                     int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator)
     {
-        Pcurrent = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
-        setBPersonal(Pcurrent);
-        setFitness(Pcurrent.getEval());
-        setBfitness(Pcurrent.getEval());
+        this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
+
+        setBestPersonal(this.currentPlan);
+        setFitness(currentPlan.getEval());
+        setBestFitness(currentPlan.getEval());
+    }
+
+    public Particle(Particle p){
+        this.currentPlan = new Plan(p.currentPlan);
+        this.bestPersonal = new Plan(p.bestPersonal);
+        this.fitness = p.fitness;
+        this.bestFitness = p.bestFitness;
+
     }
 
     public void CalculateVelocity(double c1, double c2, double w, Particle bGlobal){
-        Pcurrent.CalculateVelocity(c1, c2, w, bGlobal.getPcurrent(), BPersonal);
+        currentPlan.CalculateVelocity(c1, c2, w, bGlobal.getCurrentPlan(), bestPersonal);
     }
 
     public void CalculatePosition(){
-        Pcurrent.CalculatePosition();
-        setFitness(Pcurrent.getEval());
+        currentPlan.CalculatePosition();
+        setFitness(currentPlan.getEval());
 
     }
 
     public void CalculateBestPersonal(){
-        if(Pcurrent.getEval() < Bfitness){
-            setBPersonal(Pcurrent);
-            setBfitness(Pcurrent.getEval());
+        if(getFitness() < bestFitness){
+            //System.out.println("MEJORA DE BEST PERSONAL:"+ bestFitness+ " -> " + getFitness() );
+            setBestPersonal(this.currentPlan);
+            setBestFitness(currentPlan.getEval());
+
         }
     }
     /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
 
     public void printIntensityMatrix(){
-        Pcurrent.printIntensityMatrix();
+        currentPlan.printIntensityMatrix();
     }
 
     public void printAperture(){
-        Pcurrent.printApertures();
+        currentPlan.printApertures();
     }
 
     public void printApertureBeam(int x){
-        Pcurrent.printAperturesBeam(x);
+        currentPlan.printAperturesBeam(x);
     }
 
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public double getFitness() {
-        return fitness;
+        return this.fitness;
     }
 
     public void setFitness(double fitness) {
         this.fitness = fitness;
     }
 
-    public double getBfitness() {
-        return Bfitness;
+    public void setBestFitness(double bestFitness) {
+        this.bestFitness = bestFitness;
     }
 
-    public void setBfitness(double bfitness) {
-        Bfitness = bfitness;
+    public void setBestPersonal(Plan bPersonal) {
+        bestPersonal = new Plan(bPersonal);
     }
 
-    public Plan getBPersonal() {
-        return BPersonal;
-    }
-
-    public void setBPersonal(Plan bglobal) {
-        BPersonal = bglobal;
-    }
-
-    public Plan getPcurrent() {
-        return Pcurrent;
+    public Plan getCurrentPlan() {
+        return this.currentPlan;
     }
 
     public void printFluenceMap(){
-        Pcurrent.printFluenceMap();
+        currentPlan.printFluenceMap();
     }
 }

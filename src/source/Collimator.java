@@ -82,6 +82,31 @@ public class Collimator {
         }
     }
 
+    public Collimator(Collimator c){
+
+        this.coord_file = new Vector<>();
+        this.angles = new Vector<>();
+        this.angleCoord = new TreeMap<>();
+        this.allBeamletIndex = new TreeMap<>();
+        this.angleCoordMatr = new TreeMap<>();
+
+        this.nbBeamlets = c.nbBeamlets;
+        this.nAngles = c.nAngles;
+        this.xDim = c.xDim;
+        this.yDim = c.yDim;
+        this.gDim = c.gDim;
+
+        this.angles = (Vector<Integer>) c.angles.clone();
+        this.coord_file = (Vector<Pair<Integer, String>>)c.coord_file.clone();
+        this.angleCoord.putAll(c.angleCoord);
+        this.allBeamletIndex.putAll(c.allBeamletIndex);
+        this.angleCoordMatr.putAll(c.angleCoordMatr);
+        this.nbAngleBeamlets.putAll(c.nbAngleBeamlets);
+
+        setActiveRows();
+    }
+
+
     //Se inicializan las coordenadas de cada beam del collimator
     private void initializeCoordinates() throws  FileNotFoundException{
         double max = -99999;
@@ -156,6 +181,7 @@ public class Collimator {
         }
         setActiveRows();
     }
+
 
     //Metodo que obtiene el rango de apertura activo del collimator, si el rango es <a,b>
     //Significa que el rango esta abierto desde a hasta b (resalto que lo incluye)

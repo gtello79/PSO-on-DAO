@@ -12,7 +12,7 @@ public class Aperture {
     private int intensity;
     private int veloc_intensity;
     private Vector<Pair<Integer,Integer>> A;
-    private Vector<Pair<Integer,Integer>> velo_A;
+    private Vector<Pair<Double,Double>> velo_A;
 
     protected int OPEN_MIN_SETUP = 0;
     protected int OPEN_MAX_SETUP = 1;
@@ -30,7 +30,16 @@ public class Aperture {
         this.A = new Vector<>();
 
         for(int i = 0; i < collimator.getxDim(); i++)
-            velo_A.add(new Pair(1,1));
+            velo_A.add(new Pair(1.0,1.0));
+    }
+
+    public Aperture(Aperture a){
+        setAngle(a.angle);
+        setIntensity(a.intensity);
+        setVeloc_intensity(a.veloc_intensity);
+        setVelo_A(a.velo_A);
+        setApertures(a.A);
+
     }
 
     public void initializeAperture(int type, int open_apertures){
@@ -101,8 +110,10 @@ public class Aperture {
             Pair<Integer,Integer> aux_P = BP.get(i);
 
             if(collimator.getActiveRange(i,angle).getFirst() < 0) continue;
-            int first = (int)(w*velo_A.get(i).getFirst() + c1*r1*(A.get(i).getFirst()-aux_G.getFirst())  +  c2*r2*(A.get(i).getFirst() - aux_P.getFirst()) );
-            int second = (int)(w*velo_A.get(i).getSecond() + c1*r1*(A.get(i).getSecond()-aux_G.getSecond())  +  c2*r2*(A.get(i).getSecond() - aux_P.getSecond()) );
+
+            Double first = (w*velo_A.get(i).getFirst() + c1*r1*(A.get(i).getFirst()-aux_G.getFirst())  +  c2*r2*(A.get(i).getFirst() - aux_P.getFirst()) );
+            Double second = (w*velo_A.get(i).getSecond() + c1*r1*(A.get(i).getSecond()-aux_G.getSecond())  +  c2*r2*(A.get(i).getSecond() - aux_P.getSecond()) );
+
             velo_A.set(i, new Pair(first, second));
         }
 
@@ -124,8 +135,16 @@ public class Aperture {
             int limit_inf = collimator.getActiveRange(i,angle).getFirst();
             int limit_sup = collimator.getActiveRange(i,angle).getSecond();
 
-            int first = velo_A.get(i).getFirst() + A.get(i).getFirst();
-            int second = velo_A.get(i).getSecond() + A.get(i).getSecond();
+
+            //System.out.println("PREVIO: "+A.get(i).getFirst() + " " + A.get(i).getSecond());
+
+            int first = (int)(velo_A.get(i).getFirst() + A.get(i).getFirst());
+            int second = (int)(velo_A.get(i).getSecond() + A.get(i).getSecond());
+
+            //System.out.println("DESPUES: "+first + " " + second);
+
+            if(first < limit_inf  || first > limit_sup) first = limit_inf;
+            if(second < limit_inf  || second > limit_sup ) second = limit_sup;
 
             if(first > second) {
                 int val = (first + second)/2;
@@ -133,8 +152,7 @@ public class Aperture {
                 second = (val) + 1;
             }
 
-            if(first < limit_inf ) first = limit_inf;
-            if(second > limit_sup ) second = limit_sup;
+            //System.out.println("FINAL: "+first + " " + second);
 
             Pair<Integer, Integer> newApertures = new Pair(first, second);
             A.set(i, newApertures);
@@ -174,11 +192,23 @@ public class Aperture {
     }
 
     public void setApertures(Vector<Pair<Integer,Integer>> Aper){
-        int i = 0;
+        Vector<Pair<Integer,Integer>> newAper = new Vector<>();
+
         for(Pair<Integer,Integer> x: Aper){
-            A.add(i,x);
-            i++;
+            Pair<Integer, Integer> newShape = new Pair(x.getFirst(), x.getSecond());
+            newAper.add(newShape);
         }
+        this.A = newAper;
+    }
+
+    public void setVelo_A(Vector<Pair<Double,Double>> velocAperture){
+        Vector<Pair<Double,Double>> newVelocity = new Vector<>();
+
+        for(Pair<Double,Double> x: velocAperture){
+            Pair<Double,Double> newShape = new Pair(x.getFirst(), x.getSecond());
+            newVelocity.add(newShape);
+        }
+        this.velo_A = newVelocity;
     }
 
     public Vector<Pair<Integer,Integer>> getApertures(){

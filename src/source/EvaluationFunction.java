@@ -9,13 +9,7 @@ import java.util.*;
 
 public class EvaluationFunction {
 
-    private double F;
-
-    private int n_evaluations;
-
-    //Matrix of derivatives for each organ and voxel
-    //How much increase/decrease F increasing the voxel in one unity.
-    private Vector<Vector<Double>> D;
+    private double evaluation;
 
     //dosis de distribucion por cada organano
     private Vector<Vector<Double>> Z;
@@ -35,8 +29,7 @@ public class EvaluationFunction {
 
     public EvaluationFunction(Vector<Volumen> volumes)
     {
-        setN_evaluations(0);
-        setF(0.0);
+        setEvaluation(0.0);
         setNb_organs( volumes.size() );
 
         nb_voxels = new Vector<>();
@@ -66,7 +59,7 @@ public class EvaluationFunction {
 
     public double evalIntensityVector(Vector<Double> p, Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax){
         //Valor de Funcion objetivo
-        F = 0.0;
+        setEvaluation(0.0);
 
         //Se genera el Vector Z (efecto del beamlet i sobre el voxel v, en el organo r)
         for(int o = 0 ; o < nb_organs; o++){
@@ -75,7 +68,6 @@ public class EvaluationFunction {
 
             //Tomo la DDM asociada a un organo o
             Matrix doseDeposition = DDM.get(o);
-            //doseDeposition.printShape();
 
             //Recorrer todos los voxels de ese organo
             for(int v = 0; v < nb_voxels.get(o) ; v++){
@@ -105,21 +97,19 @@ public class EvaluationFunction {
                     pen += w.get(o) * Math.pow(Math.max(diff,0),2);
                 }
             }
-            F += pen/nb_voxels.get(o);
+            evaluation += pen/nb_voxels.get(o);
             //System.out.println("Region "+ o +": " +pen/nb_voxels.get(o));
         }
-        return F;
+
+        setEvaluation(evaluation);
+        return evaluation;
     }
 
 
     /* -------------------------------------------------- GETTER AND SETTERS ----------------------------------------------------------- */
 
-    public void setF(double f) {
-        F = f;
-    }
-
-    public void setN_evaluations(int n_evaluations) {
-        this.n_evaluations = n_evaluations;
+    public void setEvaluation(double f) {
+        this.evaluation = f;
     }
 
     public void setNb_organs(int nb_organs) {
@@ -127,109 +117,5 @@ public class EvaluationFunction {
     }
 
     /*---------------------------------- METODOS PENDIENTES ---------------------------------------------------------------------------*/
-
-    public double eval(Plan p, Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax) {
-        generate_Z(p);
-        F = 0.0;
-        //Se recorren los organos
-        for (int o = 0; o < nb_organs; o++) {
-            double pen = 0.0;
-            for (int k = 0; k < nb_voxels.get(o); k++) {
-                if (Z.get(o).get(k) < Zmin.get(o)) {
-                    pen += w.get(o) * Math.pow(Math.max((Zmin.get(o)-Z.get(o).get(k)),0),2);
-                }
-                if (Z.get(o).get(k) > Zmax.get(o)) {
-                    pen += w.get(o) * Math.pow(Math.max((Z.get(o).get(k) - Zmax.get(o)),0),2);
-
-                }
-            }
-            F += pen / nb_voxels.get(o);
-        }
-        n_evaluations++;
-        return F;
-    }
-
-    //Genera la dosis de cada beamlet en cada angulo sobre un voxel
-    public void generate_Z(Plan p) {
-        //Se obtiene cada beam
-        Vector<Beam> stations = p.getBeams();
-
-        //Setea el vector Z
-        for (int o = 0; o < nb_organs; o++) {
-            Vector toAdd = new Vector(nb_voxels.get(o));
-            for (int i = 0; i < nb_voxels.get(o); i++){
-                toAdd.add(0.0);
-            }
-            Z.setElementAt(toAdd,o);
-        }
-
-        //Generacion del vector de dosis por cada angulo
-        for (Beam station : stations) {
-            //Se estima usando el error cuadratico medio
-            //considering 2*Xmid, Xext
-            //Se actualiza la matriz Z para la distribucion de dosis con la dosis suministrada por beam
-            //we update the dose distribution matrices Z with the dose delivered by the actual beam
-            for (int o = 0; o < nb_organs; o++) {
-                //Dosis distribuida por cada organo desde los beamlets
-                Matrix Depo = station.getDepositionMatrix(o);
-
-                for (int k = 0; k < nb_voxels.get(o); k++) {
-                    double dose = 0.0;
-                    //Se calcula la dosis de cada beamlet en el actual beam
-                    for (int b = 0; b < station.getNbBeamlets(); b++) {
-                        dose += Depo.getPos(k, b)*station.getIntensity(b);
-                    }
-                    double d = dose + Z.get(o).get(k);
-
-                    Vector pivote = Z.get(o);
-                    pivote.setElementAt(d, k);
-                    Z.setElementAt(pivote, o);
-                }
-            }
-        }
-    }
-
-    /***
-     * Metodo implementado para cargar un vector te intensidad externa nuestros propositos
-     * utilizado netamente para
-     */
-    public Vector<Double> importIntensityVector(String VectorName){
-        String path = "import/intensityVector/";
-        String fileName = VectorName;
-        String delimiter = " ";
-        File archivo = new File(path+fileName);
-        Vector<Double> intensityVector = new Vector<>();
-        int beamletsbybeam = 0;
-
-        if(!archivo.exists()) {
-            System.out.println("ERROR: NO SE ENCUENTRA EL ARCHIVO "+fileName);
-        }else{
-            Scanner reader = null;
-            try {
-                reader = new Scanner(archivo);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            while ( reader.hasNextLine() ){
-                String datLine = reader.nextLine();
-
-                String[] x = datLine.split(delimiter);
-                if(!x[0].equals("") && !x[0].equals(";")) {
-
-                    String[] y = x[x.length-1].split("\t");
-                    double intensity = Double.parseDouble(y[y.length - 1]);
-                    intensityVector.add(intensity);
-                    beamletsbybeam++;
-                }
-                else{
-                    if(x[0].equals(";")){
-                        beamletsbybeam = 0;
-                    }
-                }
-
-            }
-        }
-        return intensityVector;
-    }
 
 }

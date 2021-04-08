@@ -3,16 +3,18 @@ import source.*;
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Vector;
 
 public class Plan {
     private double eval;
-    private int n_beam;
-    private int totalbeamlet;
+    private int nBeam;
+    private int totalBeamLet;
 
     private Vector<Double> w;
     private Vector<Double> zMin;
     private Vector<Double> zMax;
+
     private Vector<Beam> Angle_beam;
     private Vector<Double> fluenceMap;
     private EvaluationFunction ev;
@@ -20,39 +22,52 @@ public class Plan {
 
     /*---------------------------------------------- METHODS -----------------------------------------------------------------------*/
 
-    public Plan(Vector<Double> w, Vector<Double> zMin, Vector<Double> zMax, int max_apertures, int max_intensity, int initial_intensity, int step_intensity, int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator) {
-        setN_beam(collimator.getNbAngles());
+    public Plan(Vector<Double> w, Vector<Double> zMin, Vector<Double> zMax, ArrayList<Integer> maxApertures, int max_intensity, int initial_intensity, int step_intensity, int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator) {
+        setNBeam(collimator.getNbAngles());
         setW(w);
-        setZmin(zMin);
-        setZmax(zMax);
+        setZMin(zMin);
+        setZMax(zMax);
 
         this.Angle_beam = new Vector<>();
         this.ev = new EvaluationFunction(volumen);
-        int x = 0;
+        this.totalBeamLet = collimator.getNbBeamlets();
 
         System.out.println("-------- Initilizing plan.-----------");
-        for (int i = 0; i < n_beam; i++) {
+        for (int i = 0; i < nBeam; i++) {
 
-            Beam new_beam = new Beam(collimator.getAngle(i), max_apertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
+            Beam new_beam = new Beam(collimator.getAngle(i), maxApertures.get(i) , max_intensity, initial_intensity, step_intensity, open_apertures, setup, collimator);
             Angle_beam.add(new_beam);
-            x += new_beam.getNbBeamlets();
 
         }
-        fluenceMap = getFluenceMap();
-        setTotalBeamlet(x);
+
         System.out.println("--Created " + Angle_beam.size() + " Stations Beams");
         eval();
         System.out.println("--Initial Evaluation: " + getEval());
     }
 
+
     public Plan(Plan p){
-        setN_beam(p.n_beam);
-        setZmax(p.zMax);
-        setZmin(p.zMin);
         setEval(p.eval);
+        setNBeam(p.nBeam);
+        setTotalBeamlet(p.totalBeamLet);
 
+        setW(p.w);
+        setZMax(p.zMax);
+        setZMin(p.zMin);
+        setAngle_beam(p.getAngle_beam());
+        setFluenceMap(p.getFluenceMap());
+
+        this.Angle_beam = new Vector<>();
+        this.ev = p.ev;
+        this.totalBeamLet = p.totalBeamLet;
+
+        for(Beam b: p.getBeams()){
+            Beam newBeam = new Beam(b);
+            Angle_beam.add(newBeam);
+        }
+
+        setEval(p.eval);
     }
-
 
     /*Funcion de evaluacion */
     public void eval() {
@@ -68,8 +83,8 @@ public class Plan {
     public void CalculateVelocity(double c1, double c2, double w, Plan Bsolution, Plan Bpersonal) {
         //Bsolution: Best Global solution ; Bpersonal: Best Personal solution
         for (Beam actual : Angle_beam) {
-            Beam B_Bsolution = Bsolution.getByID(actual.getId_beam());
-            Beam B_BPersonal = Bpersonal.getByID(actual.getId_beam());
+            Beam B_Bsolution = Bsolution.getByID(actual.getIdBeam());
+            Beam B_BPersonal = Bpersonal.getByID(actual.getIdBeam());
             actual.CalculateVelocity(c1, c2, w, B_Bsolution, B_BPersonal);
         }
     }
@@ -96,7 +111,7 @@ public class Plan {
 
     public Beam getByID(int to_search){
         for(Beam pivote: Angle_beam){
-            if(pivote.getId_beam() == to_search){
+            if(pivote.getIdBeam() == to_search){
                 return pivote;
             }
         }
@@ -115,37 +130,49 @@ public class Plan {
         return Angle_beam;
     }
 
-    public void setN_beam(int n_beam) {
-        this.n_beam = n_beam;
+    public void setNBeam(int nBeam) {
+        this.nBeam = nBeam;
     }
 
     public void setW(Vector<Double> w) {
         this.w = w;
     }
 
-    public void setZmin(Vector<Double> zmin) {
-        zMin = new Vector<>();
-        zMin.addAll(zmin);
+    public void setZMin(Vector<Double> zMin) {
+        this.zMin = new Vector<>();
+        this.zMin.addAll(zMin);
     }
 
-    public void setZmax(Vector<Double> zMaxVector) {
-        zMax = new Vector<>();
-        zMax.addAll(zMaxVector);
+    public void setZMax(Vector<Double> zMaxVector) {
+        this.zMax = new Vector<>();
+        this.zMax.addAll(zMaxVector);
     }
 
-    public void setTotalBeamlet(int nbeamlet) {
-        this.totalbeamlet = nbeamlet;
+    public void setTotalBeamlet(int totalBeamLet) {
+        this.totalBeamLet = totalBeamLet;
+    }
+
+    public Vector<Beam> getAngle_beam() {
+        return Angle_beam;
+    }
+
+    public void setAngle_beam(Vector<Beam> angle_beam) {
+        Angle_beam = angle_beam;
+    }
+
+    public void setFluenceMap(Vector<Double> fluenceMap) {
+        this.fluenceMap = fluenceMap;
     }
 
     /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
     public void printIdBeam(){
-        System.out.println("TOTAL BEAMLET: " + totalbeamlet);
+        System.out.println("TOTAL BEAMLET: " + totalBeamLet);
         for(Beam x: Angle_beam)
             x.printIdBeam();
     }
 
     public void printIdBeamtoVector(){
-        System.out.println("TOTAL BEAMLET: " + totalbeamlet);
+        System.out.println("TOTAL BEAMLET: " + totalBeamLet);
         for(Beam x: Angle_beam)
             x.printIdBeamtoVector();
     }
