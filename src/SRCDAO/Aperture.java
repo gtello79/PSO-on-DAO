@@ -64,13 +64,13 @@ public class Aperture {
                     aux.add(new Pair(fLeaf,fLeaf+1));
 
                 }else if(type == RAND_RAND_SETUP){
-                    //Se abre aleatoriamente las hojas
+                    ///Se abre aleatoriamente las hojas
                     int index1 = fLeaf + (int)(Math.random()*(sLeaf - fLeaf));
 
                     if( index1 == sLeaf ){
                         aux.add(new Pair(fLeaf, sLeaf));
                     }else{
-                        int index2 = index1 + (int)(Math.random()*(sLeaf-index1+1));
+                        int index2 = (index1+1) + (int)(Math.random()*(sLeaf-index1));
                         aux.add(new Pair(index1,index2));
                     }
                 }else{
@@ -111,8 +111,9 @@ public class Aperture {
 
             if(collimator.getActiveRange(i,angle).getFirst() < 0) continue;
 
-            Double first = (w*velo_A.get(i).getFirst() + c1*r1*(A.get(i).getFirst()-aux_G.getFirst())  +  c2*r2*(A.get(i).getFirst() - aux_P.getFirst()) );
-            Double second = (w*velo_A.get(i).getSecond() + c1*r1*(A.get(i).getSecond()-aux_G.getSecond())  +  c2*r2*(A.get(i).getSecond() - aux_P.getSecond()) );
+
+            Double first = (w*velo_A.get(i).getFirst() + c1*r1*( aux_G.getFirst() - A.get(i).getFirst() )  +  c2*r2*(aux_P.getFirst() - A.get(i).getFirst() ) );
+            Double second = (w*velo_A.get(i).getSecond() + c1*r1*( aux_G.getSecond() - A.get(i).getSecond() )  +  c2*r2*(aux_P.getSecond() - A.get(i).getSecond() ) );
 
             velo_A.set(i, new Pair(first, second));
         }
@@ -125,18 +126,18 @@ public class Aperture {
         double r1 = Math.random();
         double r2 = Math.random();
 
-        int val = (int)(w*veloc_intensity + r1*c1*(intensity-bG) + r2*c2*(intensity-bP));
+        int val = (int)(w*veloc_intensity + r1*c1*(bG - intensity) + r2*c2*(bP - intensity));
         setVeloc_intensity(val);
     }
 
     public void movAperture(){
         for(int i = 0; i < A.size(); i++){
-            if(A.get(i).getFirst() < -1) continue;
+            if(A.get(i).getFirst() < -1)
+                continue;
+
             int limit_inf = collimator.getActiveRange(i,angle).getFirst();
             int limit_sup = collimator.getActiveRange(i,angle).getSecond();
 
-
-            //System.out.println("PREVIO: "+A.get(i).getFirst() + " " + A.get(i).getSecond());
 
             int first = (int)(velo_A.get(i).getFirst() + A.get(i).getFirst());
             int second = (int)(velo_A.get(i).getSecond() + A.get(i).getSecond());
@@ -144,6 +145,7 @@ public class Aperture {
             //System.out.println("DESPUES: "+first + " " + second);
 
             if(first < limit_inf  || first > limit_sup) first = limit_inf;
+
             if(second < limit_inf  || second > limit_sup ) second = limit_sup;
 
             if(first > second) {
@@ -152,8 +154,6 @@ public class Aperture {
                 second = (val) + 1;
             }
 
-            //System.out.println("FINAL: "+first + " " + second);
-
             Pair<Integer, Integer> newApertures = new Pair(first, second);
             A.set(i, newApertures);
 
@@ -161,8 +161,17 @@ public class Aperture {
     }
 
     public void moveIntensity(int max_intensity){
+        //System.out.println("PREVIO: "+getIntensity());
+
         int val = getIntensity() + getVeloc_intensity();
-        if(val > 0 && val < max_intensity) setIntensity(val);
+
+        if(val > max_intensity) val = max_intensity;
+
+        if(val < 0 ) val = 0;
+
+        setIntensity(val);
+
+        //System.out.println("Final: "+val);
     }
 
     /*---------------------------------------------------GETTERS AND SETTERS------------------------------------------------------------*/

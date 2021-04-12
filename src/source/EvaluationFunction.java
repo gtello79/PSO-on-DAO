@@ -61,9 +61,15 @@ public class EvaluationFunction {
         //Valor de Funcion objetivo
         setEvaluation(0.0);
 
+        //for(Double x: p){
+        //    System.out.print( x + " " );
+        //}
+        //System.out.println("--------------");
+
+
         //Se genera el Vector Z (efecto del beamlet i sobre el voxel v, en el organo r)
         for(int o = 0 ; o < nb_organs; o++){
-            double totalBeamlets = nb_beamlets.get(o);
+            double totalBeamlets = nb_beamlets.get(o); //336
             Vector<Double> d = new Vector<Double>();
 
             //Tomo la DDM asociada a un organo o
@@ -81,24 +87,28 @@ public class EvaluationFunction {
             }
             //Se agrega el vector Z asociaco al organo R
             Z.set(o,d);
+
         }
 
         //Se calcula la penalizacion a partir de la dosis estimada
         for (int o = 0; o < nb_organs; o++) {
             double pen = 0.0;
-            double diff;
+            double diff = 0.0;
+
             for (int k = 0; k < nb_voxels.get(o); k++) {
                 if (Z.get(o).get(k) < Zmin.get(o)) {
                     diff = Zmin.get(o) - Z.get(o).get(k);
                     pen += w.get(o) * Math.pow(Math.max(diff,0),2);
                 }
+
                 if (Z.get(o).get(k) > Zmax.get(o)) {
                     diff = Z.get(o).get(k) - Zmax.get(o);
                     pen += w.get(o) * Math.pow(Math.max(diff,0),2);
                 }
+                //System.out.println(k + " Z: "+ Z.get(o).get(k) + " DIFF: " + diff + " PENA: " + pen);
             }
             evaluation += pen/nb_voxels.get(o);
-            //System.out.println("Region "+ o +": " +pen/nb_voxels.get(o));
+
         }
 
         setEvaluation(evaluation);

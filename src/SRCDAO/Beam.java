@@ -152,7 +152,7 @@ public class Beam {
                     continue;
 
                 for (int j = ap.getOpBeam(i).getFirst()+1 ; j < ap.getOpBeam(i).getSecond(); j++) {
-                    Integer newIntensity = (int)(I.getPos(i, j) + apIntensity);
+                    Integer newIntensity = (int)(this.I.getPos(i, j) + apIntensity);
                     I.setPos(i,j, newIntensity );
                 }
             }

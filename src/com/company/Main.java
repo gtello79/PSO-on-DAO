@@ -87,7 +87,7 @@ public class Main {
         String file = "src/data/test_instance_0_70_140_210_280.txt";
         String file2 = "src/data/test_instance_coordinates.txt";
 
-        int max_intensity = 28;
+        int max_intensity = 5; //10 x apertura - probar este parametro
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;
@@ -107,14 +107,14 @@ public class Main {
 
         int size = 10; //Particle size
         int iter = 30; //Pso Iterations
-        double c1 = 10;
-        double c2 = 10;
-        double iner = 0.001;
+        double c1 = 1;
+        double c2 = 1;
+        double iner = 1;
 
         Vector <Double> w  = new Vector<>();
         w.add(1.0);
         w.add(1.0);
-        w.add(1.0);
+        w.add(5.0); //valor 5.0
 
         Vector <Double> Zmin = new Vector<>();
         Zmin.add(0.0);
@@ -124,7 +124,7 @@ public class Main {
 
         Vector <Double> Zmax =  new Vector<>();
         Zmax.add(65.0);
-        Zmax.add(60.0);
+        Zmax.add(65.0); //Anterior 60
         Zmax.add(76.0);
 
         Vector <Integer> angles = get_angles(file);
@@ -136,9 +136,8 @@ public class Main {
             maxApertures.add(5);
         }
 
-
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,c1, c2, iner, size, iter);
-        swarm.MoveSwarms();
+        //swarm.MoveSwarms();
 
 
     }

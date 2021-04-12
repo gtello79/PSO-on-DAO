@@ -21,11 +21,11 @@ public class Swarm {
         setC2(c2);
         setIner(iner);
         setIter(iter);
-        Particle newParticle;
         this.swarm = new ArrayList<>();
 
-        /*A set of particles will be created*/
+        /*A Particles set will be created*/
         for(int i = 0; i < size ; i++){
+            Particle newParticle;
             System.out.println("Creating Particle: "+ i);
             if(i == 0){
                 newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
