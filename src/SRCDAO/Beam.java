@@ -5,13 +5,14 @@ import source.Pair;
 import source.*;
 
 public class Beam {
-    //Representacion del collimator
-    private Collimator collimator;
-
-    //Representacion de la matriz de intensidad
-    private Matrix I;
     //ID BEAM
     private int angle;
+
+    //Representacion del collimator
+    private final Collimator collimator;
+
+    //Representacion de la matriz de intensidad
+    private final Matrix I;
 
     //Informacion de la configuracion tecnica del angulo
     private int maxApertures;
@@ -26,10 +27,7 @@ public class Beam {
      * Each aperture is represented by a vector of pairs A[i] = (x_ini, x_fin)
      * and an intensity range open (x_ini+1, x_fin-1) of row "r" for aperture d: A[d][r](x_ini, x_fin)
     */
-    private Vector<Aperture> A;
-    private HashMap<Pair<Integer,Integer>, Integer> pos2beam;
-    private HashMap<Integer, Pair<Integer,Integer>> beam2pos;
-
+    private final Vector<Aperture> A;
     private Vector<Double> fluenceMap;
 
 
@@ -46,32 +44,25 @@ public class Beam {
 
         this.collimator = collimator;
         this.A = new Vector<>();
-        this.pos2beam = new HashMap<>();
-        this.beam2pos = new HashMap<>();
         this.fluenceMap = new Vector<>();
 
         if(openApertures==-1)
             setOpenApertures(maxApertures);
 
         // Declaracion de la matriz de intensidad I y se inicializa
-        I = new Matrix(collimator.getxDim(), collimator.getyDim());
+        this.I = new Matrix(collimator.getxDim(), collimator.getyDim());
 
         // Rellenado de la matriz de intensidad
-        for(int i = 0; i < collimator.getxDim(); i++){
-            for(int j = 0; j < collimator.getyDim(); j++){
-                if(j >= collimator.getActiveRange(i,angle).getFirst() && j <= collimator.getActiveRange(i,angle).getSecond() ) {
-                    I.setPos(i,j,0);
-                }else{
-                    I.setPos(i,j,-1);
-                }
-            }
-        }
+        clearIntensity();
 
-        // Initialize apertures (PRINCIPAL representation)
+        // Initialize apertures
         initiliazeBeam(setup,openApertures);
 
         //Se construye la Matriz de Intensidad
         generateIntensities();
+
+
+
     }
 
     public Beam(Beam b){
@@ -87,8 +78,6 @@ public class Beam {
         this.collimator = new Collimator(b.collimator);
 
         this.A = new Vector<>();
-        this.pos2beam = new HashMap<>();
-        this.beam2pos = new HashMap<>();
         this.fluenceMap = new Vector<>();
 
         if(openApertures==-1)
@@ -98,18 +87,10 @@ public class Beam {
         I = new Matrix(collimator.getxDim(), collimator.getyDim());
 
         // Rellenado de la matriz de intensidad
-        for(int i = 0; i < this.collimator.getxDim(); i++){
-            for(int j = 0; j < this.collimator.getyDim(); j++){
-                if(j >= collimator.getActiveRange(i,angle).getFirst() && j <= this.collimator.getActiveRange(i,angle).getSecond() ) {
-                    I.setPos(i,j,0);
-                }else{
-                    I.setPos(i,j,-1);
-                }
-            }
-        }
+        clearIntensity();
 
-        for(int i = 0; i < maxApertures; i++){
-            Aperture copyAperture = new Aperture(b.getAperture(i));
+        for(Aperture a: b.A){
+            Aperture copyAperture = new Aperture(a);
             this.A.add(copyAperture);
         }
 
@@ -117,6 +98,7 @@ public class Beam {
         generateIntensities();
 
     }
+
 
     public void initiliazeBeam(int type, int openApertures){
         Vector<Integer> levels = new Vector<>();
@@ -138,13 +120,13 @@ public class Beam {
         }
     }
 
-    public void generateIntensities(){
 
+    public void generateIntensities(){
         Pair<Integer,Integer> aux;
         clearIntensity();
 
         for(Aperture ap : A) {
-            int apIntensity = ap.getIntensity();
+            double apIntensity = ap.getIntensity();
             for (int i = 0; i < collimator.getxDim(); i++) {
                 aux = collimator.getActiveRange(i, angle);
 
@@ -152,16 +134,17 @@ public class Beam {
                     continue;
 
                 for (int j = ap.getOpBeam(i).getFirst()+1 ; j < ap.getOpBeam(i).getSecond(); j++) {
-                    Integer newIntensity = (int)(this.I.getPos(i, j) + apIntensity);
-                    I.setPos(i,j, newIntensity );
+                    double newIntensity = (this.I.getPos(i, j) + apIntensity);
+                    I.setPos(i,j, newIntensity);
                 }
             }
         }
-        buildIntensityVector();
 
+        buildIntensityVector();
     }
 
     public void buildIntensityVector(){
+        this.fluenceMap = new Vector<>();
         for(int i = 0; i < collimator.getxDim(); i++){
             Pair<Integer,Integer> x = collimator.getActiveRange(i,angle);
             if(x.getFirst() < 0 )
@@ -173,18 +156,20 @@ public class Beam {
     }
 
     public void clearIntensity(){
-        Pair<Integer,Integer> aux;
+        // Rellenado de la matriz de intensidad
         for(int i = 0; i < collimator.getxDim(); i++){
-            aux = collimator.getActiveRange(i,angle);
-            if( aux.getFirst()<0 )
-                continue;
-            for(int j = aux.getFirst(); j <= aux.getSecond(); j++)
-                I.setPos(i,j,0);
+            for(int j = 0; j < collimator.getyDim(); j++){
+                if(j >= collimator.getActiveRange(i,angle).getFirst() && j <= collimator.getActiveRange(i,angle).getSecond() ) {
+                    this.I.setPos(i,j,0);
+                }else{
+                    this.I.setPos(i,j,-1);
+                }
+            }
         }
     }
 
 
-    /* ------------------------------------ PSO METHODS ----------------------------------*/
+    /* ------------------------------------------------ PSO METHODS ----------------------------------*/
     public void CalculateVelocity(double c1, double c2, double w, Beam BGlobal, Beam BPersonal){
         for(int i = 0; i < A.size() ; i++){
             Aperture x = A.get(i);
@@ -205,47 +190,8 @@ public class Beam {
 
     /* ------------------------------------------------- GETTER Y SETTERS ---------------------------------------------------*/
 
-    /* Function to be used to get the position in the matrix I of a beam column of matrix D*/
-    public Pair<Integer,Integer> getPos(int index){
-
-        if(!beam2pos.containsValue(index)){
-            beam2pos.put(index, collimator.indexToPos(index,angle));
-            Pair<Integer,Integer> r = collimator.indexToPos(index,angle);
-            pos2beam.put(collimator.indexToPos(index,angle), index);
-            return beam2pos.get(index);
-        }
-        else return beam2pos.get(index);
-    }
-
-
-
     public Vector<Double> getIntensityVector(){
         return fluenceMap;
-    }
-
-    public int getPosToIndex(int i,int j){
-        int id = -10;
-        for(Integer x: beam2pos.keySet()){
-            Pair<Integer,Integer> piv = beam2pos.get(x);
-            if(piv.getFirst() == i && piv.getSecond() == j){
-                id = x;
-                break;
-            }
-        }
-        if(id == -10){
-            System.out.println("NO SE ENCONTRO EL VALOR");
-        }
-        return id;
-    }
-
-    public double getIntensity(int beamlet){
-        Pair<Integer,Integer> p = getPos(beamlet);
-        return I.getPos(p.getFirst(), p.getSecond() );
-    }
-
-    public int getNbBeamlets()
-    {
-        return collimator.getNangleBeamlets(angle);
     }
 
     public int getIdBeam() {
@@ -288,14 +234,6 @@ public class Beam {
         return A.get(id);
     }
 
-    public Collimator getCollimator(){
-        return collimator;
-    }
-
-    public void setCollimator(Collimator collimator){
-        this.collimator = collimator;
-    }
-
     /*-------------------------------------------------------- PRINTERS -------------------------------------- */
 
     public void printIntensityMatrix(){
@@ -304,7 +242,7 @@ public class Beam {
             for(int j = 0; j < collimator.getyDim(); j++){
                 System.out.print(I.getPos(i,j) + " ");
             }
-            System.out.println("");
+            System.out.println();
         }
     }
 
@@ -315,26 +253,6 @@ public class Beam {
         }
     }
 
-    public void printIdBeam(){
-        System.out.println("ANGLE: " + angle + " TOTAL ANGLE BEAMLETS:" + getNbBeamlets());
-        for(int i = 0; i < collimator.getxDim(); i++){
-            Pair<Integer,Integer> x = collimator.getActiveRange(i,angle);
-            if(x.getFirst() < 0 )continue;
-            for(int j = x.getFirst(); j <= x.getSecond(); j++){
-                System.out.println( getPosToIndex(i,j)+1 + " " + I.getPos(i,j) );
-            }
-        }
-    }
-
-    public void printIdBeamtoVector(){
-        for(int i = 0; i < collimator.getxDim(); i++){
-            Pair<Integer,Integer> x = collimator.getActiveRange(i,angle);
-            if(x.getFirst() < 0 )continue;
-            for(int j = x.getFirst(); j <= x.getSecond(); j++){
-                System.out.print(I.getPos(i,j)+ " " );
-            }
-        }
-    }
 
 
 }

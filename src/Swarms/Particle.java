@@ -10,7 +10,7 @@ public class Particle {
     private double fitness;
     private double bestFitness;
     private Plan bestPersonal;
-    private Plan currentPlan;
+    private final Plan currentPlan;
 
     /*-------------------------------------------------------------METHODS -------------------------------------------*/
     public Particle(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity, int initial_intensity, int step_intensity,
@@ -18,8 +18,9 @@ public class Particle {
     {
         this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
 
-        setBestPersonal(this.currentPlan);
         setFitness(currentPlan.getEval());
+
+        setBestPersonal(this.currentPlan);
         setBestFitness(currentPlan.getEval());
     }
 
@@ -37,32 +38,21 @@ public class Particle {
 
     public void CalculatePosition(){
         currentPlan.CalculatePosition();
-        setFitness(currentPlan.getEval());
-
     }
 
     public void CalculateBestPersonal(){
-        if(getFitness() < bestFitness){
-            //System.out.println("MEJORA DE BEST PERSONAL:"+ bestFitness+ " -> " + getFitness() );
+        if(this.fitness < bestFitness){
+
             setBestPersonal(this.currentPlan);
-            setBestFitness(currentPlan.getEval());
+            setBestFitness(this.fitness);
 
         }
     }
-    /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
 
-    public void printIntensityMatrix(){
-        currentPlan.printIntensityMatrix();
+    public void evalParticle(){
+        this.fitness = currentPlan.eval();
+
     }
-
-    public void printAperture(){
-        currentPlan.printApertures();
-    }
-
-    public void printApertureBeam(int x){
-        currentPlan.printAperturesBeam(x);
-    }
-
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public double getFitness() {
         return this.fitness;
@@ -84,7 +74,4 @@ public class Particle {
         return this.currentPlan;
     }
 
-    public void printFluenceMap(){
-        currentPlan.printFluenceMap();
-    }
 }

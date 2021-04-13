@@ -11,7 +11,7 @@ public class Swarm {
     private double c1;
     private double c2;
     private double inner;
-    private ArrayList<Particle> swarm;
+    private final ArrayList<Particle> swarm;
     private int iter;
 
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
@@ -19,7 +19,7 @@ public class Swarm {
                  int open_apertures, int setup, int diffSetup ,Vector<Volumen> volumen, Collimator collimator, double c1, double c2, double iner, int size, int iter) {
         setC1(c1);
         setC2(c2);
-        setIner(iner);
+        setInner(iner);
         setIter(iter);
         this.swarm = new ArrayList<>();
 
@@ -29,15 +29,13 @@ public class Swarm {
             System.out.println("Creating Particle: "+ i);
             if(i == 0){
                 newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
+                setBestGlobalParticle(newParticle);
+                setBestGlobalEval(newParticle.getFitness());
             }else{
                 newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
             }
-            swarm.add(newParticle);
 
-            if(i == 0){
-                setBestGlobalParticle(newParticle);
-                setBestGlobalEval(newParticle.getFitness());
-            }
+            swarm.add(newParticle);
             System.out.println();
         }
         CalculateNewBestGlobal();
@@ -48,8 +46,9 @@ public class Swarm {
 
         System.out.println("MOVING SWARMS");
         for(int i = 0; i < getIter(); i++){
-            CalculateVelocity();
-            CalculatePosition();
+            calculateVelocity();
+            calculatePosition();
+            evalParticles();
 
             CalculateNewBestPersonal();
             CalculateNewBestGlobal();
@@ -59,18 +58,24 @@ public class Swarm {
     }
 
 
-    public void CalculateVelocity(){
+    public void calculateVelocity(){
         for (Particle particle : swarm) {
             particle.CalculateVelocity(getC1(), getC2(), getInner(), getBestGlobalParticle() );
         }
     }
 
-    public void CalculatePosition(){
+    public void calculatePosition(){
         int i = 0;
         for(Particle particula: swarm){
             particula.CalculatePosition();
             System.out.println("Particle "+i+": "+particula.getFitness());
             i++;
+        }
+    }
+
+    public void evalParticles(){
+        for(Particle particula: swarm){
+            particula.evalParticle();
         }
     }
 
@@ -94,6 +99,10 @@ public class Swarm {
         return bestGlobalEval;
     }
 
+    public void setBestGlobalParticle(Particle bestGlobalParticle) {
+        this.bestGlobalParticle = new Particle(bestGlobalParticle);
+    }
+
     public double getC1() {
         return c1;
     }
@@ -108,10 +117,6 @@ public class Swarm {
 
     public int getIter() {
         return iter;
-    }
-
-    public void setBestGlobalParticle(Particle bestGlobalParticle) {
-        this.bestGlobalParticle = new Particle(bestGlobalParticle);
     }
 
     public void setBestGlobalEval(double newSolution) {
@@ -130,54 +135,12 @@ public class Swarm {
         this.c2 = c2;
     }
 
-    public void setIner(double inner) {
+    public void setInner(double inner) {
         this.inner = inner;
     }
 
     public void setIter(int iter) {
         this.iter = iter;
     }
-
-    /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
-
-    public void printIntensityMatrixSwarm(){
-        for(Particle p : swarm){
-            p.printIntensityMatrix();
-        }
-    }
-
-    public void printIntensityMatrixParticle(int i){
-        Particle p = swarm.get(i);
-        p.printIntensityMatrix();
-    }
-
-    public void printAperture(){
-        int x = 0;
-        for(Particle p : swarm){
-            System.out.println("Particle " + x);
-            p.printAperture();
-            x++;
-        }
-    }
-    public void printApertureParticle(int x){
-        Particle p = swarm.get(x);
-        p.printAperture();
-
-    }
-
-    public void printApertureBeam(int x){
-        int r = 0;
-        for(Particle p : swarm){
-            System.out.println("Particle " + r);
-            p.printApertureBeam(x);
-            x++;
-        }
-    }
-
-    public void printApertureBeamByParticle(int x, int y){
-        Particle p = swarm.get(y);
-        p.printApertureBeam(x);
-    }
-
 
 }

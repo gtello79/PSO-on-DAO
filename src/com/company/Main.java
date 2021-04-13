@@ -105,8 +105,8 @@ public class Main {
             RAND_RAND_SETUP = 4;
         */
 
-        int size = 10; //Particle size
-        int iter = 30; //Pso Iterations
+        int size = 100; //Particle size
+        int iter = 50; //Pso Iterations
         double c1 = 1;
         double c2 = 1;
         double iner = 1;
@@ -131,13 +131,20 @@ public class Main {
         Collimator collimator = new Collimator(file2,angles);
         Vector <Volumen> volumes = createVolumes(file);
 
-
         for(int a = 0; a < angles.size(); a++){
             maxApertures.add(5);
         }
 
+        EvaluationFunction ev = new EvaluationFunction(volumes);
+        Vector<Double> p = new Vector<>();
+        for (int i = 0; i < collimator.getNbBeamlets(); i++){
+            p.add(2.0);
+
+        }
+
+
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,c1, c2, iner, size, iter);
-        //swarm.MoveSwarms();
+        swarm.MoveSwarms();
 
 
     }

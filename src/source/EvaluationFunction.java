@@ -1,9 +1,5 @@
 package source;
 
-import SRCDAO.*;
-
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.*;
 
 
@@ -12,19 +8,19 @@ public class EvaluationFunction {
     private double evaluation;
 
     //dosis de distribucion por cada organano
-    private Vector<Vector<Double>> Z;
+    private final Vector<Vector<Double>> Z;
 
     //Numero de organos, incluyendo el tumor
-    private int nb_organs;
+    private int nbOrgans;
 
     //Numero de voxels por cada organo
-    private Vector<Integer> nb_voxels;
+    private final Vector<Integer> nbVoxels;
 
     //Doses Deposition Matrix
-    private Vector<Matrix> DDM = new Vector<>();
+    private final Vector<Matrix> DDM = new Vector<>();
 
     //Numero de beamlets x tejido (hasta el momento se espera que todos sean iguales)
-    private Vector<Integer> nb_beamlets;
+    private final Vector<Integer> nbBeamLets;
 
 
     public EvaluationFunction(Vector<Volumen> volumes)
@@ -32,24 +28,25 @@ public class EvaluationFunction {
         setEvaluation(0.0);
         setNb_organs( volumes.size() );
 
-        nb_voxels = new Vector<>();
-        nb_beamlets = new Vector<>();
-        Z = new Vector<>(nb_organs);
+        nbVoxels = new Vector<>();
+        nbBeamLets = new Vector<>();
+        Z = new Vector<>(nbOrgans);
 
         for(Volumen v: volumes) {
             DDM.add(v.getDDM());
-            nb_beamlets.add(v.getNb_beamlets());
+            nbBeamLets.add(v.getNb_beamlets());
         }
-        for (int i = 0; i < nb_organs; i++)
-            this.nb_voxels.add(volumes.get(i).getNb_voxels());
+
+        for (int i = 0; i < nbOrgans; i++)
+            this.nbVoxels.add(volumes.get(i).getNb_voxels());
 
         //Inicializando la 'matriz' o mapas Z con 0.0
-        for(int i = 0; i < nb_organs; i++){
-            Vector this_row = new Vector<Double>();
-            for(int j = 0; j < nb_voxels.get(i) ; j++){
-                this_row.add(0.0);
+        for(int i = 0; i < nbOrgans; i++){
+            Vector thisRow = new Vector<Double>();
+            for(int j = 0; j < nbVoxels.get(i) ; j++){
+                thisRow.add(0.0);
             }
-            (this.Z).add(this_row);
+            this.Z.add(thisRow);
 
         }
 
@@ -61,22 +58,16 @@ public class EvaluationFunction {
         //Valor de Funcion objetivo
         setEvaluation(0.0);
 
-        //for(Double x: p){
-        //    System.out.print( x + " " );
-        //}
-        //System.out.println("--------------");
-
-
         //Se genera el Vector Z (efecto del beamlet i sobre el voxel v, en el organo r)
-        for(int o = 0 ; o < nb_organs; o++){
-            double totalBeamlets = nb_beamlets.get(o); //336
+        for(int o = 0 ; o < nbOrgans; o++){
+            double totalBeamlets = nbBeamLets.get(o); //336
             Vector<Double> d = new Vector<Double>();
 
             //Tomo la DDM asociada a un organo o
             Matrix doseDeposition = DDM.get(o);
 
             //Recorrer todos los voxels de ese organo
-            for(int v = 0; v < nb_voxels.get(o) ; v++){
+            for(int v = 0; v < nbVoxels.get(o) ; v++){
                 double dosis_v = 0.0;
 
                 //Dosis para el voxel v
@@ -85,17 +76,18 @@ public class EvaluationFunction {
                 }
                 d.add(dosis_v);
             }
-            //Se agrega el vector Z asociaco al organo R
+            //Se agrega el vector Z asociado al organo R
             Z.set(o,d);
+
 
         }
 
         //Se calcula la penalizacion a partir de la dosis estimada
-        for (int o = 0; o < nb_organs; o++) {
+        for (int o = 0; o < nbOrgans; o++) {
             double pen = 0.0;
             double diff = 0.0;
 
-            for (int k = 0; k < nb_voxels.get(o); k++) {
+            for (int k = 0; k < nbVoxels.get(o); k++) {
                 if (Z.get(o).get(k) < Zmin.get(o)) {
                     diff = Zmin.get(o) - Z.get(o).get(k);
                     pen += w.get(o) * Math.pow(Math.max(diff,0),2);
@@ -105,9 +97,9 @@ public class EvaluationFunction {
                     diff = Z.get(o).get(k) - Zmax.get(o);
                     pen += w.get(o) * Math.pow(Math.max(diff,0),2);
                 }
-                //System.out.println(k + " Z: "+ Z.get(o).get(k) + " DIFF: " + diff + " PENA: " + pen);
+
             }
-            evaluation += pen/nb_voxels.get(o);
+            evaluation += pen/nbVoxels.get(o);
 
         }
 
@@ -122,8 +114,8 @@ public class EvaluationFunction {
         this.evaluation = f;
     }
 
-    public void setNb_organs(int nb_organs) {
-        this.nb_organs = nb_organs;
+    public void setNb_organs(int nbOrgans) {
+        this.nbOrgans = nbOrgans;
     }
 
     /*---------------------------------- METODOS PENDIENTES ---------------------------------------------------------------------------*/

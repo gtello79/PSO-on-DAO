@@ -1,8 +1,6 @@
 package SRCDAO;
 import source.*;
 
-import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -17,7 +15,7 @@ public class Plan {
 
     private Vector<Beam> Angle_beam;
     private Vector<Double> fluenceMap;
-    private EvaluationFunction ev;
+    private final EvaluationFunction ev;
 
 
     /*---------------------------------------------- METHODS -----------------------------------------------------------------------*/
@@ -70,11 +68,12 @@ public class Plan {
     }
 
     /*Funcion de evaluacion */
-    public void eval() {
-        //Esta es la nueva forma de evaluar nuestro vector
-        fluenceMap = getFluenceMap();
+    public double eval() {
+        this.fluenceMap = getFluenceMap();
+
         double val = ev.evalIntensityVector(fluenceMap, w, zMin, zMax);
         setEval(val);
+        return val;
     }
 
     /* --------------------------------------- PSO METHODS ---------------------------------------- */
@@ -94,7 +93,6 @@ public class Plan {
         for (Beam actual : Angle_beam) {
             actual.CalculatePosition();
         }
-        eval();
     }
 
     /*--------------------------------------------------------- GETTER AND SETTERS -----------------------------------------------------*/
@@ -165,17 +163,6 @@ public class Plan {
     }
 
     /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
-    public void printIdBeam(){
-        System.out.println("TOTAL BEAMLET: " + totalBeamLet);
-        for(Beam x: Angle_beam)
-            x.printIdBeam();
-    }
-
-    public void printIdBeamtoVector(){
-        System.out.println("TOTAL BEAMLET: " + totalBeamLet);
-        for(Beam x: Angle_beam)
-            x.printIdBeamtoVector();
-    }
 
     public void printIntensityMatrix(){
         for(Beam b: Angle_beam){
@@ -194,38 +181,6 @@ public class Plan {
         b.printApertures();
     }
 
-    //Se exporta un vector de intensidad en un formato para AMPL
-    public void exportintensityVector(){
-        FileWriter intensityVector = null;
-        PrintWriter pw = null;
-        try{
-            intensityVector = new FileWriter("IntensityVector.txt");
-            pw = new PrintWriter(intensityVector);
-            int param = 1;
-            for(Beam b: Angle_beam) {
-                int index = 1;
-                Vector<Double> intensity = b.getIntensityVector();
-                pw.print("param x" + param + " := ");
-                for (Double i : intensity){
-                    pw.println(index + "\t" + i);
-                    index++;
-                }
-                pw.println("; \n");
-                param++;
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }finally{
-            // Nuevamente aprovechamos el finally para
-            // asegurarnos que se cierra el fichero.
-            try {
-                if (intensityVector != null)
-                    intensityVector.close();
-            }catch (Exception e2){
-                e2.printStackTrace();
-            }
-        }
-    }
 
     public void printFluenceMap(){
         for (Double i: fluenceMap){
