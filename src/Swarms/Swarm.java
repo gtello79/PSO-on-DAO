@@ -13,6 +13,8 @@ public class Swarm {
     private double inner;
     private final ArrayList<Particle> swarm;
     private int iter;
+    private int globalUpdateCount = 0;
+
 
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
     public Swarm(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity , int initial_intensity, int step_intensity,
@@ -27,6 +29,8 @@ public class Swarm {
         for(int i = 0; i < size ; i++){
             Particle newParticle;
             System.out.println("Creating Particle: "+ i);
+            this.globalUpdateCount = 0;
+
             if(i == 0){
                 newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
                 setBestGlobalParticle(newParticle);
@@ -54,7 +58,7 @@ public class Swarm {
             CalculateNewBestPersonal();
             CalculateNewBestGlobal();
 
-            System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval);
+            System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
         }
 
         bestGlobalParticle.printFluenceMapByBeam();
@@ -84,12 +88,17 @@ public class Swarm {
     }
 
     public void CalculateNewBestGlobal() {
+        boolean changeGlobal = false;
         for (Particle particle: swarm){
             if (particle.getFitness() < getBestGlobalEval() ) {
                 setBestGlobalParticle(particle);
                 setBestGlobalEval(particle.getFitness());
+                changeGlobal = true;
             }
         }
+
+        if(changeGlobal) setGlobalUpdateCount();
+
     }
 
     public void CalculateNewBestPersonal() {
@@ -145,6 +154,14 @@ public class Swarm {
 
     public void setIter(int iter) {
         this.iter = iter;
+    }
+
+    public int getGlobalUpdateCount() {
+        return globalUpdateCount;
+    }
+
+    public void setGlobalUpdateCount() {
+        this.globalUpdateCount += 1;
     }
 
 }

@@ -16,16 +16,16 @@ public class CreateCSV {
     String UID = String.valueOf(id);
 
     public CreateCSV(Particle particle) {
-        String folderPath = "C:\\Users\\gonza\\PycharmProjects\\IntensityMatrixPlotter\\Instances\\";
+        String folderPath = "./Results/";
         Plan plan = particle.getCurrentPlan();
 
         for(Beam beam: plan.getAngle_beam()){
-            String fileName1 = UID+"intensityMatrix"+beam.getIdBeam();
+            String fileName1 = UID+"-intensityMatrix"+beam.getIdBeam();
             Matrix matrix = beam.getIntensitisMatrix();
             intensityMatrixToCSV(folderPath, fileName1, beam.getIdBeam(), matrix);
         }
 
-        System.out.println("DONE");
+        System.out.println("DONE - UID Experiment: " + id);
     }
 
     private void intensityMatrixToCSV(String path ,String fileName, int angle, Matrix matrix){

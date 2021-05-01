@@ -106,11 +106,11 @@ public class Main {
             RAND_RAND_SETUP = 4;
         */
 
-        int size = 40; //Particle size
-        int iter = 500; //Pso Iterations
+        int size = 1; //Particle size
+        int iter = 1; //Pso Iterations
         double c1 = 2;
         double c2 = 2;
-        double iner = 0.5;
+        double iner = 2;
 
         Vector <Double> w  = new Vector<>();
         w.add(1.0);
