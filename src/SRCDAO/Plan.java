@@ -162,6 +162,16 @@ public class Plan {
         this.fluenceMap = fluenceMap;
     }
 
+    public ArrayList<Matrix> getIntensitiesMatrix(){
+        ArrayList<Matrix> matrixArrayList = new ArrayList<>();
+        for(Beam beam: Angle_beam){
+            matrixArrayList.add(beam.getIntensitisMatrix());
+        }
+        return  matrixArrayList;
+    }
+
+
+
     /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
 
     public void printIntensityMatrix(){
@@ -187,6 +197,12 @@ public class Plan {
             System.out.print(i + " ");
         }
         System.out.println();
+    }
+
+    public void printFluenceMapByBeam(){
+        for(Beam b : Angle_beam){
+            b.printFluenceMapOnBeam();
+        }
     }
 
 }

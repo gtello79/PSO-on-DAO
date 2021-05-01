@@ -100,4 +100,13 @@ public class Matrix {
             }
         }
     }
+
+    public int getX(){
+        return this.cols;
+    }
+
+    public int getY(){
+        return this.rows;
+    }
+
 }

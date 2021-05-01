@@ -39,6 +39,7 @@ public class Swarm {
             System.out.println();
         }
         CalculateNewBestGlobal();
+
     }
 
     /*Running PSO Algorithm*/
@@ -55,6 +56,9 @@ public class Swarm {
 
             System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval);
         }
+
+        bestGlobalParticle.printFluenceMapByBeam();
+
     }
 
 
@@ -66,16 +70,16 @@ public class Swarm {
 
     public void calculatePosition(){
         int i = 0;
-        for(Particle particula: swarm){
-            particula.CalculatePosition();
-            System.out.println("Particle "+i+": "+particula.getFitness());
+        for(Particle particle: swarm){
+            particle.CalculatePosition();
+            System.out.println("Particle "+i+": "+particle.getFitness());
             i++;
         }
     }
 
     public void evalParticles(){
-        for(Particle particula: swarm){
-            particula.evalParticle();
+        for(Particle particle: swarm){
+            particle.evalParticle();
         }
     }
 

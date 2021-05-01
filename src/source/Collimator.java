@@ -56,7 +56,7 @@ public class Collimator {
         if(!archivo.exists()) {
             System.out.println("ERROR: NO SE ENCUENTRA EL ARCHIVO "+coord_filename);
         }else{
-            System.out.println("##READING COLLIMATOR COORDINATES INFO ");
+            System.out.println("## READING COLLIMATOR COORDINATES INFO ");
             Scanner reading = new Scanner(archivo);
 
             while( reading.hasNextLine() ) {
@@ -172,6 +172,7 @@ public class Collimator {
 
             for( Pair<Double,Double> row : beamletsBeam ) {
                 blperBeam++;
+
                 int newX = (int)(row.getFirst() + max);
                 int newY = (int)(row.getSecond() + max);
                 newCoords.add(new Pair(newX,newY));

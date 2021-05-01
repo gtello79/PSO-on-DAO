@@ -1,5 +1,6 @@
 package com.company;
 import Swarms.*;
+import Utils.CreateCSV;
 import source.*;
 import java.io.FileNotFoundException;
 import java.io.File;
@@ -87,7 +88,7 @@ public class Main {
         String file = "src/data/test_instance_0_70_140_210_280.txt";
         String file2 = "src/data/test_instance_coordinates.txt";
 
-        int max_intensity = 5; //10 x apertura - probar este parametro
+        int max_intensity = 10; //10 x apertura - probar este parametro
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;
@@ -105,11 +106,11 @@ public class Main {
             RAND_RAND_SETUP = 4;
         */
 
-        int size = 100; //Particle size
-        int iter = 50; //Pso Iterations
-        double c1 = 1;
-        double c2 = 1;
-        double iner = 1;
+        int size = 40; //Particle size
+        int iter = 500; //Pso Iterations
+        double c1 = 2;
+        double c2 = 2;
+        double iner = 0.5;
 
         Vector <Double> w  = new Vector<>();
         w.add(1.0);
@@ -135,17 +136,17 @@ public class Main {
             maxApertures.add(5);
         }
 
-        EvaluationFunction ev = new EvaluationFunction(volumes);
-        Vector<Double> p = new Vector<>();
-        for (int i = 0; i < collimator.getNbBeamlets(); i++){
-            p.add(2.0);
-
-        }
-
-
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,c1, c2, iner, size, iter);
         swarm.MoveSwarms();
 
 
+        Particle p = swarm.getBestGlobalParticle();
+
+        CreateCSV createCSV = new CreateCSV(p);
+
     }
+
+
+
+
 }

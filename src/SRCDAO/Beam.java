@@ -127,7 +127,7 @@ public class Beam {
 
         for(Aperture ap : A) {
             double apIntensity = ap.getIntensity();
-            for (int i = 0; i < collimator.getxDim(); i++) {
+            for (int i = 0; i < collimator.getyDim(); i++) {
                 aux = collimator.getActiveRange(i, angle);
 
                 if (aux.getFirst() < 0 || ap.getOpBeam(i).getFirst() < -1)
@@ -230,6 +230,10 @@ public class Beam {
         this.setup = setup;
     }
 
+    public Matrix getIntensitisMatrix(){
+        return I;
+    }
+
     public Aperture getAperture(int id){
         return A.get(id);
     }
@@ -253,6 +257,11 @@ public class Beam {
         }
     }
 
-
-
+    public void printFluenceMapOnBeam(){
+        System.out.println("Id Beam: " + angle);
+        for (Double i: fluenceMap){
+            System.out.print(i + " ");
+        }
+        System.out.println();
+    }
 }

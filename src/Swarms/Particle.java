@@ -1,6 +1,7 @@
 package Swarms;
 import SRCDAO.*;
 import source.Collimator;
+import source.Matrix;
 import source.Volumen;
 
 import java.util.ArrayList;
@@ -17,7 +18,6 @@ public class Particle {
                     int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator)
     {
         this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
-
         setFitness(currentPlan.getEval());
 
         setBestPersonal(this.currentPlan);
@@ -42,16 +42,13 @@ public class Particle {
 
     public void CalculateBestPersonal(){
         if(this.fitness < bestFitness){
-
             setBestPersonal(this.currentPlan);
             setBestFitness(this.fitness);
-
         }
     }
 
     public void evalParticle(){
         this.fitness = currentPlan.eval();
-
     }
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public double getFitness() {
@@ -72,6 +69,10 @@ public class Particle {
 
     public Plan getCurrentPlan() {
         return this.currentPlan;
+    }
+
+    public void printFluenceMapByBeam(){
+        currentPlan.printFluenceMapByBeam();
     }
 
 }
