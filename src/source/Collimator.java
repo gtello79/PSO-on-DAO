@@ -159,7 +159,7 @@ public class Collimator {
             }
         }
         //Se define la dimension total del colimator
-        gDim = (int)(max*2);
+        gDim = (int)(max*2)+1;
         this.xDim = gDim;
         this.yDim = gDim;
         this.nbBeamlets = globalID;
@@ -262,6 +262,24 @@ public class Collimator {
     public Vector<Integer> getAngles() {
         return angles;
     }
+
+    public SortedMap<Integer, Vector<Pair<Integer, Integer>>> getAngleCoord() {
+        return angleCoord;
+    }
+
+    public void setAngleCoord(SortedMap<Integer, Vector<Pair<Integer, Integer>>> angleCoord) {
+        this.angleCoord = angleCoord;
+    }
+
+    public SortedMap<Integer, Vector<Pair<Double, Double>>> getAngleCoordMatr() {
+        return angleCoordMatr;
+    }
+
+    public void setAngleCoordMatr(SortedMap<Integer, Vector<Pair<Double, Double>>> angleCoordMatr) {
+        this.angleCoordMatr = angleCoordMatr;
+    }
+
+
 
     /*--------------------------------------------------- PRINT ALL COORDINATES ------------------------------------------------------------*/
     public void printActiveRange(){

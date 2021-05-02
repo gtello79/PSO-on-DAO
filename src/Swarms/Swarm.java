@@ -11,6 +11,7 @@ public class Swarm {
     private double c1;
     private double c2;
     private double inner;
+    private double firstSolution;
     private final ArrayList<Particle> swarm;
     private int iter;
     private int globalUpdateCount = 0;
@@ -35,6 +36,7 @@ public class Swarm {
                 newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
                 setBestGlobalParticle(newParticle);
                 setBestGlobalEval(newParticle.getFitness());
+                this.firstSolution = bestGlobalEval;
             }else{
                 newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
             }
@@ -62,7 +64,7 @@ public class Swarm {
         }
 
         bestGlobalParticle.printFluenceMapByBeam();
-
+        System.out.println("Initial solution: " + firstSolution );
     }
 
 

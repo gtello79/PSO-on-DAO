@@ -154,7 +154,6 @@ public class Aperture {
             int first = (velocityA.get(i).getFirst() + A.get(i).getFirst());
             int second = (velocityA.get(i).getSecond() + A.get(i).getSecond());
 
-
             if(first < limit_inf  || first > limit_sup){
                 first = limit_inf;
                 auxVelocity.setFirst(0);
@@ -169,6 +168,8 @@ public class Aperture {
                 int val = (first + second)/2;
                 first = (val);
                 second = (val)+1;
+                auxVelocity.setFirst(0);
+                auxVelocity.setSecond(0);
             }
 
             Pair<Integer, Integer> newApertures = new Pair(first, second);
@@ -180,8 +181,13 @@ public class Aperture {
     public void moveIntensity(double max_intensity){
         double val = getIntensity() + getVeloc_intensity();
 
-        if(val > max_intensity) val = max_intensity;
-        if(val < 0 ) val = 0;
+        if(val > max_intensity){
+            val = max_intensity;
+            veloc_intensity = 0;
+        }else if(val < 0 ) {
+            val = 0;
+            veloc_intensity = 0;
+        }
 
         double newIntensity = ((double)Math.round(val*1000)/1000);
 
@@ -239,39 +245,4 @@ public class Aperture {
         return A;
     }
 
-    /*------------------------------------------PRINTERS -----------------------------------------------------------------*/
-    public void printAperture(){
-        System.out.println("Intensity: "+ intensity);
-        int x = 0;
-        for(Pair<Integer,Integer> aperture : A){
-            System.out.println(x + " (" +aperture.getFirst() + " , " + aperture.getSecond() + ") ");
-            x++;
-        }
-    }
-
-    public Matrix apertureToMatrix() {
-        Pair<Integer, Integer> aux;
-
-        Matrix matrix = new Matrix(collimator.getxDim(), collimator.getyDim());
-
-        int j = 0;
-        for (Pair<Integer, Integer> ap : A) {
-
-            aux = collimator.getActiveRange(j, angle);
-            for (int i = 0; i < collimator.getxDim(); i++) {
-
-
-                if (aux.getFirst() < 0 || ap.getFirst() < -1) {
-                    matrix.setPos(i, j, -1);
-                }else if(i >= ap.getFirst() + 1 && i < ap.getSecond() ){
-                    matrix.setPos(i, j, 0);
-                }else{
-                    matrix.setPos(i,j,1);
-                }
-            }
-
-            j++;
-        }
-        return matrix;
-    }
 }

@@ -22,6 +22,7 @@ public class Beam {
     private int stepIntensity;
     private int openApertures;
     private int setup;
+    private int collimatorDim;
 
     /* Apertures (representation 1):
      * Each aperture is represented by a vector of pairs A[i] = (x_ini, x_fin)
@@ -41,6 +42,8 @@ public class Beam {
         setOpenApertures(openApertures);
         setSetup(setup);
         setMinIntensity(1);
+        setCollimatorDim(collimator.getyDim());
+
 
         this.collimator = collimator;
         this.A = new Vector<>();
@@ -74,9 +77,9 @@ public class Beam {
         setOpenApertures(b.openApertures);
         setSetup(b.setup);
         setMinIntensity(b.minIntensity);
+        setCollimatorDim(b.getCollimatorDim());
 
         this.collimator = new Collimator(b.collimator);
-
         this.A = new Vector<>();
         this.fluenceMap = new Vector<>();
 
@@ -127,7 +130,7 @@ public class Beam {
 
         for(Aperture ap : A) {
             double apIntensity = ap.getIntensity();
-            for (int i = 0; i < collimator.getyDim(); i++) {
+            for (int i = 0; i < collimator.getxDim(); i++) {
                 aux = collimator.getActiveRange(i, angle);
 
                 if (aux.getFirst() < 0 || ap.getOpBeam(i).getFirst() < -1)
@@ -238,6 +241,20 @@ public class Beam {
         return A.get(id);
     }
 
+    public Vector<Aperture> getApertures(){
+        return A;
+    }
+
+    public int getCollimatorDim() {
+        return collimatorDim;
+    }
+
+    public void setCollimatorDim(int collimatorDim) {
+        this.collimatorDim = collimatorDim;
+    }
+
+
+
     /*-------------------------------------------------------- PRINTERS -------------------------------------- */
 
     public void printIntensityMatrix(){
@@ -253,7 +270,7 @@ public class Beam {
     public void printApertures(){
         System.out.println(angle + ": ");
         for(Aperture x : A){
-            x.printAperture();
+            //x.printAperture();
         }
     }
 

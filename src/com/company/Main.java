@@ -88,7 +88,7 @@ public class Main {
         String file = "src/data/test_instance_0_70_140_210_280.txt";
         String file2 = "src/data/test_instance_coordinates.txt";
 
-        int max_intensity = 10; //10 x apertura - probar este parametro
+        int max_intensity = 6; //10 x apertura - probar este parametro
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;
@@ -112,41 +112,38 @@ public class Main {
         double c2 = 2;
         double iner = 2;
 
-        Vector <Double> w  = new Vector<>();
+        Vector<Double> w = new Vector<>();
         w.add(1.0);
         w.add(1.0);
         w.add(5.0); //valor 5.0
 
-        Vector <Double> Zmin = new Vector<>();
+        Vector<Double> Zmin = new Vector<>();
         Zmin.add(0.0);
         Zmin.add(0.0);
         Zmin.add(76.0);
 
 
-        Vector <Double> Zmax =  new Vector<>();
+        Vector<Double> Zmax = new Vector<>();
         Zmax.add(65.0);
         Zmax.add(65.0); //Anterior 60
         Zmax.add(76.0);
 
-        Vector <Integer> angles = get_angles(file);
-        Collimator collimator = new Collimator(file2,angles);
-        Vector <Volumen> volumes = createVolumes(file);
+        Vector<Integer> angles = get_angles(file);
+        Collimator collimator = new Collimator(file2, angles);
+        Vector<Volumen> volumes = createVolumes(file);
 
-        for(int a = 0; a < angles.size(); a++){
+        for (int a = 0; a < angles.size(); a++) {
             maxApertures.add(5);
         }
 
-        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,c1, c2, iner, size, iter);
+        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator, c1, c2, iner, size, iter);
         swarm.MoveSwarms();
 
 
-        Particle p = swarm.getBestGlobalParticle();
+        Particle particle = swarm.getBestGlobalParticle();
 
-        CreateCSV createCSV = new CreateCSV(p);
+        CreateCSV createCSV = new CreateCSV(particle);
 
+        //createCSV.collimatorIndex(collimator);
     }
-
-
-
-
 }
