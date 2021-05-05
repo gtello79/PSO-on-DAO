@@ -32,8 +32,8 @@ public class Particle {
 
     }
 
-    public void CalculateVelocity(double c1, double c2, double w, Particle bGlobal){
-        currentPlan.CalculateVelocity(c1, c2, w, bGlobal.getCurrentPlan(), bestPersonal);
+    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture,double c1Intensity, double c2Intensity, double wIntensity, Particle bGlobal){
+        currentPlan.CalculateVelocity(c1Aperture, c2Aperture, wAperture, c1Intensity, c2Intensity, wIntensity, bGlobal.getCurrentPlan(), bestPersonal);
     }
 
     public void CalculatePosition(){

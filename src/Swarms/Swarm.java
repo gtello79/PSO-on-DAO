@@ -8,9 +8,13 @@ import java.util.Vector;
 public class Swarm {
     private Particle bestGlobalParticle;
     private double bestGlobalEval;
-    private double c1;
-    private double c2;
-    private double inner;
+    private double c1Aperture;
+    private double c2Aperture;
+
+    private double innerAperture;
+    private double c1Intensity;
+    private double c2Intensity;
+    private double innerIntensity;
     private double firstSolution;
     private final ArrayList<Particle> swarm;
     private int iter;
@@ -19,10 +23,14 @@ public class Swarm {
 
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
     public Swarm(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity , int initial_intensity, int step_intensity,
-                 int open_apertures, int setup, int diffSetup ,Vector<Volumen> volumen, Collimator collimator, double c1, double c2, double iner, int size, int iter) {
-        setC1(c1);
-        setC2(c2);
-        setInner(iner);
+                 int open_apertures, int setup, int diffSetup ,Vector<Volumen> volumen, Collimator collimator,
+                 double c1Aperture, double c2Aperture, double innerAperture, double c1Intensity, double c2Intensity, double innerIntensity, int size, int iter) {
+        setC1Aperture(c1Aperture);
+        setC2Aperture(c2Aperture);
+        setInnerAperture(innerAperture);
+        setC1Intensity(c1Intensity);
+        setC2Intensity(c2Intensity);
+        setInnerIntensity(innerIntensity);
         setIter(iter);
         this.swarm = new ArrayList<>();
 
@@ -55,22 +63,24 @@ public class Swarm {
         for(int i = 0; i < getIter(); i++){
             calculateVelocity();
             calculatePosition();
-            evalParticles();
+            boolean change = evalParticles();
 
             CalculateNewBestPersonal();
-            CalculateNewBestGlobal();
+
+            if(change)
+                setGlobalUpdateCount();
 
             System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
         }
 
-        bestGlobalParticle.printFluenceMapByBeam();
-        System.out.println("Initial solution: " + firstSolution );
+        //bestGlobalParticle.printFluenceMapByBeam();
+        System.out.println("Initial solution: " + firstSolution  + " - Final solution: "+ bestGlobalEval);
     }
 
 
     public void calculateVelocity(){
         for (Particle particle : swarm) {
-            particle.CalculateVelocity(getC1(), getC2(), getInner(), getBestGlobalParticle() );
+            particle.CalculateVelocity(getC1Aperture(), getC2Aperture(),getInnerAperture(),getC1Intensity(),getC2Intensity(),getInnerIntensity(),getBestGlobalParticle());
         }
     }
 
@@ -83,10 +93,19 @@ public class Swarm {
         }
     }
 
-    public void evalParticles(){
+    public boolean evalParticles(){
+        boolean changeGlobal = false;
         for(Particle particle: swarm){
             particle.evalParticle();
+
+            //Calculate new Best Global
+            if (particle.getFitness() < getBestGlobalEval() ) {
+                setBestGlobalParticle(particle);
+                setBestGlobalEval(particle.getFitness());
+                changeGlobal = true;
+            }
         }
+        return changeGlobal;
     }
 
     public void CalculateNewBestGlobal() {
@@ -118,18 +137,6 @@ public class Swarm {
         this.bestGlobalParticle = new Particle(bestGlobalParticle);
     }
 
-    public double getC1() {
-        return c1;
-    }
-
-    public double getC2() {
-        return c2;
-    }
-
-    public double getInner() {
-        return inner;
-    }
-
     public int getIter() {
         return iter;
     }
@@ -142,18 +149,6 @@ public class Swarm {
         return bestGlobalParticle;
     }
 
-    public void setC1(double c1) {
-        this.c1 = c1;
-    }
-
-    public void setC2(double c2) {
-        this.c2 = c2;
-    }
-
-    public void setInner(double inner) {
-        this.inner = inner;
-    }
-
     public void setIter(int iter) {
         this.iter = iter;
     }
@@ -164,6 +159,54 @@ public class Swarm {
 
     public void setGlobalUpdateCount() {
         this.globalUpdateCount += 1;
+    }
+
+    public double getC1Aperture() {
+        return c1Aperture;
+    }
+
+    public void setC1Aperture(double c1Aperture) {
+        this.c1Aperture = c1Aperture;
+    }
+
+    public double getC2Aperture() {
+        return c2Aperture;
+    }
+
+    public void setC2Aperture(double c2Aperture) {
+        this.c2Aperture = c2Aperture;
+    }
+
+    public double getInnerAperture() {
+        return innerAperture;
+    }
+
+    public void setInnerAperture(double innerAperture) {
+        this.innerAperture = innerAperture;
+    }
+
+    public double getC1Intensity() {
+        return c1Intensity;
+    }
+
+    public void setC1Intensity(double c1Intensity) {
+        this.c1Intensity = c1Intensity;
+    }
+
+    public double getC2Intensity() {
+        return c2Intensity;
+    }
+
+    public void setC2Intensity(double c2Intensity) {
+        this.c2Intensity = c2Intensity;
+    }
+
+    public double getInnerIntensity() {
+        return innerIntensity;
+    }
+
+    public void setInnerIntensity(double innerIntensity) {
+        this.innerIntensity = innerIntensity;
     }
 
 }

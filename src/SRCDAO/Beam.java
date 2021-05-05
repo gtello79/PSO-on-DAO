@@ -23,6 +23,7 @@ public class Beam {
     private int openApertures;
     private int setup;
     private int collimatorDim;
+    private int totalBeamlets;
 
     /* Apertures (representation 1):
      * Each aperture is represented by a vector of pairs A[i] = (x_ini, x_fin)
@@ -43,7 +44,7 @@ public class Beam {
         setSetup(setup);
         setMinIntensity(1);
         setCollimatorDim(collimator.getyDim());
-
+        setTotalBeamlets(collimator.getNangleBeamlets(angle));
 
         this.collimator = collimator;
         this.A = new Vector<>();
@@ -64,8 +65,6 @@ public class Beam {
         //Se construye la Matriz de Intensidad
         generateIntensities();
 
-
-
     }
 
     public Beam(Beam b){
@@ -78,6 +77,7 @@ public class Beam {
         setSetup(b.setup);
         setMinIntensity(b.minIntensity);
         setCollimatorDim(b.getCollimatorDim());
+        setTotalBeamlets(b.getTotalBeamlets());
 
         this.collimator = new Collimator(b.collimator);
         this.A = new Vector<>();
@@ -109,7 +109,7 @@ public class Beam {
         //Calculate levels for random Intensity
         int l = (maxIntensity-minIntensity)/stepIntensity ;
         for(int k = 0; k < maxApertures; k++){
-            int i = minIntensity + stepIntensity *(int) (Math.random()*(l+1));
+            int i = minIntensity + stepIntensity *(int)(Math.random()*(l+1));
             levels.add(i);
         }
 
@@ -173,13 +173,13 @@ public class Beam {
 
 
     /* ------------------------------------------------ PSO METHODS ----------------------------------*/
-    public void CalculateVelocity(double c1, double c2, double w, Beam BGlobal, Beam BPersonal){
+    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture,double c1Intensity, double c2Intensity, double wIntensity, Beam BGlobal, Beam BPersonal){
         for(int i = 0; i < A.size() ; i++){
             Aperture x = A.get(i);
             Aperture bG = BGlobal.getAperture(i);
             Aperture bP = BPersonal.getAperture(i);
-            x.velAperture(w,c1,c2,bG,bP);
-            x.velIntensity(w,c1,c2,bG,bP);
+            x.velAperture(wAperture,c1Aperture,c2Aperture,bG,bP);
+            x.velIntensity(wIntensity,c1Intensity,c2Intensity,bG,bP);
         }
     }
 
@@ -253,6 +253,13 @@ public class Beam {
         this.collimatorDim = collimatorDim;
     }
 
+    public int getTotalBeamlets() {
+        return totalBeamlets;
+    }
+
+    public void setTotalBeamlets(int totalBeamlets) {
+        this.totalBeamlets = totalBeamlets;
+    }
 
 
     /*-------------------------------------------------------- PRINTERS -------------------------------------- */

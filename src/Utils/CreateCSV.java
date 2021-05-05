@@ -32,7 +32,8 @@ public class CreateCSV {
         }
 
         System.out.println("DONE - UID Experiment: " + id);
-        System.out.println("Aperture Folder on " + apertureFolderPath + " - Intensity Folder on " + intensityFolderPath );
+        //System.out.println("Aperture Folder on " + apertureFolderPath + " - Intensity Folder on " + intensityFolderPath );
+        IntensityVector(plan);
     }
 
     private void intensityMatrixToCSV(String path ,String fileName, int angle, Matrix matrix){
@@ -129,5 +130,36 @@ public class CreateCSV {
         }
     }
 
+    public void IntensityVector(Plan p){
+        Vector<Integer> nBeamLetsByBeam = new Vector<>();
+        String IntensityVectorPath = "./import/";
+        String fileName = UID +" - FluenceMap.csv";
+        for(Beam b: p.getAngle_beam())
+            nBeamLetsByBeam.add(b.getTotalBeamlets());
+        System.out.println(nBeamLetsByBeam);
+        int beamIndex = 0;
+        try{
+            FileWriter matrixCSV = new FileWriter(IntensityVectorPath+fileName+ ".csv");
+            String vectorChain = "";
+            int count = 0;
+            for(double i: p.getFluenceMap()){
+                vectorChain += i + " \n";
+                count++;
+                if(count == nBeamLetsByBeam.get(beamIndex)){
+                    vectorChain += " \n";
+                    beamIndex++;
+                    count = 0;
+                }
+
+
+            }
+            matrixCSV.append(vectorChain);
+            matrixCSV.flush();
+            matrixCSV.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+
+    }
 
 }

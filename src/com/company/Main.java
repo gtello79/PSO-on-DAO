@@ -88,7 +88,7 @@ public class Main {
         String file = "src/data/test_instance_0_70_140_210_280.txt";
         String file2 = "src/data/test_instance_coordinates.txt";
 
-        int max_intensity = 6; //10 x apertura - probar este parametro
+        int max_intensity = 10; //10 x apertura - probar este parametro
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;
@@ -96,7 +96,7 @@ public class Main {
         ArrayList<Integer> maxApertures = new ArrayList<>();
 
         int setup = 4;
-        int diffSetup = 4;
+        int diffSetup = 0;
 
         /*
             OPEN_MIN_SETUP = 0;
@@ -106,11 +106,18 @@ public class Main {
             RAND_RAND_SETUP = 4;
         */
 
+        //Parametros PSO
         int size = 1; //Particle size
         int iter = 1; //Pso Iterations
-        double c1 = 2;
-        double c2 = 2;
-        double iner = 2;
+
+        double generalValue = 1;
+        double c1Aperture = generalValue;
+        double c2Aperture = generalValue;
+        double inerAperture = 1;
+
+        double c1Intensity = 1;
+        double c2Intensity = 1;
+        double inerIntensity = 1;
 
         Vector<Double> w = new Vector<>();
         w.add(1.0);
@@ -136,7 +143,8 @@ public class Main {
             maxApertures.add(5);
         }
 
-        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator, c1, c2, iner, size, iter);
+        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
+                                c1Aperture, c2Aperture, inerAperture, c1Intensity, c2Intensity, inerIntensity, size, iter);
         swarm.MoveSwarms();
 
 
@@ -144,6 +152,6 @@ public class Main {
 
         CreateCSV createCSV = new CreateCSV(particle);
 
-        //createCSV.collimatorIndex(collimator);
+        createCSV.collimatorIndex(collimator);
     }
 }

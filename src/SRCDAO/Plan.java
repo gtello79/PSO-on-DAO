@@ -20,7 +20,8 @@ public class Plan {
 
     /*---------------------------------------------- METHODS -----------------------------------------------------------------------*/
 
-    public Plan(Vector<Double> w, Vector<Double> zMin, Vector<Double> zMax, ArrayList<Integer> maxApertures, int max_intensity, int initial_intensity, int step_intensity, int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator) {
+    public Plan(Vector<Double> w, Vector<Double> zMin, Vector<Double> zMax, ArrayList<Integer> maxApertures, int max_intensity,
+                int initial_intensity, int step_intensity, int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator) {
         setNBeam(collimator.getNbAngles());
         setW(w);
         setZMin(zMin);
@@ -79,12 +80,12 @@ public class Plan {
     /* --------------------------------------- PSO METHODS ---------------------------------------- */
 
     //Funcion que realiza la actualizacion de la velocidad de la particula
-    public void CalculateVelocity(double c1, double c2, double w, Plan Bsolution, Plan Bpersonal) {
+    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture,double c1Intensity, double c2Intensity, double wIntensity, Plan Bsolution, Plan Bpersonal) {
         //Bsolution: Best Global solution ; Bpersonal: Best Personal solution
         for (Beam actual : Angle_beam) {
             Beam B_Bsolution = Bsolution.getByID(actual.getIdBeam());
             Beam B_BPersonal = Bpersonal.getByID(actual.getIdBeam());
-            actual.CalculateVelocity(c1, c2, w, B_Bsolution, B_BPersonal);
+            actual.CalculateVelocity(c1Aperture, c2Aperture, wAperture, c1Intensity, c2Intensity, wIntensity, B_Bsolution, B_BPersonal);
         }
     }
 
