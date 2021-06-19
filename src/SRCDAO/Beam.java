@@ -274,13 +274,6 @@ public class Beam {
         }
     }
 
-    public void printApertures(){
-        System.out.println(angle + ": ");
-        for(Aperture x : A){
-            //x.printAperture();
-        }
-    }
-
     public void printFluenceMapOnBeam(){
         System.out.println("Id Beam: " + angle);
         for (Double i: fluenceMap){

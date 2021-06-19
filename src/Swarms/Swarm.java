@@ -19,12 +19,13 @@ public class Swarm {
     private final ArrayList<Particle> swarm;
     private int iter;
     private int globalUpdateCount = 0;
-
+    private int lastChange = 0;
 
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
     public Swarm(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity , int initial_intensity, int step_intensity,
                  int open_apertures, int setup, int diffSetup ,Vector<Volumen> volumen, Collimator collimator,
                  double c1Aperture, double c2Aperture, double innerAperture, double c1Intensity, double c2Intensity, double innerIntensity, int size, int iter) {
+        
         setC1Aperture(c1Aperture);
         setC2Aperture(c2Aperture);
         setInnerAperture(innerAperture);
@@ -67,14 +68,17 @@ public class Swarm {
 
             CalculateNewBestPersonal();
 
-            if(change)
+            if(change){
                 setGlobalUpdateCount();
-
+                setLastChange(i);
+            }
+                
             System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
         }
 
         //bestGlobalParticle.printFluenceMapByBeam();
-        System.out.println("Initial solution: " + firstSolution  + " - Final solution: "+ bestGlobalEval);
+        System.out.println("Initial solution: " + firstSolution  + " - Final solution: "+ bestGlobalEval + " - last Change: "+ lastChange);
+        System.out.println(firstSolution  + " " + bestGlobalEval + " " + globalUpdateCount + " " + lastChange);
     }
 
 
@@ -85,16 +89,14 @@ public class Swarm {
     }
 
     public void calculatePosition(){
-        int i = 0;
         for(Particle particle: swarm){
             particle.CalculatePosition();
-            System.out.println("Particle "+i+": "+particle.getFitness());
-            i++;
         }
     }
 
     public boolean evalParticles(){
         boolean changeGlobal = false;
+        int i = 0;
         for(Particle particle: swarm){
             particle.evalParticle();
 
@@ -104,22 +106,19 @@ public class Swarm {
                 setBestGlobalEval(particle.getFitness());
                 changeGlobal = true;
             }
+            System.out.println("Particle "+i+": "+particle.getFitness());
+            i++;
         }
         return changeGlobal;
     }
 
     public void CalculateNewBestGlobal() {
-        boolean changeGlobal = false;
         for (Particle particle: swarm){
             if (particle.getFitness() < getBestGlobalEval() ) {
                 setBestGlobalParticle(particle);
                 setBestGlobalEval(particle.getFitness());
-                changeGlobal = true;
             }
         }
-
-        if(changeGlobal) setGlobalUpdateCount();
-
     }
 
     public void CalculateNewBestPersonal() {
@@ -207,6 +206,14 @@ public class Swarm {
 
     public void setInnerIntensity(double innerIntensity) {
         this.innerIntensity = innerIntensity;
+    }
+
+    public void setLastChange(int lastChange){
+        this.lastChange = lastChange;
+    }
+
+    public int getLastChange(){
+        return this.lastChange;
     }
 
 }

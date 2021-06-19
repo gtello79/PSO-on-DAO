@@ -181,18 +181,6 @@ public class Plan {
         }
     }
 
-    public void printApertures(){
-        for(Beam b: Angle_beam){
-            b.printApertures();
-        }
-    }
-
-    public void printAperturesBeam(int x){
-        Beam b = Angle_beam.get(x);
-        b.printApertures();
-    }
-
-
     public void printFluenceMap(){
         for (Double i: fluenceMap){
             System.out.print(i + " ");

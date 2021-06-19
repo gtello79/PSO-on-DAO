@@ -1,10 +1,7 @@
 package source;
-import SRCDAO.Beam;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.util.Vector;
 
 public class Matrix {
     private int rows;
