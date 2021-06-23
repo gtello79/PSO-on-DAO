@@ -113,11 +113,11 @@ public class Main {
 
         double generalValue = 1;
 
-        double c1Aperture = 2.5;          // Coef Global
+        double c1Aperture = 0;          // Coef Global
         double c2Aperture = 2;          // Coef Personal
         double inerAperture = 1;        // Inner
 
-        double c1Intensity = 2.5;         // Coef Global
+        double c1Intensity = 0;         // Coef Global
         double c2Intensity = 2;         // Coef Personal
         double inerIntensity = 1;       // Inner
         

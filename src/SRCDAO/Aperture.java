@@ -148,7 +148,6 @@ public class Aperture {
 
         for(int i = 0; i < A.size(); i++){
 
-            Pair<Integer, Integer> auxVelocity = new Pair(velocityA.get(i).getFirst(), velocityA.get(i).getSecond() );
             if(A.get(i).getFirst() < -1)
                 continue;
 
@@ -160,25 +159,20 @@ public class Aperture {
 
             if(first < limit_inf  || first > limit_sup){
                 first = limit_inf-1;
-                auxVelocity.setFirst(0);
             }
 
             if(second < limit_inf  || second > limit_sup ){
                 second = limit_sup+1;
-                auxVelocity.setSecond(0);
             }
 
             if(first > second) {
                 int val = (first + second)/2;
                 first = (val);
                 second = (val)+1;
-                auxVelocity.setFirst(0);
-                auxVelocity.setSecond(0);
             }
 
             Pair<Integer, Integer> newApertures = new Pair(first, second);
             A.set(i, newApertures);
-            //this.velocityA.set(i, auxVelocity);
         }
     }
 
@@ -187,10 +181,8 @@ public class Aperture {
 
         if(val > max_intensity){
             val = max_intensity;
-            //veloc_intensity = 0;
         }else if(val < 0 ) {
             val = 0;
-            //veloc_intensity = 0;
         }
 
         double newIntensity = ((double)Math.round(val*1000)/1000);

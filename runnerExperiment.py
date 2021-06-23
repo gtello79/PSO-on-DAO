@@ -11,9 +11,9 @@ def main():
 
 
     UID = str(int(random.random()*1000))
-    exp_iter = 6
+    exp_iter = 10
     results = []
-    
+    print("Experiments ID ", UID)
     # Compilacion del codigo   
     system(compiler_command)
 
