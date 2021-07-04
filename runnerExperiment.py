@@ -8,10 +8,10 @@ def main():
     folder_finals = './FinalResults/'
     execute_command = "java -cp src com.company.Main"
     compiler_command = "javac --class-path src src/com/company/Main.java"
-
+    
 
     UID = str(int(random.random()*1000))
-    exp_iter = 10
+    exp_iter = 5
     results = []
     print("Experiments ID ", UID)
     # Compilacion del codigo   

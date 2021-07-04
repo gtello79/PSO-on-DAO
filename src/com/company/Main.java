@@ -6,13 +6,23 @@ import java.io.FileNotFoundException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
+import java.util.HashMap;
 
 public class Main {
 
-    
+    public static HashMap<String, String> mappingArg(String [] args){
+        
+        HashMap<String, String> params = new HashMap<>();
 
+        for(int i = 0; i < args.length ; i+=2){
+            String param = args[i];
+            String value = args[i+1];
+            params.put(param, value);    
+        } 
+        return params;
+    }
+    
     public static boolean isNumeric(String cadena) {
 
         boolean resultado;
@@ -90,6 +100,8 @@ public class Main {
     public static void main(String[] args) throws FileNotFoundException {
         String file = "src/data/test_instance_0_70_140_210_280.txt";
         String file2 = "src/data/test_instance_coordinates.txt";
+        
+        HashMap<String, String> params = mappingArg(args);
 
         //MLC Configuration    
         int max_intensity = 10; //10 x apertura - probar este parametro
@@ -108,21 +120,45 @@ public class Main {
         */
 
         //Parametros PSO
+        String [] parameters = {"","","c2Aperture","","c1Intensity","c2Intensity","inerIntensity"};
         int size = 400; //Particle size
         int iter = 100; //Pso Iterations
-
-        double generalValue = 1;
-
-        double c1Aperture = 0;          // Coef Global
-        double c2Aperture = 2;          // Coef Personal
+        
+        double c1Aperture = 1;          // Coef Global
+        double c2Aperture = 1;          // Coef Personal
         double inerAperture = 1;        // Inner
 
-        double c1Intensity = 0;         // Coef Global
-        double c2Intensity = 2;         // Coef Personal
+        double c1Intensity = 1;         // Coef Global
+        double c2Intensity = 1;         // Coef Personal
         double inerIntensity = 1;       // Inner
         
+        if(params.containsKey("size")) 
+            size = Integer.parseInt(params.get("size"));
+        if(params.containsKey("iter")) 
+            iter = Integer.parseInt(params.get("iter"));
         
-        System.out.println("c1: "+ c1Aperture + "- c2: "+ c2Aperture + "- w: " + inerAperture); 
+        if(params.containsKey("c1Aperture")) 
+            c1Aperture = Double.parseDouble(params.get("c1Aperture"));
+        if(params.containsKey("c2Aperture")) 
+            c2Aperture = Double.parseDouble(params.get("c2Aperture"));
+        if(params.containsKey("inerAperture")) 
+            inerAperture = Double.parseDouble(params.get("inerAperture"));
+        
+        if(params.containsKey("c1Intensity")) 
+            c1Intensity = Double.parseDouble(params.get("c1Intensity"));
+        if(params.containsKey("c2Intensity")) 
+            c2Intensity = Double.parseDouble(params.get("c2Intensity"));
+        if(params.containsKey("inerIntensity")) 
+            inerIntensity = Double.parseDouble(params.get("inerIntensity"));
+        
+
+        System.out.println("Size: "+ size+ "- iter: "+ iter); 
+        System.out.println("Aperture - c1: "+ c1Aperture + "- c2: "+ c2Aperture + "- w: " + inerAperture); 
+        System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity); 
+
+
+
+
         Vector<Double> w = new Vector<>();
         w.add(1.0);
         w.add(1.0);
@@ -148,15 +184,14 @@ public class Main {
             maxApertures.add(5);
         }
 
-        Long initialClock = System.currentTimeMillis();
-
+        
         //Creating the swarm
-        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
-                                c1Aperture, c2Aperture, inerAperture, c1Intensity, c2Intensity, inerIntensity, size, iter);
-        swarm.MoveSwarms();
+        //Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
+        //                        c1Aperture, c2Aperture, inerAperture, c1Intensity, c2Intensity, inerIntensity, size, iter);
+        // swarm.MoveSwarms();
 
         //Get the Solution of the algorithm
-        Particle particle = swarm.getBestGlobalParticle();
+        //Particle particle = swarm.getBestGlobalParticle();
 
         //Used to calculate the execution minutes
         // Long finalClock = (System.currentTimeMillis() - initialClock);
