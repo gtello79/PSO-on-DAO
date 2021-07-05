@@ -153,7 +153,7 @@ public class Main {
         
 
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
-        System.out.println("Aperture - c1: "+ c1Aperture + "- c2: "+ c2Aperture + "- w: " + inerAperture); 
+        System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture); 
         System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity); 
 
 
@@ -185,10 +185,10 @@ public class Main {
         }
 
         
-        //Creating the swarm
-        //Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
-        //                        c1Aperture, c2Aperture, inerAperture, c1Intensity, c2Intensity, inerIntensity, size, iter);
-        // swarm.MoveSwarms();
+        // Creating the swarm
+        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
+                                c1Aperture, c2Aperture, inerAperture, c1Intensity, c2Intensity, inerIntensity, size, iter);
+        swarm.MoveSwarms();
 
         //Get the Solution of the algorithm
         //Particle particle = swarm.getBestGlobalParticle();
