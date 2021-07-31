@@ -157,8 +157,6 @@ public class Main {
         System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity); 
 
 
-
-
         Vector<Double> w = new Vector<>();
         w.add(1.0);
         w.add(1.0);
