@@ -28,7 +28,7 @@ public class Volumen {
         int count = 0;
         Vector<String> lines = new Vector<>();
         if(!cordFile.exists()){
-            System.out.println("FILE "+ data + "DON'T FOUND");
+            System.out.println("FILE "+ data + " DON'T FOUND");
         }else{
             //Lectura de archivo data
             Scanner reader = new Scanner(cordFile);

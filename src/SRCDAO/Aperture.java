@@ -105,41 +105,34 @@ public class Aperture {
     }
 
     /*----------------------------------------------------PSO METHODS--------------------------------------------------------------------------------*/
-    public void velAperture(double wAperture, double c1Aperture, double c2Aperture, Aperture BGlobal, Aperture BPersonal){
+    public void velAperture(double wAperture, double c1Aperture, double c2Aperture, double cnAperture ,Aperture BGlobal, Aperture BPersonal){
         double r1 = Math.random();
         double r2 = Math.random();
 
         Vector<Pair<Integer,Integer>> BG = BGlobal.getApertures();
         Vector<Pair<Integer,Integer>> BP = BPersonal.getApertures();
+
         for(int i = 0; i < collimator.getxDim(); i++){
             Pair<Integer,Integer> aux_G = BG.get(i);
             Pair<Integer,Integer> aux_P = BP.get(i);
 
-            if( collimator.getActiveRange(i,angle).getFirst() < 0 ) continue;
+            if( collimator.getActiveRange(i,angle).getFirst() < 0 )
+                continue;
 
-            Integer first = (int)(wAperture*velocityA.get(i).getFirst() + c1Aperture*r1*( aux_G.getFirst() - A.get(i).getFirst() )  +  c2Aperture*r2*(aux_P.getFirst() - A.get(i).getFirst() ) );
-            Integer second = (int)(wAperture*velocityA.get(i).getSecond() + c1Aperture*r1*( aux_G.getSecond() - A.get(i).getSecond() )  +  c2Aperture*r2*(aux_P.getSecond() - A.get(i).getSecond() ) );
-
-            //if(first < 0) first = -1.0;
-            //if(first > 0) first = 1.0;
-
-            //if(second < 0) second = -1.0;
-            //if(second > 0) second = 1.0;
+            Integer first = (int)(cnAperture*(wAperture*velocityA.get(i).getFirst() + c1Aperture*r1*( aux_G.getFirst() - A.get(i).getFirst() )  +  c2Aperture*r2*(aux_P.getFirst() - A.get(i).getFirst() ) ));
+            Integer second = (int)(cnAperture*(wAperture*velocityA.get(i).getSecond() + c1Aperture*r1*( aux_G.getSecond() - A.get(i).getSecond() )  +  c2Aperture*r2*(aux_P.getSecond() - A.get(i).getSecond() ) ));
 
             velocityA.set(i, new Pair(first, second));
         }
     }
 
-    public void velIntensity(double wIntensity, double c1Intensity, double c2Intensity, Aperture BGlobal, Aperture BPersonal){
+    public void velIntensity(double wIntensity, double c1Intensity, double c2Intensity, double cnIntensity, Aperture BGlobal, Aperture BPersonal){
         double bG = BGlobal.getIntensity();
         double bP = BPersonal.getIntensity();
         double r1 = Math.random();
         double r2 = Math.random();
 
-        double val = wIntensity*veloc_intensity + r1*c1Intensity*(bG - intensity) + r2*c2Intensity*(bP - intensity);
-
-        //if(val < 0) val = -1.0;
-        //if(val > 0) val = 1.0;
+        double val = cnIntensity*(wIntensity*veloc_intensity + r1*c1Intensity*(bG - intensity) + r2*c2Intensity*(bP - intensity));
 
         setVeloc_intensity(val);
     }
@@ -148,6 +141,7 @@ public class Aperture {
 
         for(int i = 0; i < A.size(); i++){
 
+            //Par <-2,-2> cerradas de forma definitiva
             if(A.get(i).getFirst() < -1)
                 continue;
 
@@ -181,14 +175,12 @@ public class Aperture {
 
         if(val > max_intensity){
             val = max_intensity;
-        }else if(val < 0 ) {
-            val = 0;
+        }else if(val < 0.0 ) {
+            val = 0.0;
         }
 
         double newIntensity = ((double)Math.round(val*1000)/1000);
-
         setIntensity(newIntensity);
-
     }
 
     /*---------------------------------------------------GETTERS AND SETTERS------------------------------------------------------------*/
@@ -224,7 +216,7 @@ public class Aperture {
             Pair<Integer, Integer> newShape = new Pair(x.getFirst(), x.getSecond());
             newAper.add(newShape);
         }
-        this.A = newAper;
+        this.A = new Vector(newAper);
     }
 
     public void setVelocityA(Vector<Pair<Integer,Integer>> velocAperture){
@@ -234,7 +226,7 @@ public class Aperture {
             Pair<Integer,Integer> newShape = new Pair(x.getFirst(), x.getSecond());
             newVelocity.add(newShape);
         }
-        this.velocityA = newVelocity;
+        this.velocityA = new Vector(newVelocity);
     }
 
     public Vector<Pair<Integer,Integer>> getApertures(){

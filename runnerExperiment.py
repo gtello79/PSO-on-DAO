@@ -10,6 +10,7 @@ def main():
     UID = str(int(random.random()*1000))
     exp_iter = 5
     results = []
+    instance = 1
 
     # Default params
     size = 400
@@ -50,7 +51,7 @@ def main():
     if(argv.__contains__("exp_iter")):
         index = argv.index("exp_iter")
         exp_iter = int(argv[index+1])
-
+    
     #Compilacion
     compiler_command = "javac --class-path src src/com/company/Main.java "
     system(compiler_command)

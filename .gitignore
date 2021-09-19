@@ -1,7 +1,9 @@
-".\\Diagramas y literatura"
-".\\apertureFolder"
-".\\intensityFolder"
-".\\import"
+apertureFolder
+intensityFolder
+import
 ExperimentsFiles/
 FinalResults/
 IRace/
+src/data
+src/last_data
+PSO.iml

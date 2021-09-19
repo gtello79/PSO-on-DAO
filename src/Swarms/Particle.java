@@ -6,11 +6,25 @@ import source.Volumen;
 import java.util.ArrayList;
 import java.util.Vector;
 
-public class Particle {
+public class Particle extends Thread{
     private double fitness;
     private double bestFitness;
     private Plan bestPersonal;
     private final Plan currentPlan;
+    private Particle bestGlobal;
+    private int setupRunnerThread;
+    private double c1ApertureThread;
+    private double c2ApertureThread;
+    private double innerApertureThread;
+    private double cnApertureThread;
+
+    private double c1IntensityThread;
+    private double c2IntensityThread;
+    private double innerIntensityThread;
+    private double cnIntensityThread;
+
+    static final int MOVEMENT_THREAD = 0;
+    static final int EVAL_THREAD = 1;
 
     /*-------------------------------------------------------------METHODS -------------------------------------------*/
     public Particle(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity, int initial_intensity, int step_intensity,
@@ -21,6 +35,7 @@ public class Particle {
 
         setBestPersonal(this.currentPlan);
         setBestFitness(currentPlan.getEval());
+        setupRunnerThread = 0;
     }
 
     public Particle(Particle p){
@@ -31,12 +46,23 @@ public class Particle {
 
     }
 
-    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture,double c1Intensity, double c2Intensity, double wIntensity, Particle bGlobal){
-        currentPlan.CalculateVelocity(c1Aperture, c2Aperture, wAperture, c1Intensity, c2Intensity, wIntensity, bGlobal.getCurrentPlan(), bestPersonal);
+    public void evalParticle(){
+        double lastFitness = this.fitness;
+        this.fitness = currentPlan.eval();
+    }
+
+    public void CalculateVelocity(double c1Aperture,  double c2Aperture, double wAperture, double cnAperture,
+                                  double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Particle bGlobal){
+
+        currentPlan.CalculateVelocity(c1Aperture, c2Aperture, wAperture, cnAperture, c1Intensity, c2Intensity, wIntensity, cnIntensity, bGlobal.getCurrentPlan(), bestPersonal);
     }
 
     public void CalculatePosition(){
         currentPlan.CalculatePosition();
+    }
+
+    public void OptimizateIntensities(){
+        currentPlan.OptimizateIntensities();
     }
 
     public void CalculateBestPersonal(){
@@ -46,9 +72,27 @@ public class Particle {
         }
     }
 
-    public void evalParticle(){
-        this.fitness = currentPlan.eval();
+    public void run(){
+
+        switch (setupRunnerThread){
+
+            case MOVEMENT_THREAD:
+                // Calcular velocidad
+                CalculateVelocity(c1ApertureThread, c2ApertureThread, innerApertureThread, cnApertureThread, c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
+                // Calcular posicion
+                CalculatePosition();
+                setupRunnerThread++;
+                break;
+            case EVAL_THREAD:
+                // Evaluar particula
+                evalParticle();
+                setupRunnerThread = 0;
+                break;
+        }
     }
+
+
+    
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public double getFitness() {
         return this.fitness;
@@ -70,8 +114,79 @@ public class Particle {
         return this.currentPlan;
     }
 
+    public double getC1ApertureThread() {
+        return c1ApertureThread;
+    }
+
+    public void setC1ApertureThread(double c1ApertureThread) {
+        this.c1ApertureThread = c1ApertureThread;
+    }
+
+    public double getC2ApertureThread() {
+        return c2ApertureThread;
+    }
+
+    public void setC2ApertureThread(double c2ApertureThread) {
+        this.c2ApertureThread = c2ApertureThread;
+    }
+
+    public double getInnerApertureThread() {
+        return innerApertureThread;
+    }
+
+    public void setInnerApertureThread(double innerApertureThread) {
+        this.innerApertureThread = innerApertureThread;
+    }
+
+    public double getCnApertureThread() {
+        return cnApertureThread;
+    }
+
+    public void setCnApertureThread(double cnApertureThread) {
+        this.cnApertureThread = cnApertureThread;
+    }
+
+    public double getC1IntensityThread() {
+        return c1IntensityThread;
+    }
+
+    public void setC1IntensityThread(double c1IntensityThread) {
+        this.c1IntensityThread = c1IntensityThread;
+    }
+
+    public double getC2IntensityThread() {
+        return c2IntensityThread;
+    }
+
+    public void setC2IntensityThread(double c2IntensityThread) {
+        this.c2IntensityThread = c2IntensityThread;
+    }
+
+    public double getInnerIntensityThread() {
+        return innerIntensityThread;
+    }
+
+    public void setInnerIntensityThread(double innerIntensityThread) {
+        this.innerIntensityThread = innerIntensityThread;
+    }
+
+    public double getCnIntensityThread() {
+        return cnIntensityThread;
+    }
+
+    public void setCnIntensityThread(double cnIntensityThread) {
+        this.cnIntensityThread = cnIntensityThread;
+    }
+
+    public void setBestGlobal(Particle p){
+        this.bestGlobal = new Particle(p);
+    }
+
+    /*-------------------------------------- PRINTERS --------------------------------------------------------------------------*/
     public void printFluenceMapByBeam(){
         currentPlan.printFluenceMapByBeam();
     }
+
+
 
 }

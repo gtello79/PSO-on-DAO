@@ -68,7 +68,7 @@ public class Beam {
     }
 
     public Beam(Beam b){
-        setAngle(b.angle);
+        setAngle(b.angle);                  // Setea el ID del Beam
         setMax_apertures(b.maxApertures);
         setMax_intensity(b.maxIntensity);
         setInitialIntensity(b.initialIntensity);
@@ -133,7 +133,7 @@ public class Beam {
             for (int i = 0; i < collimator.getxDim(); i++) {
                 aux = collimator.getActiveRange(i, angle);
 
-                if (aux.getFirst() < 0 || ap.getOpBeam(i).getFirst() < -1)
+                if (aux.getFirst() < 0 || ap.getOpBeam(i).getFirst() < -1 || apIntensity <= 0.0)
                     continue;
 
                 for (int j = ap.getOpBeam(i).getFirst()+1 ; j < ap.getOpBeam(i).getSecond(); j++) {
@@ -173,13 +173,14 @@ public class Beam {
 
 
     /* ------------------------------------------------ PSO METHODS ----------------------------------*/
-    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture,double c1Intensity, double c2Intensity, double wIntensity, Beam BGlobal, Beam BPersonal){
+    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture, double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Beam BGlobal, Beam BPersonal){
         for(int i = 0; i < A.size() ; i++){
             Aperture x = A.get(i);
             Aperture bG = BGlobal.getAperture(i);
             Aperture bP = BPersonal.getAperture(i);
-            x.velAperture(wAperture,c1Aperture,c2Aperture,bG,bP);
-            x.velIntensity(wIntensity,c1Intensity,c2Intensity,bG,bP);
+            
+            x.velAperture(wAperture, c1Aperture, c2Aperture, cnAperture, bG, bP);
+            x.velIntensity(wIntensity, c1Intensity, c2Intensity, cnIntensity, bG, bP);
         }
     }
 
@@ -261,7 +262,16 @@ public class Beam {
         this.totalBeamlets = totalBeamlets;
     }
 
-
+    public Double getIntensityByAperture(int apertureIndex) throws Exception {
+        double intensity;
+        try {
+            intensity = A.get(apertureIndex).getIntensity();
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new Exception("La intensidad no ha sido encontrada ");
+        }
+        return intensity;
+    }
     /*-------------------------------------------------------- PRINTERS -------------------------------------- */
 
     public void printIntensityMatrix(){

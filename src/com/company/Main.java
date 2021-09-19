@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Vector;
+
 import java.util.Scanner;
 import java.util.HashMap;
 
@@ -36,6 +37,33 @@ public class Main {
 
         return resultado;
     }
+
+    public static Pair<String,String> getInstanceById(Integer index) throws FileNotFoundException {
+
+        String indexFile = "src/data/index_instances.txt";
+        String folder_coord = "1_1";
+        File of = new File(indexFile);
+
+        Scanner reading = new Scanner(of);
+        
+        int nLine = 1;
+        while(reading.hasNextLine()){
+            String linea = reading.nextLine();
+            if (nLine == index){
+                folder_coord = linea;
+                break;
+            }    
+            nLine++;
+        }
+        
+        folder_coord = "src/data/"+folder_coord+"/";
+        String instance_file = folder_coord + "Instance.txt";
+        String coordinate_file = folder_coord + "coordinates_instance.txt";
+        
+        reading.close();
+        return new Pair(instance_file, coordinate_file);
+    }
+
 
     public static Vector<Integer> get_angles(String nameFile) throws FileNotFoundException {
         File testInstance = new File(nameFile);
@@ -98,10 +126,11 @@ public class Main {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        String file = "src/data/test_instance_0_70_140_210_280.txt";
-        String file2 = "src/data/test_instance_coordinates.txt";
-        
+
         HashMap<String, String> params = mappingArg(args);
+
+        //Instance 0-70-140-210-280 CERR PACKAGE
+        int instanceId = 71;
 
         //MLC Configuration    
         int max_intensity = 10; //10 x apertura - probar este parametro
@@ -112,7 +141,7 @@ public class Main {
         //Particle configuration
         int setup = 4;
         int diffSetup = 4;
-
+        int nThreads = 1;
         /*
             OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1; 
             CLOSED_MIN_SETUP = 2; CLOSED_MAX_SETUP = 3;
@@ -120,17 +149,18 @@ public class Main {
         */
 
         //Parametros PSO
-        String [] parameters = {"","","c2Aperture","","c1Intensity","c2Intensity","inerIntensity"};
-        int size = 400; //Particle size
-        int iter = 100; //Pso Iterations
+        int size = 20; //Particle size
+        int iter = 20; //Pso Iterations
         
         double c1Aperture = 1;          // Coef Global
         double c2Aperture = 1;          // Coef Personal
         double inerAperture = 1;        // Inner
+        double cnAperture = 1; // constriction Factor
 
         double c1Intensity = 1;         // Coef Global
         double c2Intensity = 1;         // Coef Personal
         double inerIntensity = 1;       // Inner
+        double cnIntensity = 1; // constriction Factor
         
         if(params.containsKey("size")) 
             size = Integer.parseInt(params.get("size"));
@@ -143,6 +173,8 @@ public class Main {
             c2Aperture = Double.parseDouble(params.get("c2Aperture"));
         if(params.containsKey("inerAperture")) 
             inerAperture = Double.parseDouble(params.get("inerAperture"));
+        if(params.containsKey("cnAperture")) 
+            cnAperture = Double.parseDouble(params.get("cnAperture"));
         
         if(params.containsKey("c1Intensity")) 
             c1Intensity = Double.parseDouble(params.get("c1Intensity"));
@@ -150,13 +182,20 @@ public class Main {
             c2Intensity = Double.parseDouble(params.get("c2Intensity"));
         if(params.containsKey("inerIntensity")) 
             inerIntensity = Double.parseDouble(params.get("inerIntensity"));
-        
+        if(params.containsKey("cnIntensity")) 
+            cnIntensity = Double.parseDouble(params.get("cnIntensity"));
+        if(params.containsKey("i")) 
+            instanceId = Integer.parseInt(params.get("i"));
+        if(params.containsKey("nThreads"))
+            nThreads = Integer.parseInt(params.get("nThreads"));
+            if(nThreads > 3){
+                nThreads = 3;
+            }
 
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
         System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture); 
         System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity); 
-
-
+        System.out.println("nThreads: " + nThreads);
         Vector<Double> w = new Vector<>();
         w.add(1.0);
         w.add(1.0);
@@ -170,34 +209,40 @@ public class Main {
 
         Vector<Double> Zmax = new Vector<>();
         Zmax.add(65.0);
-        Zmax.add(65.0); //Anterior 60
+        Zmax.add(65.0);
         Zmax.add(76.0);
+        
+        Pair<String,String> dataToLoad = getInstanceById(instanceId);
+        String file = dataToLoad.getFirst();
+        String file2 = dataToLoad.getSecond();
 
         Vector<Integer> angles = get_angles(file);
-        Collimator collimator = new Collimator(file2, angles);
-        Vector<Volumen> volumes = createVolumes(file);
 
+        // Informacion del Collimator
+        Collimator collimator = new Collimator(file2, angles);
+
+        // Informacion de los organos desde DDM
+        Vector<Volumen> volumes = createVolumes(file);
+        
         ArrayList<Integer> maxApertures = new ArrayList<>();
         for (int a = 0; a < angles.size(); a++) {
             maxApertures.add(5);
         }
 
-        
+
+        Long initialAlgorithmTime = System.currentTimeMillis();
         // Creating the swarm
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
-                                c1Aperture, c2Aperture, inerAperture, c1Intensity, c2Intensity, inerIntensity, size, iter);
+                                c1Aperture, c2Aperture, inerAperture, cnAperture,
+                                c1Intensity, c2Intensity, inerIntensity, cnIntensity, size, iter, nThreads);
+        
         swarm.MoveSwarms();
-
+        Long finalAlgorithmTime = System.currentTimeMillis();
+        System.out.println("Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
+        /*
         //Get the Solution of the algorithm
-        //Particle particle = swarm.getBestGlobalParticle();
+        Particle particle = swarm.getBestGlobalParticle();
+        */
 
-        //Used to calculate the execution minutes
-        // Long finalClock = (System.currentTimeMillis() - initialClock);
-        // long totalMinutes = TimeUnit.MILLISECONDS.toMinutes(finalClock);
-        // System.out.println("Final time :"+ totalMinutes);
-
-        //Stadistics of the solution
-        // CreateCSV createCSV = new CreateCSV(particle);
-        // createCSV.collimatorIndex(collimator);
     }
 }
