@@ -183,6 +183,34 @@ public class Aperture {
         setIntensity(newIntensity);
     }
 
+    public boolean getProyectedBeamLet(int indexBeamlet){
+        int counterLocal = 0;
+        for(int i = 0; i < collimator.getxDim(); i++){
+
+            Pair<Integer, Integer> x = collimator.getActiveRange(i, angle);
+            Pair<Integer, Integer> positionApertures = A.get(i);
+
+            if(x.getFirst() < 0 ) {
+                continue;
+            }
+            for(int j = x.getFirst(); j <= x.getSecond(); j++){
+                if(counterLocal == indexBeamlet){
+                    if(j > positionApertures.getFirst() && j < positionApertures.getSecond() ){
+                        return true;
+                    }else{
+                        return false;
+                    }
+                }
+                counterLocal ++;
+            }
+        }
+        if(counterLocal != collimator.getNangleBeamlets(angle)){
+            System.out.println("ERROR: LA CANTIDAD DE BEAMLETS NO COINCIDE");
+            System.out.println("CONTADOS: "+ counterLocal + " REGISTRADOS: "+ collimator.getNangleBeamlets(angle));
+            System.exit(0);
+        }
+        return false;
+    }
     /*---------------------------------------------------GETTERS AND SETTERS------------------------------------------------------------*/
 
     public Pair<Integer,Integer> getOpBeam(int i){
