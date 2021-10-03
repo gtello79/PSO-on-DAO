@@ -19,6 +19,13 @@ public class Matrix {
         }
     }
 
+    public Matrix(Matrix newMatrix){
+        this.rows = newMatrix.getX();
+        this.cols = newMatrix.getY();
+
+        this.p = newMatrix.p.clone();
+    }
+
     public void sumPos(int x, int y, int val){
         for(int i = 0; i < rows ; i++){
             if(i == x){
