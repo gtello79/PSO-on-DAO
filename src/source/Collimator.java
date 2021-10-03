@@ -206,7 +206,7 @@ public class Collimator {
                     // Significa que la fila no esta activa, que no tiene beamlets en ella
                     activeRange.add(new Pair(-1,-1));
                 }else{
-                    //
+                    // Fila abierta
                     Vector<Integer> orderItems = new Vector<>();
                     for (Integer index: filter){
                         orderItems.add(index);
