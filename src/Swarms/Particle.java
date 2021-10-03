@@ -10,7 +10,7 @@ public class Particle extends Thread{
     private double fitness;
     private double bestFitness;
     private Plan bestPersonal;
-    private final Plan currentPlan;
+    private Plan currentPlan;
     private Particle bestGlobal;
     private int setupRunnerThread;
     private double c1ApertureThread;
@@ -78,7 +78,8 @@ public class Particle extends Thread{
 
             case MOVEMENT_THREAD:
                 // Calcular velocidad
-                CalculateVelocity(c1ApertureThread, c2ApertureThread, innerApertureThread, cnApertureThread, c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
+                CalculateVelocity(c1ApertureThread, c2ApertureThread, innerApertureThread, cnApertureThread,
+                                    c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
                 // Calcular posicion
                 CalculatePosition();
                 setupRunnerThread++;
@@ -91,8 +92,6 @@ public class Particle extends Thread{
         }
     }
 
-
-    
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public double getFitness() {
         return this.fitness;
