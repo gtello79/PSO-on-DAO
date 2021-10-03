@@ -32,6 +32,7 @@ public class Swarm {
     private int threadsToUse = 1;
 
     private boolean callablefunctions = false;
+    private Vector<double[]> evalTrack;
 
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
     public Swarm(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity , int initial_intensity, int step_intensity,
@@ -43,7 +44,7 @@ public class Swarm {
         setIter(iter);
 
         this.swarm = new ArrayList<>();
-
+        this.evalTrack = new Vector<>();
         /*A Particles set will be created*/
         for(int i = 0; i < size ; i++){
             Particle newParticle;
@@ -55,6 +56,7 @@ public class Swarm {
                 setBestGlobalParticle(newParticle);
                 setBestGlobalEval(newParticle.getFitness());
                 this.firstSolution = bestGlobalEval;
+
             }else{
                 newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
             }
@@ -88,6 +90,10 @@ public class Swarm {
         setCnIntensity(cnIntensity);
 
         CalculateNewBestGlobal();
+        double[] x = new double[2];
+        x[0] = 0.0;
+        x[1] = this.bestGlobalEval;
+        evalTrack.add(x);
     }
 
 
@@ -100,28 +106,43 @@ public class Swarm {
             // Habilitacion de función por paralelismo
             if(callablefunctions){
                 ParticlesMovementThreads();
+                if(i%10 == 0 && i > 1){
+                    System.out.println("Optimizacion de intensidad");
+                    OptimizateIntensities();
+                }
                 change = evalParticlesThread();
             }
             else{
                 calculateVelocity();
                 calculatePosition();
+
                 change = evalParticles();
+
+                if(i%10 == 0 && i > 1){
+                    System.out.println("Optimizacion de intensidad");
+                    OptimizateIntensities();
+                    change = evalParticles();
+                }
+
             }
 
-            if(i%10 == 0){
-                System.out.println("Optimizacion de intensidad");
-                //OptimizateIntensity();
-            }
             CalculateNewBestPersonal();
 
             if(change){
                 setGlobalUpdateCount();
                 setLastChange(i);
+
+                double[] x = new double[2];
+                x[0] = (double)i;
+                x[1] = this.bestGlobalEval;
+                evalTrack.add(x);
             }
             System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
         }
 
-        //bestGlobalParticle.printFluenceMapByBeam();
+        System.out.println("Evaluation Track");
+        System.out.println(this.evalTrack);
+
         System.out.println("Initial solution: " + firstSolution  + " - Final solution: "+ bestGlobalEval + " - last Change: "+ lastChange);
         System.out.println(firstSolution  + " " + bestGlobalEval + " " + globalUpdateCount + " " + lastChange);
     }
@@ -140,7 +161,7 @@ public class Swarm {
         }
     }
 
-    public void OptimizateIntensites(){
+    public void OptimizateIntensities(){
         for(Particle particle: swarm){
             particle.OptimizateIntensities();
         }
@@ -150,6 +171,7 @@ public class Swarm {
         boolean changeGlobal = false;
         int i = 0;
         for(Particle particle: swarm){
+            double lastFitness = particle.getFitness();
             particle.evalParticle();
 
             //Calculate new Best Global
@@ -158,7 +180,7 @@ public class Swarm {
                 setBestGlobalEval(particle.getFitness());
                 changeGlobal = true;
             }
-            System.out.println("Particle "+i+": "+particle.getFitness());
+            System.out.println("Particle "+i+": "+ lastFitness +" -> "+particle.getFitness());
             i++;
         }
         return changeGlobal;
