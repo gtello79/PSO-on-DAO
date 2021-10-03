@@ -130,10 +130,12 @@ public class Beam {
 
         for(Aperture ap : A) {
             double apIntensity = ap.getIntensity();
+
+            //Intensidad 0 -> No hay necesidad de iterar
             for (int i = 0; i < collimator.getxDim(); i++) {
                 aux = collimator.getActiveRange(i, angle);
 
-                if (aux.getFirst() < 0 || ap.getOpBeam(i).getFirst() < -1 || apIntensity <= 0.0)
+                if (aux.getFirst() < 0 || ap.getOpBeam(i).getFirst() < -1 )
                     continue;
 
                 for (int j = ap.getOpBeam(i).getFirst()+1 ; j < ap.getOpBeam(i).getSecond(); j++) {
@@ -142,20 +144,7 @@ public class Beam {
                 }
             }
         }
-
         buildIntensityVector();
-    }
-
-    public void buildIntensityVector(){
-        this.fluenceMap = new Vector<>();
-        for(int i = 0; i < collimator.getxDim(); i++){
-            Pair<Integer,Integer> x = collimator.getActiveRange(i,angle);
-            if(x.getFirst() < 0 )
-                continue;
-            for(int j = x.getFirst(); j <= x.getSecond(); j++){
-                fluenceMap.add(I.getPos(i,j));
-            }
-        }
     }
 
     public void clearIntensity(){
@@ -171,6 +160,36 @@ public class Beam {
         }
     }
 
+    public void buildIntensityVector(){
+        this.fluenceMap = new Vector<>();
+
+        for(int i = 0; i < collimator.getxDim(); i++){
+            Pair<Integer,Integer> x = collimator.getActiveRange(i,angle);
+            if( x.getFirst() < 0 )
+                continue;
+            for(int j = x.getFirst(); j <= x.getSecond(); j++){
+                fluenceMap.add(I.getPos(i,j));
+            }
+        }
+    }
+
+    public boolean setIntensityByAperture(double[] intensitySolver){
+        if(A.size() != intensitySolver.length){
+            System.out.println("ERROR EN LAS INTENSIDADES OBTENIDAS");
+            return false;
+        }else {
+            for (int a = 0; a < A.size(); a++) {
+                Aperture aperture = A.get(a);
+                aperture.setIntensity(intensitySolver[a]);
+            }
+        }
+        return true;
+    }
+
+    public boolean getProyectedBeamLetByAperture(int idAperture, int indexBeamlet){
+        Aperture ap = A.get(idAperture);
+        return ap.getProyectedBeamLet(indexBeamlet);
+    }
 
     /* ------------------------------------------------ PSO METHODS ----------------------------------*/
     public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture, double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Beam BGlobal, Beam BPersonal){
@@ -191,6 +210,7 @@ public class Beam {
         }
         generateIntensities();
     }
+
 
     /* ------------------------------------------------- GETTER Y SETTERS ---------------------------------------------------*/
 
@@ -272,8 +292,8 @@ public class Beam {
         }
         return intensity;
     }
-    /*-------------------------------------------------------- PRINTERS -------------------------------------- */
 
+    /* -------------------------------------------------------------------- PRINTERS -------------------------------------------------------------------- */
     public void printIntensityMatrix(){
         System.out.println(angle + ": ");
         for(int i = 0; i < collimator.getxDim(); i++){
