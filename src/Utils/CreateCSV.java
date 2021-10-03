@@ -21,7 +21,7 @@ public class CreateCSV {
         String intensityFolderPath = "./intensityFolder/";
         String apertureFolderPath = "./apertureFolder/";
         Plan plan = particle.getCurrentPlan();
-
+        /*
         for(Beam beam: plan.getAngle_beam()){
             String fileName1 = UID + "-intensityMatrix"+beam.getIdBeam();
             String fileName2 = UID + "-Apertures"+beam.getIdBeam();
@@ -30,10 +30,11 @@ public class CreateCSV {
             int gdim = beam.getCollimatorDim();
             apertureMatrix(apertureFolderPath, fileName2, beam.getIdBeam(), beam.getApertures(), gdim);
         }
-
+        */
         System.out.println("DONE - UID Experiment: " + id);
         //System.out.println("Aperture Folder on " + apertureFolderPath + " - Intensity Folder on " + intensityFolderPath );
-        IntensityVector(plan);
+        //IntensityVector(plan);
+        this.printAperturesToAMPL(plan);
     }
 
     private void intensityMatrixToCSV(String path ,String fileName, int angle, Matrix matrix){
@@ -160,6 +161,21 @@ public class CreateCSV {
             e.printStackTrace();
         }
 
+    }
+
+    public void printAperturesToAMPL(Plan tp){
+        int[] beamAngles = tp.getBeamletsByBeam();
+        for(int i = 0; i < beamAngles.length; i++){
+            int totalBeamlets = beamAngles[i];
+            for(int a = 0; a < 5; a++){
+                System.out.println("param x"+(i+1)+(a+1)+" :=");
+                for(int j = 0; j < totalBeamlets; j++){
+                    System.out.println((j+1)+"    "+ tp.getProyectedBeamLetByApertureOnBeam(i,a,j));
+                }
+                System.out.println(";");
+                System.out.println("");
+            }
+        }
     }
 
 }
