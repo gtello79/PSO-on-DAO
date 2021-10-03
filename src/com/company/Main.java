@@ -149,8 +149,8 @@ public class Main {
         */
 
         //Parametros PSO
-        int size = 20; //Particle size
-        int iter = 20; //Pso Iterations
+        int size = 6; //Particle size
+        int iter = 50; //Pso Iterations
         
         double c1Aperture = 1;          // Coef Global
         double c2Aperture = 1;          // Coef Personal
@@ -199,7 +199,7 @@ public class Main {
         Vector<Double> w = new Vector<>();
         w.add(1.0);
         w.add(1.0);
-        w.add(5.0); //valor 5.0
+        w.add(5.0);
 
         Vector<Double> Zmin = new Vector<>();
         Zmin.add(0.0);
