@@ -1,5 +1,6 @@
 package SRCDAO;
 import Utils.Gurobi_Solver;
+import gurobi.GRBException;
 import source.*;
 
 import java.util.ArrayList;
@@ -23,11 +24,14 @@ public class Plan {
 
     private Gurobi_Solver gurobiSolver;
     private int[] beamIndex;
+    private Vector<Volumen> volumen;
+    private int[] beamletsByBeam;
     /*---------------------------------------------- METHODS -----------------------------------------------------------------------*/
 
     public Plan(Vector<Double> w, Vector<Double> zMin, Vector<Double> zMax, ArrayList<Integer> maxApertures, int max_intensity,
                 int initial_intensity, int step_intensity, int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator) {
 
+        System.out.println("------------ Initilizing plan. -----------------");
         setNBeam(collimator.getNbAngles());
         setW(w);
         setZMin(zMin);
@@ -39,23 +43,24 @@ public class Plan {
         this.maxApertures = new ArrayList(maxApertures);
         this.maxIntensityByAperture = max_intensity;
         this.beamIndex = new int[getNBeam()];
-
-        System.out.println("-------- Initilizing plan.-----------");
+        this.volumen = volumen;
+        this.beamletsByBeam = new int [nBeam];
         for (int i = 0; i < nBeam; i++) {
-
             Beam new_beam = new Beam(collimator.getAngle(i), maxApertures.get(i) , max_intensity, initial_intensity, step_intensity, open_apertures, setup, collimator);
             Angle_beam.add(new_beam);
             beamIndex[i] = new_beam.getIdBeam();
+            this.beamletsByBeam[i] = new_beam.getTotalBeamlets();
         }
 
-        //this.gurobiSolver = new Gurobi_Solver(this, volumen, beamIndex, [1.0,2.0], w);
+
 
         System.out.println("--Created " + Angle_beam.size() + " Stations Beams");
         eval();
         System.out.println("--Initial Evaluation: " + getEval());
+
     }
 
-
+    //Constructor de copia de un Treatment Plan
     public Plan(Plan p){
 
         setEval(p.eval);
@@ -74,25 +79,81 @@ public class Plan {
         this.maxIntensityByAperture = p.maxIntensityByAperture;
         this.setAngle_beam(p.getAngle_beam());
         this.beamIndex = new int[getNBeam()];
-        /*
-        //Copiando cada beam del Plan P en la nueva instancia
-        for(Beam b: p.getAngle_beam()){
-            Beam newBeam = new Beam(b);
-            Angle_beam.add(newBeam);
-        }
-        */
 
+        Vector<Volumen> newOrgs = new Vector<>();
+        for(int i = 0; i < p.volumen.size(); i++){
+            Volumen v = new Volumen(p.volumen.get(i));
+            newOrgs.add(v);
+
+        }
+        this.volumen = newOrgs;
         setEval(p.eval);
     }
 
     /*Funcion de evaluacion */
     public double eval() {
         this.fluenceMap = getFluenceMap();
-
         double val = ev.evalIntensityVector(fluenceMap, w, zMin, zMax);
         setEval(val);
         return val;
     }
+
+    public void OptimizateIntensities(){
+        //Optimizate Intensities
+        double [] dd = new double[3];
+        dd[0] = zMax.get(0);
+        dd[1] = zMax.get(1);
+        dd[2] = zMax.get(2);
+
+        try {
+            Gurobi_Solver newModel;
+            try {
+                newModel = new Gurobi_Solver(this, volumen, beamIndex, dd, w);
+                setIntensity(newModel.newIntensity);
+                double objFunction = newModel.objVal;
+                System.out.println("Solver: " + newModel.objVal);
+                //setEval(newModel.objVal); // -> Recuperar valor de la funcion objetivo
+            } catch (GRBException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        buildTreatmentPlan();
+    }
+
+    public void buildTreatmentPlan(){
+        for(int i = 0; i < Angle_beam.size(); i++){
+            // Tomar cada beam
+            Beam b = Angle_beam.get(i);
+            // Construirlo ( limpiar Intensity Map )
+            b.generateIntensities();
+        }
+    }
+
+    public int getProyectedBeamLetByApertureOnBeam(int indexBeam, int idAperture, int indexBeamlet ){
+        Beam beam = Angle_beam.get(indexBeam);
+        int coef = 0;
+        if(beam.getProyectedBeamLetByAperture(idAperture, indexBeamlet)){
+            coef+=1;
+        }
+        return coef;
+    }
+
+    public boolean setIntensity(double[][] newIntensities){
+        boolean process = true;
+
+        for(int b = 0; b < Angle_beam.size(); b++){
+            Beam beam = Angle_beam.get(b);
+            double[] apertureIntensities = newIntensities[b];
+            boolean action = beam.setIntensityByAperture(apertureIntensities);
+            if(!action)
+                return false;
+        }
+        return process;
+    }
+
 
     /* --------------------------------------- PSO METHODS ---------------------------------------- */
 
@@ -111,11 +172,6 @@ public class Plan {
         for (Beam actual : Angle_beam) {
             actual.CalculatePosition();
         }
-    }
-
-    public void OptimizateIntensities(){
-        //Optimizate Intensities
-        //Gurobi_Solver(this,)
     }
 
     /*--------------------------------------------------------- GETTER AND SETTERS -----------------------------------------------------*/
@@ -137,6 +193,10 @@ public class Plan {
         }
         System.out.println("ALERTA, BEAM "+ to_search +" NO ENCONTRADO");
         return null;
+    }
+
+    public int[] getBeamletsByBeam(){
+        return this.beamletsByBeam;
     }
 
     public Integer getMaxIntensityByAperture(){
@@ -229,21 +289,7 @@ public class Plan {
         return apertures;
     }
 
-
-    /*--------------------------------------------------------- PRINTERS -----------------------------------------------------*/
-
-    public void printIntensityMatrix(){
-        for(Beam b: Angle_beam){
-            b.printIntensityMatrix();
-        }
-    }
-
-    public void printFluenceMap(){
-        for (Double i: fluenceMap){
-            System.out.print(i + " ");
-        }
-        System.out.println();
-    }
+    /* --------------------------------------------------------- PRINTERS ----------------------------------------------------- */
 
     public void printFluenceMapByBeam(){
         for(Beam b : Angle_beam){
