@@ -2,6 +2,7 @@ package Utils;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Vector;
 
 import SRCDAO.Aperture;
@@ -60,7 +61,7 @@ public class CreateCSV {
         }
     }
 
-    private void apertureMatrix(String path, String fileName, int angle, Vector<Aperture> apertureVector, int gDim){
+    private void apertureMatrix(String path, String fileName, int angle, ArrayList<Aperture> apertureVector, int gDim){
         final String NextLine = "\n";
         final String delimiter = ",";
         try{
@@ -69,7 +70,7 @@ public class CreateCSV {
             matrixCSV.append(NextLine);
             for(Aperture a : apertureVector){
                 String apertureChain = "";
-                Vector<Pair<Integer, Integer>> shapes = a.getApertures();
+                ArrayList<Pair<Integer, Integer>> shapes = a.getApertures();
                 apertureChain += Double.toString(a.getIntensity()) + '\n';
 
                 //Filas de aperturas
@@ -102,7 +103,7 @@ public class CreateCSV {
 
     public void collimatorIndex(Collimator collimator){
         String collimatorPath = "./import/collimatorIndex/";
-        Vector<Integer> angles = collimator.getAngles();
+        ArrayList<Integer> angles = collimator.getAngles();
         for(Integer angle: angles){
             Vector<Pair<Double,Double>> angleCoordMatr = collimator.getAngleCoordMatr().get(angle);
             Vector<Pair<Integer,Integer>> angleCoordNew = collimator.getAngleCoord().get(angle);

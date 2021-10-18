@@ -11,25 +11,26 @@ public class Plan {
     private int nBeam;
     private int totalBeamLet;
     private int maxIntensityByAperture;
+    private int totalAperturesUnsed;
 
-    private Vector<Double> w;
-    private Vector<Double> zMin;
-    private Vector<Double> zMax;
-    private Vector<Integer> beamletsByAngle;
+    private ArrayList<Volumen> volumen;
+    private ArrayList<Double> w;
+    private ArrayList<Double> zMin;
+    private ArrayList<Double> zMax;
     private ArrayList<Integer> maxApertures;
 
-    private Vector<Beam> Angle_beam;
-    private Vector<Double> fluenceMap;
+    private ArrayList<Beam> Angle_beam;
+    private ArrayList<Double> fluenceMap;
     private EvaluationFunction ev;
 
     private Gurobi_Solver gurobiSolver;
     private int[] beamIndex;
-    private Vector<Volumen> volumen;
+
     private int[] beamletsByBeam;
     /*---------------------------------------------- METHODS -----------------------------------------------------------------------*/
 
-    public Plan(Vector<Double> w, Vector<Double> zMin, Vector<Double> zMax, ArrayList<Integer> maxApertures, int max_intensity,
-                int initial_intensity, int step_intensity, int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator) {
+    public Plan(ArrayList<Double> w, ArrayList<Double> zMin, ArrayList<Double> zMax, ArrayList<Integer> maxApertures, int max_intensity,
+                int initial_intensity, int step_intensity, int open_apertures, int setup, ArrayList<Volumen> volumen, Collimator collimator) {
 
         System.out.println("------------ Initilizing plan. -----------------");
         setNBeam(collimator.getNbAngles());
@@ -37,22 +38,23 @@ public class Plan {
         setZMin(zMin);
         setZMax(zMax);
 
-        this.Angle_beam = new Vector<>();
+        this.Angle_beam = new ArrayList<>();
+        this.maxApertures = new ArrayList(maxApertures);
+
         this.ev = new EvaluationFunction(volumen);
         this.totalBeamLet = collimator.getNbBeamlets();
-        this.maxApertures = new ArrayList(maxApertures);
         this.maxIntensityByAperture = max_intensity;
         this.beamIndex = new int[getNBeam()];
         this.volumen = volumen;
         this.beamletsByBeam = new int [nBeam];
+        this.totalAperturesUnsed = 0;
+
         for (int i = 0; i < nBeam; i++) {
             Beam new_beam = new Beam(collimator.getAngle(i), maxApertures.get(i) , max_intensity, initial_intensity, step_intensity, open_apertures, setup, collimator);
             Angle_beam.add(new_beam);
             beamIndex[i] = new_beam.getIdBeam();
             this.beamletsByBeam[i] = new_beam.getTotalBeamlets();
         }
-
-
 
         System.out.println("--Created " + Angle_beam.size() + " Stations Beams");
         eval();
@@ -72,7 +74,7 @@ public class Plan {
         setZMin(p.zMin);
         setFluenceMap(p.getFluenceMap());
 
-        this.Angle_beam = new Vector();
+        this.Angle_beam = new ArrayList();
         this.maxApertures = new ArrayList(p.maxApertures);
         this.ev = p.ev;
         this.totalBeamLet = p.totalBeamLet;
@@ -80,7 +82,7 @@ public class Plan {
         this.setAngle_beam(p.getAngle_beam());
         this.beamIndex = new int[getNBeam()];
 
-        Vector<Volumen> newOrgs = new Vector<>();
+        ArrayList<Volumen> newOrgs = new ArrayList<>();
         for(int i = 0; i < p.volumen.size(); i++){
             Volumen v = new Volumen(p.volumen.get(i));
             newOrgs.add(v);
@@ -175,23 +177,34 @@ public class Plan {
     }
 
     /*--------------------------------------------------------- GETTER AND SETTERS -----------------------------------------------------*/
-    public Vector<Double> getFluenceMap(){
-        Vector<Double> intensityVector = new Vector<Double>();
+    public ArrayList<Double> getFluenceMap(){
+        ArrayList<Double> intensityVector = new ArrayList<Double>();
+
         for(Beam pivote: Angle_beam){
-            Vector<Double> v =  pivote.getIntensityVector();
-            for(Double i: v){
-                intensityVector.add(i);
-            }
+            ArrayList<Double> v =  pivote.getIntensityVector();
+            intensityVector.addAll(v);
         }
         return intensityVector;
     }
 
-    public Beam getByID(int to_search){
+    public ArrayList<Integer> getAperturesUnUsed(){
+        ArrayList<Integer> unUsedByBeam = new ArrayList<>();
+        int aperturesUnUsed = 0;
+        for(int b = 0; b < this.nBeam; b++){
+            int unUsed = Angle_beam.get(b).getAperturesUnused();
+            aperturesUnUsed+=unUsed;
+            unUsedByBeam.add(unUsed);
+        }
+        this.totalAperturesUnsed = aperturesUnUsed;
+        return unUsedByBeam;
+    }
+
+    public Beam getByID(int idBeamToSearch){
         for(Beam b: Angle_beam){
-            if(b.getIdBeam() == to_search)
+            if(b.getIdBeam() == idBeamToSearch)
                 return b;
         }
-        System.out.println("ALERTA, BEAM "+ to_search +" NO ENCONTRADO");
+        System.out.println("ALERTA, BEAM "+ idBeamToSearch +" NO ENCONTRADO");
         return null;
     }
 
@@ -219,50 +232,38 @@ public class Plan {
         return nBeam;
     }
 
-    public void setW(Vector<Double> w) {
+    public void setW(ArrayList<Double> w) {
         this.w = w;
     }
 
-    public void setZMin(Vector<Double> zMin) {
-        this.zMin = new Vector(zMin);
+    public void setZMin(ArrayList<Double> zMin) {
+        this.zMin = new ArrayList(zMin);
     }
 
-    public void setZMax(Vector<Double> zMaxVector) {
-        this.zMax = new Vector<>(zMaxVector);
+    public void setZMax(ArrayList<Double> zMaxVector) {
+        this.zMax = new ArrayList(zMaxVector);
     }
 
     public void setTotalBeamlet(int totalBeamLet) {
         this.totalBeamLet = totalBeamLet;
     }
 
-    public Vector<Beam> getAngle_beam() {
+    public ArrayList<Beam> getAngle_beam() {
         return Angle_beam;
     }
 
-    public void setAngle_beam(Vector<Beam> angle_beam) {
-        Vector<Beam> newAngleBeam = new Vector<>();
+    public void setAngle_beam(ArrayList<Beam> angle_beam) {
+        ArrayList<Beam> newAngleBeam = new ArrayList<>();
         for(Beam beam: angle_beam){
             Beam beamAngle = new Beam(beam);
             newAngleBeam.add(beamAngle);
             //this.Angle_beam.add(beamAngle);
         }
-        this.Angle_beam = new Vector(newAngleBeam);
+        this.Angle_beam = new ArrayList(newAngleBeam);
     }
 
-    public void setFluenceMap(Vector<Double> fluenceMap) {
-        this.fluenceMap = new Vector(fluenceMap);
-    }
-
-    public ArrayList<Matrix> getIntensitiesMatrix(){
-        ArrayList<Matrix> matrixArrayList = new ArrayList<>();
-        for(Beam beam: Angle_beam){
-            matrixArrayList.add(beam.getIntensitisMatrix());
-        }
-        return  matrixArrayList;
-    }
-
-    public Vector<Integer> getBeamletsByAngle(){
-        return this.beamletsByAngle;
+    public void setFluenceMap(ArrayList<Double> fluenceMap) {
+        this.fluenceMap = new ArrayList(fluenceMap);
     }
 
     public ArrayList<Integer> getMaxApertures(){
@@ -287,14 +288,6 @@ public class Plan {
             e.printStackTrace();
         }
         return apertures;
-    }
-
-    /* --------------------------------------------------------- PRINTERS ----------------------------------------------------- */
-
-    public void printFluenceMapByBeam(){
-        for(Beam b : Angle_beam){
-            b.printFluenceMapOnBeam();
-        }
     }
 
 }

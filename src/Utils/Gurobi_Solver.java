@@ -21,7 +21,7 @@ public class Gurobi_Solver {
     public int aperture;                        //number of aperture
 
     public int[] bmlts;                         // number of beamlets by angles
-    public Vector<Double> weight;               //weights of objective
+    public ArrayList<Double> weight;               //weights of objective
 
     public int totalBmlts;                      //total beamlets
     public int[] angles;
@@ -43,12 +43,13 @@ public class Gurobi_Solver {
     GRBEnv env;
     GRBModel model;
 
-    Vector<Volumen> M;
+    ArrayList<Volumen> M;
     //DDM M;
     Plan sol;
 
-    public Gurobi_Solver(Plan sol, Vector<Volumen> volumen, int[] selAngles, double[] dd, Vector<Double> weight) throws Exception {
+    public Gurobi_Solver(Plan sol, ArrayList<Volumen> volumen, int[] selAngles, double[] dd, ArrayList<Double> weight) throws Exception {
 
+        this.sol=sol;
         this.beams = sol.getNBeam();
         this.eud = doubletoint(dd);
         this.organs = volumen.size();
@@ -61,7 +62,6 @@ public class Gurobi_Solver {
         this.minIntensity = 0;
         this.maxIntensity = sol.getMaxIntensityByAperture()*this.aperture;
         this.M = volumen;
-        this.sol=sol;
 
         for(int i = 0; i<R.length; i++) {
             this.R[i] = M.get(i).getNb_voxels();
@@ -74,15 +74,15 @@ public class Gurobi_Solver {
         env.dispose();
     }
 
-    public Gurobi_Solver(Plan sol, Vector<Volumen> volumen, int[] selAngles, double[] dd, Vector<Double> weight, int a, int n) throws Exception {
+    public Gurobi_Solver(Plan sol, ArrayList<Volumen> volumen, int[] selAngles, double[] dd, ArrayList<Double> weight, int a, int n) throws Exception {
+
         this.sol=sol;
         this.weight=weight;
         this.beams = sol.getNBeam();
         this.eud=doubletoint(dd);
         this.organs= volumen.size();
         this.aperture = sol.getTotalApertureByBeam(0);
-        this.bmlts=new int[beams];
-        this.bmlts=selAngles;
+        this.bmlts = sol.getBeamletsByBeam();
 
         this.aperture = sol.getMaxApertures().get(0);
         this.minIntensity = n;
@@ -102,7 +102,7 @@ public class Gurobi_Solver {
 
     }
 
-    public Gurobi_Solver(Plan sol, Vector<Volumen> volumen, int[] selAngles, double[] dd, Vector<Double> weight, int min) throws Exception {
+    public Gurobi_Solver(Plan sol, ArrayList<Volumen> volumen, int[] selAngles, double[] dd, ArrayList<Double> weight, int min) throws Exception {
         this.sol = new Plan(sol);
         this.beams = sol.getNBeam();
         this.eud = doubletoint(dd);
@@ -129,7 +129,7 @@ public class Gurobi_Solver {
         env.dispose();
     }
 
-    public Gurobi_Solver(Plan sol, Vector<Volumen> volumen, int[] selAngles, int[] dd, Vector<Double> weight) throws Exception {
+    public Gurobi_Solver(Plan sol, ArrayList<Volumen> volumen, int[] selAngles, int[] dd, ArrayList<Double> weight) throws Exception {
         this.sol = new Plan(sol);
         this.beams = sol.getNBeam();
         this.eud = dd;
@@ -348,11 +348,7 @@ public class Gurobi_Solver {
         double[][]getIntensity = new double[this.beams][this.aperture];
         for (int i = 0 ; i < this.beams; ++i) {
             for (int j = 0 ; j < this.aperture; ++j) {
-
                 getIntensity[i][j]=intensity[i][j].get(GRB.DoubleAttr.X);
-                //String varName="intensity"+i+"."+j;
-                //getIntensity[i][j]=model.getVarByName(varName).get(GRB.DoubleAttr.X);
-                //intensity[i][j] = model.addVar(minIntensity,maxIntensity,0.0, GRB.CONTINUOUS ,"Intensity" + i + "." + j);
             }
         }
 
@@ -494,13 +490,8 @@ public class Gurobi_Solver {
             getIntensity[i]=new double[totalApertures];
             for (int j = 0; j < totalApertures; ++j) {
                 getIntensity[i][j]=intensity[i][j].get(GRB.DoubleAttr.X);
-                //String varName="intensity"+i+"."+j;
-                //getIntensity[i][j]=model.getVarByName(varName).get(GRB.DoubleAttr.X);
-                //intensity[i][j] = model.addVar(minIntensity,maxIntensity,0.0, GRB.CONTINUOUS ,"Intensity" + i + "." + j);
-
             }
         }
-        //GRBVar[] vars = model.getVars();
         newIntensity = getIntensity;
         objVal = model.get(GRB.DoubleAttr.ObjVal);
     }
@@ -512,7 +503,6 @@ public class Gurobi_Solver {
         this.model = new GRBModel(env);
         model.set(GRB.StringAttr.ModelName, "Direct Aperture Optimization");
 
-        //set Variables
         // set variables for intensity an V
         GRBVar[][] intensity= new GRBVar[beams][aperture];//intensity for beam,for aperture
         GRBVar[][] voxel=new GRBVar[(R.length-1)][];
@@ -632,9 +622,6 @@ public class Gurobi_Solver {
 
     public void writeModel() throws GRBException {
         model.write("out1.lp");
-        // model.write("out1.mst");
-        // model.write("out1.mps");
-        // model.write("out1.sol");
     }
 
 }

@@ -4,9 +4,9 @@ import source.Collimator;
 import source.Volumen;
 
 import java.util.ArrayList;
-import java.util.Vector;
 
 public class Particle extends Thread{
+    int idParticle;
     private double fitness;
     private double bestFitness;
     private Plan bestPersonal;
@@ -27,10 +27,13 @@ public class Particle extends Thread{
     static final int EVAL_THREAD = 1;
 
     /*-------------------------------------------------------------METHODS -------------------------------------------*/
-    public Particle(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity, int initial_intensity, int step_intensity,
-                    int open_apertures, int setup, Vector<Volumen> volumen, Collimator collimator)
+    public Particle(int idParticle, ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures,
+                    int max_intensity, int initial_intensity, int step_intensity,  int open_apertures, int setup,
+                    ArrayList<Volumen> volumen, Collimator collimator)
     {
-        this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
+        this.idParticle = idParticle;
+        this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity,
+                                    open_apertures, setup, volumen, collimator);
         setFitness(currentPlan.getEval());
 
         setBestPersonal(this.currentPlan);
@@ -43,12 +46,15 @@ public class Particle extends Thread{
         this.bestPersonal = new Plan(p.bestPersonal);
         this.fitness = p.fitness;
         this.bestFitness = p.bestFitness;
-
+        this.setupRunnerThread = 0;
     }
 
     public void evalParticle(){
         double lastFitness = this.fitness;
         this.fitness = currentPlan.eval();
+        //System.out.println("Particle "+idParticle+": " +  lastFitness + " -> " + fitness);
+        CalculateBestPersonal();
+
     }
 
     public void CalculateVelocity(double c1Aperture,  double c2Aperture, double wAperture, double cnAperture,
@@ -72,6 +78,7 @@ public class Particle extends Thread{
         }
     }
 
+    @Override
     public void run(){
 
         switch (setupRunnerThread){
@@ -82,7 +89,7 @@ public class Particle extends Thread{
                                     c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
                 // Calcular posicion
                 CalculatePosition();
-                setupRunnerThread++;
+                setupRunnerThread = 1;
                 break;
             case EVAL_THREAD:
                 // Evaluar particula
@@ -93,6 +100,10 @@ public class Particle extends Thread{
     }
 
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
+    public ArrayList<Integer> getTotalUnUsedApertures(){
+        return this.currentPlan.getAperturesUnUsed();
+    }
+
     public double getFitness() {
         return this.fitness;
     }
@@ -180,12 +191,5 @@ public class Particle extends Thread{
     public void setBestGlobal(Particle p){
         this.bestGlobal = new Particle(p);
     }
-
-    /*-------------------------------------- PRINTERS --------------------------------------------------------------------------*/
-    public void printFluenceMapByBeam(){
-        currentPlan.printFluenceMapByBeam();
-    }
-
-
 
 }

@@ -1,19 +1,18 @@
 package SRCDAO;
 
-
 import source.Collimator;
 import source.Pair;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 public class Aperture {
 
     private Collimator collimator;
     private int angle;
     private double intensity;
-    private Vector<Pair<Integer,Integer>> A;
+    private ArrayList<Pair<Integer,Integer>> A;
 
-    private Vector<Pair<Integer,Integer>> velocityA;
+    private ArrayList<Pair<Integer,Integer>> velocityA;
     private double veloc_intensity;
 
     protected int OPEN_MIN_SETUP = 0;
@@ -28,11 +27,11 @@ public class Aperture {
         setIntensity(0.0);
         setVeloc_intensity(1.0);
         this.collimator = collimator;
-        this.velocityA = new Vector<>();
-        this.A = new Vector<>();
+        this.velocityA = new ArrayList<>();
+        this.A = new ArrayList<>();
 
         for(int i = 0; i < collimator.getxDim(); i++)
-            velocityA.add(new Pair(0,0));
+            velocityA.add(new Pair(0,0)); // -> Velocidad 0 para todas las filas
     }
 
     public Aperture(Aperture a){
@@ -45,7 +44,7 @@ public class Aperture {
     }
 
     public void initializeAperture(int type, int open_apertures){
-        Vector<Pair<Integer,Integer>> aux = new Vector<>();
+        ArrayList<Pair<Integer,Integer>> aux = new ArrayList<>();
 
         for(int i = 0; i < collimator.getxDim(); i++){
 
@@ -109,17 +108,21 @@ public class Aperture {
         double r1 = Math.random();
         double r2 = Math.random();
 
-        Vector<Pair<Integer,Integer>> BG = BGlobal.getApertures();
-        Vector<Pair<Integer,Integer>> BP = BPersonal.getApertures();
+        ArrayList<Pair<Integer,Integer>> BG = BGlobal.getApertures();
+        ArrayList<Pair<Integer,Integer>> BP = BPersonal.getApertures();
 
         for(int i = 0; i < collimator.getxDim(); i++){
             Pair<Integer,Integer> aux_G = BG.get(i);
             Pair<Integer,Integer> aux_P = BP.get(i);
 
+            // Se mueven unicamente las que estan disponible para moverse
             if( collimator.getActiveRange(i,angle).getFirst() < 0 )
                 continue;
 
+            // Velocidad de la primera hoja (izquierda)
             Integer first = (int)(cnAperture*(wAperture*velocityA.get(i).getFirst() + c1Aperture*r1*( aux_G.getFirst() - A.get(i).getFirst() )  +  c2Aperture*r2*(aux_P.getFirst() - A.get(i).getFirst() ) ));
+
+            // Velocidad de la segunda hoja (derecha)
             Integer second = (int)(cnAperture*(wAperture*velocityA.get(i).getSecond() + c1Aperture*r1*( aux_G.getSecond() - A.get(i).getSecond() )  +  c2Aperture*r2*(aux_P.getSecond() - A.get(i).getSecond() ) ));
 
             velocityA.set(i, new Pair(first, second));
@@ -159,7 +162,7 @@ public class Aperture {
                 second = limit_sup+1;
             }
 
-            if(first > second) {
+            if(first >= second) {
                 int val = (first + second)/2;
                 first = (val);
                 second = (val)+1;
@@ -237,27 +240,27 @@ public class Aperture {
         this.veloc_intensity = veloc_intensity;
     }
 
-    public void setApertures(Vector<Pair<Integer,Integer>> Aperture){
-        Vector<Pair<Integer,Integer>> newAper = new Vector<>();
+    public void setApertures(ArrayList<Pair<Integer,Integer>> Aperture){
+        ArrayList<Pair<Integer,Integer>> newAper = new ArrayList<>();
 
         for(Pair<Integer,Integer> x: Aperture){
             Pair<Integer, Integer> newShape = new Pair(x.getFirst(), x.getSecond());
             newAper.add(newShape);
         }
-        this.A = new Vector(newAper);
+        this.A = new ArrayList(newAper);
     }
 
-    public void setVelocityA(Vector<Pair<Integer,Integer>> velocAperture){
-        Vector<Pair<Integer,Integer>> newVelocity = new Vector<>();
+    public void setVelocityA(ArrayList<Pair<Integer,Integer>> velocAperture){
+        ArrayList<Pair<Integer,Integer>> newVelocity = new ArrayList<>();
 
         for(Pair<Integer,Integer> x: velocAperture){
             Pair<Integer,Integer> newShape = new Pair(x.getFirst(), x.getSecond());
             newVelocity.add(newShape);
         }
-        this.velocityA = new Vector(newVelocity);
+        this.velocityA = new ArrayList(newVelocity);
     }
 
-    public Vector<Pair<Integer,Integer>> getApertures(){
+    public ArrayList<Pair<Integer,Integer>> getApertures(){
         return A;
     }
 

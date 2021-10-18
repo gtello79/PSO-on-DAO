@@ -8,29 +8,29 @@ public class EvaluationFunction {
     private double evaluation;
 
     //dosis de distribucion por cada organano
-    private final Vector<Vector<Double>> Z;
+    private final ArrayList<ArrayList<Double>> Z;
 
     //Numero de organos, incluyendo el tumor
     private int nbOrgans;
 
     //Numero de voxels por cada organo
-    private final Vector<Integer> nbVoxels;
+    private final ArrayList<Integer> nbVoxels;
 
     //Doses Deposition Matrix
-    private final Vector<Matrix> DDM = new Vector<>();
+    private final ArrayList<Matrix> DDM = new ArrayList<>();
 
     //Numero de beamlets x tejido (hasta el momento se espera que todos sean iguales)
-    private final Vector<Integer> nbBeamLets;
+    private final ArrayList<Integer> nbBeamLets;
 
 
-    public EvaluationFunction(Vector<Volumen> volumes)
+    public EvaluationFunction(ArrayList<Volumen> volumes)
     {
         setEvaluation(0.0);
         setNb_organs( volumes.size() );
 
-        nbVoxels = new Vector<>();
-        nbBeamLets = new Vector<>();
-        Z = new Vector<>(nbOrgans);
+        nbVoxels = new ArrayList<>();
+        nbBeamLets = new ArrayList<>();
+        Z = new ArrayList<>(nbOrgans);
 
         for(Volumen v: volumes) {
             DDM.add(v.getDDM());
@@ -42,7 +42,7 @@ public class EvaluationFunction {
 
         //Inicializando la 'matriz' o mapas Z con 0.0
         for(int i = 0; i < nbOrgans; i++){
-            Vector thisRow = new Vector<Double>();
+            ArrayList thisRow = new ArrayList<Double>();
             for(int j = 0; j < nbVoxels.get(i) ; j++){
                 thisRow.add(0.0);
             }
@@ -54,14 +54,14 @@ public class EvaluationFunction {
 
     /* ----------------------------------------------------------- METHODS --------------------------------------------------------*/
 
-    public double evalIntensityVector(Vector<Double> p, Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax){
+    public double evalIntensityVector(ArrayList<Double> p, ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax){
         //Valor de Funcion objetivo
         setEvaluation(0.0);
 
         //Se genera el Vector Z (efecto del beamlet i sobre el voxel v, en el organo r)
         for(int o = 0 ; o < nbOrgans; o++){
-            double totalBeamlets = nbBeamLets.get(o); //336
-            Vector<Double> d = new Vector<Double>();
+            double totalBeamlets = nbBeamLets.get(o);
+            ArrayList<Double> d = new ArrayList<Double>();
 
             //Tomo la DDM asociada a un organo o
             Matrix doseDeposition = DDM.get(o);
@@ -76,9 +76,8 @@ public class EvaluationFunction {
                 }
                 d.add(dosis_v);
             }
-            //Se agrega el vector Z asociado al organo R
+            //Se agrega el vector Z asociado al organo O
             Z.set(o,d);
-
 
         }
 
@@ -86,8 +85,8 @@ public class EvaluationFunction {
         for (int o = 0; o < nbOrgans; o++) {
             double pen = 0.0;
             double diff = 0.0;
-
             for (int k = 0; k < nbVoxels.get(o); k++) {
+
                 if (Z.get(o).get(k) < Zmin.get(o)) {
                     diff = Zmin.get(o) - Z.get(o).get(k);
                     pen += w.get(o) * Math.pow(Math.max(diff,0),2);
@@ -118,6 +117,5 @@ public class EvaluationFunction {
         this.nbOrgans = nbOrgans;
     }
 
-    /*---------------------------------- METODOS PENDIENTES ---------------------------------------------------------------------------*/
 
 }

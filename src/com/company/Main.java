@@ -97,9 +97,9 @@ public class Main {
     }
 
     //Se pasa el archivo src/data/test_instance_0_70_140_210_280.txt
-    public static Vector<Volumen> createVolumes(String org_filename) throws FileNotFoundException {
+    public static ArrayList<Volumen> createVolumes(String org_filename) throws FileNotFoundException {
         Vector<String> orgFiles = new Vector<>();
-        Vector<Volumen> Volumes = new Vector<>();
+        ArrayList<Volumen> Volumes = new ArrayList<>();
         String line;
         int nline = 0;
         File of = new File(org_filename);
@@ -133,7 +133,7 @@ public class Main {
         int instanceId = 71;
 
         //MLC Configuration    
-        int max_intensity = 10; //10 x apertura - probar este parametro
+        int max_intensity = 20; //10 x apertura - probar este parametro
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;
@@ -141,7 +141,8 @@ public class Main {
         //Particle configuration
         int setup = 4;
         int diffSetup = 4;
-        int nThreads = 1;
+        int nThreads = 3;
+        boolean optimizedIntensity = true;
         /*
             OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1; 
             CLOSED_MIN_SETUP = 2; CLOSED_MAX_SETUP = 3;
@@ -149,23 +150,21 @@ public class Main {
         */
 
         //Parametros PSO
-        int size = 6; //Particle size
-        int iter = 50; //Pso Iterations
+        int size = 100;                     //Particle size
+        int iter = 10;                     //Pso Iterations
         
-        double c1Aperture = 1;          // Coef Global
-        double c2Aperture = 1;          // Coef Personal
-        double inerAperture = 1;        // Inner
-        double cnAperture = 1; // constriction Factor
+        double c1Aperture = 0.9321;         // Coef Global
+        double c2Aperture = 0.9949;         // Coef Personal
+        double inerAperture = 0.1314;       // Inner
+        double cnAperture = 1.4638;         // constriction Factor
 
-        double c1Intensity = 1;         // Coef Global
-        double c2Intensity = 1;         // Coef Personal
-        double inerIntensity = 1;       // Inner
-        double cnIntensity = 1; // constriction Factor
+        double c1Intensity = 0.48;          // Coef Global
+        double c2Intensity = 1.4577;        // Coef Personal
+        double inerIntensity = 0.8432;      // Inner
+        double cnIntensity = 0.9911;        // constriction Factor
         
         if(params.containsKey("size")) 
             size = Integer.parseInt(params.get("size"));
-        if(params.containsKey("iter")) 
-            iter = Integer.parseInt(params.get("iter"));
         
         if(params.containsKey("c1Aperture")) 
             c1Aperture = Double.parseDouble(params.get("c1Aperture"));
@@ -186,28 +185,33 @@ public class Main {
             cnIntensity = Double.parseDouble(params.get("cnIntensity"));
         if(params.containsKey("i")) 
             instanceId = Integer.parseInt(params.get("i"));
-        if(params.containsKey("nThreads"))
+        if(params.containsKey("nThreads")){
             nThreads = Integer.parseInt(params.get("nThreads"));
             if(nThreads > 3){
                 nThreads = 3;
             }
+        }
+        if(params.containsKey("intensityOptimized")){
+            optimizedIntensity = true;
+        }
+        // Editando iteraciones en funcion de las particulas
+        iter = 400000/size;
 
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
-        System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture); 
-        System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity); 
+        System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture + " - cn: "+ cnAperture);
+        System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity + " - cn: "+ cnIntensity);
         System.out.println("nThreads: " + nThreads);
-        Vector<Double> w = new Vector<>();
+        ArrayList<Double> w = new ArrayList<>();
         w.add(1.0);
         w.add(1.0);
         w.add(5.0);
 
-        Vector<Double> Zmin = new Vector<>();
+        ArrayList<Double> Zmin = new ArrayList<>();
         Zmin.add(0.0);
         Zmin.add(0.0);
         Zmin.add(76.0);
 
-
-        Vector<Double> Zmax = new Vector<>();
+        ArrayList<Double> Zmax = new ArrayList<>();
         Zmax.add(65.0);
         Zmax.add(65.0);
         Zmax.add(76.0);
@@ -222,7 +226,7 @@ public class Main {
         Collimator collimator = new Collimator(file2, angles);
 
         // Informacion de los organos desde DDM
-        Vector<Volumen> volumes = createVolumes(file);
+        ArrayList<Volumen> volumes = createVolumes(file);
         
         ArrayList<Integer> maxApertures = new ArrayList<>();
         for (int a = 0; a < angles.size(); a++) {
@@ -234,10 +238,11 @@ public class Main {
         // Creating the swarm
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
                                 c1Aperture, c2Aperture, inerAperture, cnAperture,
-                                c1Intensity, c2Intensity, inerIntensity, cnIntensity, size, iter, nThreads);
+                                c1Intensity, c2Intensity, inerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
         
         swarm.MoveSwarms();
         Long finalAlgorithmTime = System.currentTimeMillis();
+
         System.out.println("Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
         /*
         //Get the Solution of the algorithm

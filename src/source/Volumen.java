@@ -42,12 +42,11 @@ public class Volumen {
         this.valueDAODDM = v.getValueDAODDM();
     }
 
-
-    //set data
     private void setData(String data) throws FileNotFoundException {
+        int count = 0;
         File cordFile = new File("src/"+data);
         String bladderDates = null;
-        int count = 0;
+
         Vector<String> lines = new Vector<>();
         if(!cordFile.exists()){
             System.out.println("FILE "+ data + " DON'T FOUND");

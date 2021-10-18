@@ -10,7 +10,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
-
 public class Swarm {
     private Particle bestGlobalParticle;
     private double bestGlobalEval;
@@ -30,21 +29,25 @@ public class Swarm {
     private int globalUpdateCount = 0;
     private int lastChange = 0;
     private int threadsToUse = 1;
+    private boolean optimizedIntensity;
 
     private boolean callablefunctions = false;
     private Vector<double[]> evalTrack;
 
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
-    public Swarm(Vector<Double> w, Vector<Double> Zmin, Vector<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity , int initial_intensity, int step_intensity,
-                 int open_apertures, int setup, int diffSetup ,Vector<Volumen> volumen, Collimator collimator,
+    public Swarm(ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity , int initial_intensity, int step_intensity,
+                 int open_apertures, int setup, int diffSetup ,ArrayList<Volumen> volumen, Collimator collimator,
                  double c1Aperture, double c2Aperture, double innerAperture, double cnAperture, 
-                 double c1Intensity, double c2Intensity, double innerIntensity, double cnIntensity, int size, int iter, int nThreads) {
+                 double c1Intensity, double c2Intensity, double innerIntensity, double cnIntensity, int size, int iter, int nThreads,
+                 boolean optimizedIntensity) {
 
         setThreadsToUse(nThreads);
         setIter(iter);
 
         this.swarm = new ArrayList<>();
         this.evalTrack = new Vector<>();
+        this.optimizedIntensity = optimizedIntensity;
+
         /*A Particles set will be created*/
         for(int i = 0; i < size ; i++){
             Particle newParticle;
@@ -52,13 +55,13 @@ public class Swarm {
             this.globalUpdateCount = 0;
 
             if(i == 0){
-                newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
+                //Particula diferenciada
+                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
                 setBestGlobalParticle(newParticle);
                 setBestGlobalEval(newParticle.getFitness());
-                this.firstSolution = bestGlobalEval;
-
             }else{
-                newParticle = new Particle(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
+                //Poblacion randomizada
+                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
             }
 
             /*Only used by Threads*/
@@ -90,12 +93,13 @@ public class Swarm {
         setCnIntensity(cnIntensity);
 
         CalculateNewBestGlobal();
-        double[] x = new double[2];
-        x[0] = 0.0;
-        x[1] = this.bestGlobalEval;
-        evalTrack.add(x);
-    }
+        double[] initialRecord = new double[2];
+        initialRecord[0] = 0.0;
+        initialRecord[1] = this.bestGlobalEval;
+        evalTrack.add(initialRecord);
+        this.firstSolution = bestGlobalEval;
 
+    }
 
     /*Running PSO Algorithm*/
     public void MoveSwarms(){
@@ -105,43 +109,64 @@ public class Swarm {
             boolean change;
             // Habilitacion de función por paralelismo
             if(callablefunctions){
+                Long initialAlgorithmTime = System.currentTimeMillis();
                 ParticlesMovementThreads();
-                if(i%10 == 0 && i > 1){
+                Long finalAlgorithmTime = System.currentTimeMillis();
+                System.out.println("Movement Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000F) + " [seg]");
+
+                Long initialEvalTime = System.currentTimeMillis();
+                evalParticlesThread();
+                Long finalEvalTime = System.currentTimeMillis();
+                System.out.println("Evaluation Time: " + ((finalEvalTime - initialEvalTime) / 1000F) + " [seg]");
+
+                if(i%10 == 0 && i > 1 && optimizedIntensity){
                     System.out.println("Optimizacion de intensidad");
                     OptimizateIntensities();
+                    evalParticlesThread();
                 }
-                change = evalParticlesThread();
+
             }
             else{
+                Long initialAlgorithmTime = System.currentTimeMillis();
                 calculateVelocity();
                 calculatePosition();
+                Long finalAlgorithmTime = System.currentTimeMillis();
+                System.out.println("Movemment Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000F) + " [seg]");
 
-                change = evalParticles();
+                Long initialEvalTime = System.currentTimeMillis();
+                evalParticles();
+                Long finalEvalTime = System.currentTimeMillis();
+                System.out.println("Evaluation Time: " + ((finalEvalTime - initialEvalTime) / 1000F) + " [seg]");
 
-                if(i%10 == 0 && i > 1){
+                if(i%10 == 0 && i > 1 && optimizedIntensity) {
                     System.out.println("Optimizacion de intensidad");
                     OptimizateIntensities();
-                    change = evalParticles();
+                    evalParticles();
                 }
 
             }
 
-            CalculateNewBestPersonal();
-
+            change = CalculateNewBestGlobal();
             if(change){
-                setGlobalUpdateCount();
+                this.globalUpdateCount++;
                 setLastChange(i);
 
-                double[] x = new double[2];
-                x[0] = (double)i;
-                x[1] = this.bestGlobalEval;
-                evalTrack.add(x);
+                double[] finalRecord = new double[2];
+                finalRecord[0] = (double)i;
+                finalRecord[1] = this.bestGlobalEval;
+                evalTrack.add(finalRecord);
             }
             System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
         }
+        System.out.println("Apertures UnUsed: ");
+        System.out.println(this.bestGlobalParticle.getTotalUnUsedApertures());
 
         System.out.println("Evaluation Track");
-        System.out.println(this.evalTrack);
+        for(int t = 0; t < this.evalTrack.size(); t++){
+            double[] track = this.evalTrack.get(t);
+            System.out.println(track[0] + " - " + track[1]);
+        }
+
 
         System.out.println("Initial solution: " + firstSolution  + " - Final solution: "+ bestGlobalEval + " - last Change: "+ lastChange);
         System.out.println(firstSolution  + " " + bestGlobalEval + " " + globalUpdateCount + " " + lastChange);
@@ -167,44 +192,27 @@ public class Swarm {
         }
     }
 
-    public boolean evalParticles(){
-        boolean changeGlobal = false;
-        int i = 0;
+    public void evalParticles(){
         for(Particle particle: swarm){
-            double lastFitness = particle.getFitness();
             particle.evalParticle();
+        }
+    }
 
-            //Calculate new Best Global
+    public boolean CalculateNewBestGlobal() {
+        boolean changeGlobal = false;
+
+        for (Particle particle: swarm){
             if (particle.getFitness() < getBestGlobalEval() ) {
                 setBestGlobalParticle(particle);
                 setBestGlobalEval(particle.getFitness());
                 changeGlobal = true;
             }
-            System.out.println("Particle "+i+": "+ lastFitness +" -> "+particle.getFitness());
-            i++;
         }
         return changeGlobal;
     }
 
-    public void CalculateNewBestGlobal() {
-        for (Particle particle: swarm){
-            if (particle.getFitness() < getBestGlobalEval() ) {
-                setBestGlobalParticle(particle);
-                setBestGlobalEval(particle.getFitness());
-            }
-        }
-    }
-
-    public void CalculateNewBestPersonal() {
-        for(Particle particle: swarm){
-            particle.CalculateBestPersonal();
-        }
-    }
-
-    public boolean evalParticlesThread(){
-        int i = 0;
-        boolean changeGlobal = false;
-        int threadsToUse = 4;
+    public void evalParticlesThread(){
+        int threadsToUse = 3;
 
         // Guardar objetos ejecutados en hilos (particulas)
         List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
@@ -229,17 +237,7 @@ public class Swarm {
         // Permite manejar el termino de los metodos llamados por los threads
         pool2.shutdown();
 
-        //Calculate new Best Global
-        for(Particle particle: swarm){
-            if (particle.getFitness() < getBestGlobalEval() ) {
-                setBestGlobalParticle(particle);
-                setBestGlobalEval(particle.getFitness());
-                changeGlobal = true;
-            }
-            System.out.println("Particle "+i+": "+particle.getFitness());
-            i++;
-        }
-        return changeGlobal;
+
     }
 
     public void ParticlesMovementThreads(){
@@ -374,5 +372,11 @@ public class Swarm {
     private void setThreadsToUse(int threadsToUse){
         this.threadsToUse = threadsToUse;
         this.callablefunctions = threadsToUse > 1;
+        if(this.callablefunctions){
+            System.out.println("Using "+this.threadsToUse + " Threads");
+        }else{
+            System.out.println("Linear resolution");
+        }
+
     }
 }

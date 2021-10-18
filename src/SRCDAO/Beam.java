@@ -30,7 +30,8 @@ public class Beam {
      * and an intensity range open (x_ini+1, x_fin-1) of row "r" for aperture d: A[d][r](x_ini, x_fin)
     */
     private final Vector<Aperture> A;
-    private Vector<Double> fluenceMap;
+    private ArrayList<Double> fluenceMap;
+    private int aperturesUnused;
 
 
     /* ------------------------------------------- GENERAL METHODS ------------------------------------------------------- */
@@ -48,7 +49,8 @@ public class Beam {
 
         this.collimator = collimator;
         this.A = new Vector<>();
-        this.fluenceMap = new Vector<>();
+        this.fluenceMap = new ArrayList<>();
+        this.aperturesUnused = 0;
 
         if(openApertures==-1)
             setOpenApertures(maxApertures);
@@ -81,7 +83,8 @@ public class Beam {
 
         this.collimator = new Collimator(b.collimator);
         this.A = new Vector<>();
-        this.fluenceMap = new Vector<>();
+        this.fluenceMap = new ArrayList<>();
+        this.aperturesUnused = 0;
 
         if(openApertures==-1)
             setOpenApertures(maxApertures);
@@ -125,13 +128,22 @@ public class Beam {
 
 
     public void generateIntensities(){
+        this.aperturesUnused = 0;
         Pair<Integer,Integer> aux;
         clearIntensity();
 
-        for(Aperture ap : A) {
+        for(int a = 0; a < A.size(); a++) {
+            Aperture ap = A.get(a);
             double apIntensity = ap.getIntensity();
 
+            if(apIntensity < 1.0){
+                this.aperturesUnused++;
+            }
             //Intensidad 0 -> No hay necesidad de iterar
+            if(apIntensity == 0.0){
+                continue;
+            }
+
             for (int i = 0; i < collimator.getxDim(); i++) {
                 aux = collimator.getActiveRange(i, angle);
 
@@ -161,7 +173,7 @@ public class Beam {
     }
 
     public void buildIntensityVector(){
-        this.fluenceMap = new Vector<>();
+        this.fluenceMap = new ArrayList<>();
 
         for(int i = 0; i < collimator.getxDim(); i++){
             Pair<Integer,Integer> x = collimator.getActiveRange(i,angle);
@@ -172,6 +184,8 @@ public class Beam {
             }
         }
     }
+
+    /* ------------------------------------------------- GETTER Y SETTERS ---------------------------------------------------*/
 
     public boolean setIntensityByAperture(double[] intensitySolver){
         if(A.size() != intensitySolver.length){
@@ -191,30 +205,23 @@ public class Beam {
         return ap.getProyectedBeamLet(indexBeamlet);
     }
 
-    /* ------------------------------------------------ PSO METHODS ----------------------------------*/
-    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture, double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Beam BGlobal, Beam BPersonal){
-        for(int i = 0; i < A.size() ; i++){
-            Aperture x = A.get(i);
-            Aperture bG = BGlobal.getAperture(i);
-            Aperture bP = BPersonal.getAperture(i);
-            
-            x.velAperture(wAperture, c1Aperture, c2Aperture, cnAperture, bG, bP);
-            x.velIntensity(wIntensity, c1Intensity, c2Intensity, cnIntensity, bG, bP);
+
+    public Double getIntensityByAperture(int apertureIndex) throws Exception {
+        double intensity;
+        try {
+            intensity = A.get(apertureIndex).getIntensity();
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new Exception("La intensidad no ha sido encontrada ");
         }
+        return intensity;
     }
 
-    public void CalculatePosition(){
-        for(Aperture x: A){
-            x.movAperture();
-            x.moveIntensity(maxIntensity);
-        }
-        generateIntensities();
+    public int getAperturesUnused(){
+        return this.aperturesUnused;
     }
 
-
-    /* ------------------------------------------------- GETTER Y SETTERS ---------------------------------------------------*/
-
-    public Vector<Double> getIntensityVector(){
+    public ArrayList<Double> getIntensityVector(){
         return fluenceMap;
     }
 
@@ -282,33 +289,26 @@ public class Beam {
         this.totalBeamlets = totalBeamlets;
     }
 
-    public Double getIntensityByAperture(int apertureIndex) throws Exception {
-        double intensity;
-        try {
-            intensity = A.get(apertureIndex).getIntensity();
-        }catch (Exception e){
-            e.printStackTrace();
-            throw new Exception("La intensidad no ha sido encontrada ");
-        }
-        return intensity;
-    }
+    /* ------------------------------------------------ PSO METHODS ----------------------------------*/
+    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture, double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Beam BGlobal, Beam BPersonal){
+        for(int i = 0; i < A.size() ; i++){
+            Aperture x = A.get(i);
+            Aperture bG = BGlobal.getAperture(i);
+            Aperture bP = BPersonal.getAperture(i);
 
-    /* -------------------------------------------------------------------- PRINTERS -------------------------------------------------------------------- */
-    public void printIntensityMatrix(){
-        System.out.println(angle + ": ");
-        for(int i = 0; i < collimator.getxDim(); i++){
-            for(int j = 0; j < collimator.getyDim(); j++){
-                System.out.print(I.getPos(i,j) + " ");
-            }
-            System.out.println();
+            x.velAperture(wAperture, c1Aperture, c2Aperture, cnAperture, bG, bP);
+            x.velIntensity(wIntensity, c1Intensity, c2Intensity, cnIntensity, bG, bP);
         }
     }
 
-    public void printFluenceMapOnBeam(){
-        System.out.println("Id Beam: " + angle);
-        for (Double i: fluenceMap){
-            System.out.print(i + " ");
+    public void CalculatePosition(){
+        for(Aperture x: A){
+            x.movAperture();
+            x.moveIntensity(maxIntensity);
         }
-        System.out.println();
+        generateIntensities();
     }
+
+
+
 }

@@ -15,27 +15,27 @@ public class Collimator {
 
     //------------------------------------------------- NUEVAS ESTRUCTURAS -----------------------------------------------------------------------
     //Vector con los pares <angle, FilePath> de cada BeamAngle
-    private Vector<Pair< Integer, String>> coord_file;
+    private ArrayList<Pair<Integer, String>> coord_file;
 
     //Contiene todos los angulos
-    private Vector<Integer> angles;
+    private ArrayList<Integer> angles;
 
     //Contiene la misma estructura de angleCoord, pero ahora los pasa indices matriciales
-    private SortedMap< Integer, Vector< Pair< Integer, Integer> > > angleCoord;
+    private Hashtable< Integer, Vector< Pair< Integer, Integer> > > angleCoord;
 
     //Map Global ID Beamlet - <ID beam, ID Local Beamlet >
-    private SortedMap<Integer, Pair<Integer, Integer>> allBeamletIndex;
+    private Hashtable<Integer, Pair<Integer, Integer>> allBeamletIndex;
 
     //Coordenadas originales (centradas en el tumor o cartesianas)
-    private SortedMap< Integer, Vector< Pair< Double, Double> > > angleCoordMatr;
+    private Hashtable< Integer, Vector< Pair< Double, Double> > > angleCoordMatr;
 
     // Range (i,j) of active beamlets of angle "a" row "r":
     //  Usando angleRowActive.get(a).get(r) obtengo el rango de apertura de la fila r en el angulo
     //  (-1,-1) indica que esta inactiva, es decir, que no tiene beamlets
-    private SortedMap< Integer, Vector< Pair< Integer, Integer> > > angleRowActive = new TreeMap<>();
+    private Hashtable< Integer, Vector< Pair< Integer, Integer> > > angleRowActive = new Hashtable<>();
 
     //Obtengo la cantidad de Beamlets por cada beam
-    private SortedMap< Integer, Integer> nbAngleBeamlets =  new TreeMap<>();
+    private Hashtable< Integer, Integer> nbAngleBeamlets =  new Hashtable<>();
 
 
     /*----------------------------------------------------------- ALL METHODS -------------------------------------------------------------------------------- */
@@ -46,11 +46,11 @@ public class Collimator {
         File archivo = new File(coord_filename);
         String delimiter = ";";
 
-        this.coord_file = new Vector<>();
-        this.angles = new Vector<>();
-        this.angleCoord = new TreeMap<>();
-        this.allBeamletIndex = new TreeMap<>();
-        this.angleCoordMatr = new TreeMap<>();
+        this.coord_file = new ArrayList<>();
+        this.angles = new ArrayList<>();
+        this.angleCoord = new Hashtable<>();
+        this.allBeamletIndex = new Hashtable<>();
+        this.angleCoordMatr = new Hashtable<>();
 
         //Lectura del archivo test_instance_coords
         if(!archivo.exists()) {
@@ -84,11 +84,11 @@ public class Collimator {
 
     public Collimator(Collimator c){
 
-        this.coord_file = new Vector<>();
-        this.angles = new Vector<>();
-        this.angleCoord = new TreeMap<>();
-        this.allBeamletIndex = new TreeMap<>();
-        this.angleCoordMatr = new TreeMap<>();
+        this.coord_file = new ArrayList<>();
+        this.angles = new ArrayList<>();
+        this.angleCoord = new Hashtable<>();
+        this.allBeamletIndex = new Hashtable<>();
+        this.angleCoordMatr = new Hashtable<>();
 
         this.nbBeamlets = c.nbBeamlets;
         this.nAngles = c.nAngles;
@@ -96,8 +96,8 @@ public class Collimator {
         this.yDim = c.yDim;
         this.gDim = c.gDim;
 
-        this.angles = (Vector<Integer>) c.angles.clone();
-        this.coord_file = (Vector<Pair<Integer, String>>)c.coord_file.clone();
+        this.angles = (ArrayList<Integer>) c.angles.clone();
+        this.coord_file = (ArrayList<Pair<Integer, String>>)c.coord_file.clone();
         this.angleCoord.putAll(c.angleCoord);
         this.allBeamletIndex.putAll(c.allBeamletIndex);
         this.angleCoordMatr.putAll(c.angleCoordMatr);
@@ -125,18 +125,22 @@ public class Collimator {
             //Se procede a leer el archivo temp
             if(!coordFile.exists()){
                 System.out.println("NO SE ENCUENTRA EL ARCHIVO "+CoordinatePath);
+                System.exit(0);
             }else{
-                //Contiene la posicion (original) de todos los beamlets de un beam
+                //Contiene la posicion (original) de todos los beamlets desde un beam
                 Vector<Pair<Double,Double>> AngleBeamlet = new Vector<>();
                 Scanner lect = new Scanner(coordFile);
                 Set<Double> filter = new HashSet<>();
 
                 //Se recorren todos los beamlets de 1 beam contenidos en el archivo
                 while(lect.hasNextLine()) {
+                    // ID Local Beamlet - Position 1 Position 2
                     String lineaActual = lect.nextLine();
                     String[] arrayLinea = lineaActual.split("\t");
 
-                    localID =  Integer.parseInt(arrayLinea[0]);
+                    //ID local obtenido desde el mismo temp
+                    localID = Integer.parseInt(arrayLinea[0]);
+
                     //Coordenadas originales a nivel cartesiano
                     x = Double.parseDouble(arrayLinea[1]);
                     y = Double.parseDouble(arrayLinea[2]);
@@ -259,34 +263,23 @@ public class Collimator {
         return yDim;
     }
 
-    public Vector<Integer> getAngles() {
+    public ArrayList<Integer> getAngles() {
         return angles;
     }
 
-    public SortedMap<Integer, Vector<Pair<Integer, Integer>>> getAngleCoord() {
+    public Hashtable<Integer, Vector<Pair<Integer, Integer>>> getAngleCoord() {
         return angleCoord;
     }
 
-    public void setAngleCoord(SortedMap<Integer, Vector<Pair<Integer, Integer>>> angleCoord) {
+    public void setAngleCoord(Hashtable<Integer, Vector<Pair<Integer, Integer>>> angleCoord) {
         this.angleCoord = angleCoord;
     }
 
-    public SortedMap<Integer, Vector<Pair<Double, Double>>> getAngleCoordMatr() {
+    public Hashtable<Integer, Vector<Pair<Double, Double>>> getAngleCoordMatr() {
         return angleCoordMatr;
     }
 
-    public void setAngleCoordMatr(SortedMap<Integer, Vector<Pair<Double, Double>>> angleCoordMatr) {
+    public void setAngleCoordMatr(Hashtable<Integer, Vector<Pair<Double, Double>>> angleCoordMatr) {
         this.angleCoordMatr = angleCoordMatr;
-    }
-
-
-
-    /*--------------------------------------------------- PRINT ALL COORDINATES ------------------------------------------------------------*/
-    public void printActiveRange(){
-        int angle = 0;
-        System.out.println("Angle: "+ angle);
-        for(int i = 0; i < gDim ; i++){
-            System.out.println(getActiveRange(i,angle));
-        }
     }
 }
