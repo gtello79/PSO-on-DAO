@@ -14,125 +14,130 @@ import source.Matrix;
 import source.Pair;
 
 public class Reporter {
-    private final Integer id = (int)(50*Math.random());
+    private final Integer id = (int)(80*Math.random());
 
-    String UID = String.valueOf(id);
+    private String UID = String.valueOf(id);
+    private String intensityFolderPath = "./OutPlots/intensityFolder/";
+    private String apertureFolderPath = "./OutPlots/apertureFolder/";
+    private String generalFolderPath = "./OutPlots/";
+    private static final int INTENSITY_MATRIX_CSV = 1;
+    private static final int INTENSITY_MATRIX_TXT = 2;
+    private static final int ALL_APERTURES_CSV = 3;
+    private static final int ALL_APERTURES_TXT = 4;
+    private static final int ALL_APERTURES_AMPL = 5;
+    private static final int ALL_COMPONENTS_TXT = 6;
 
-    public Reporter(){}
 
-    public Reporter(Particle particle) {
-        String intensityFolderPath = "./intensityFolder/";
-        String apertureFolderPath = "./apertureFolder/";
+    public Reporter(Particle particle, int function){
+        switch (function){
+            case INTENSITY_MATRIX_CSV:
+                intensityMatrixToCSV(particle);
+                break;
+
+            case INTENSITY_MATRIX_TXT:
+                break;
+
+            case ALL_APERTURES_CSV:
+                apertureMatrix(particle);
+                break;
+
+            case ALL_APERTURES_TXT:
+
+                break;
+
+            case ALL_APERTURES_AMPL:
+                printAperturesToAMPL(particle);
+                break;
+
+            case ALL_COMPONENTS_TXT:
+                exportIntensityMatrixAndApertures(particle);
+                break;
+        }
+    }
+
+
+    private void intensityMatrixToCSV(Particle particle){
+        final String NextLine = "\n";
+        final String delimiter = ",";
         Plan plan = particle.getCurrentPlan();
-        /*
+
         for(Beam beam: plan.getAngle_beam()){
-            String fileName1 = UID + "-intensityMatrix"+beam.getIdBeam();
-            String fileName2 = UID + "-Apertures"+beam.getIdBeam();
+
             Matrix matrix = beam.getIntensitisMatrix();
-            intensityMatrixToCSV(intensityFolderPath, fileName1, beam.getIdBeam(), matrix);
-            int gdim = beam.getCollimatorDim();
-            apertureMatrix(apertureFolderPath, fileName2, beam.getIdBeam(), beam.getApertures(), gdim);
-        }
-        */
-        System.out.println("DONE - UID Experiment: " + id);
-        //System.out.println("Aperture Folder on " + apertureFolderPath + " - Intensity Folder on " + intensityFolderPath );
-        //IntensityVector(plan);
-        this.printAperturesToAMPL(plan);
-    }
+            String fileName = UID + "-intensityMatrix"+beam.getIdBeam();
+            String filePath = intensityFolderPath+ fileName+ ".csv";
 
-    private void intensityMatrixToCSV(String path ,String fileName, int angle, Matrix matrix){
-        final String NextLine = "\n";
-        final String delimiter = ",";
-        try{
-            FileWriter matrixCSV = new FileWriter(path+fileName+ ".csv");
-            matrixCSV.append(String.valueOf(angle));
-            matrixCSV.append(NextLine);
-            for(int i = 0; i < matrix.getX(); i++){
-                for(int j = 0; j < matrix.getY(); j++){
-                    String value = String.valueOf(matrix.getPos(i,j));
-                    matrixCSV.append(value).append(delimiter);
-                }
+            try{
+                FileWriter matrixCSV = new FileWriter(filePath);
+                matrixCSV.append(String.valueOf(beam.getIdBeam()));
                 matrixCSV.append(NextLine);
+
+                for(int i = 0; i < matrix.getX(); i++){
+                    for(int j = 0; j < matrix.getY(); j++){
+                        String value = String.valueOf(matrix.getPos(i,j));
+                        matrixCSV.append(value).append(delimiter);
+                    }
+                    matrixCSV.append(NextLine);
+                }
+
+                matrixCSV.flush();
+                matrixCSV.close();
+
+            }catch (IOException e){
+                e.printStackTrace();
             }
-
-            matrixCSV.flush();
-            matrixCSV.close();
-
-        }catch (IOException e){
-            e.printStackTrace();
         }
+        System.out.println("DONE - UID Experiment: " + id);
     }
 
-    private void apertureMatrix(String path, String fileName, int angle, ArrayList<Aperture> apertureVector, int gDim){
+    private void apertureMatrix(Particle particle){
         final String NextLine = "\n";
         final String delimiter = ",";
-        try{
-            FileWriter matrixCSV = new FileWriter(path+fileName+ ".csv");
-            matrixCSV.append(String.valueOf(angle));
-            matrixCSV.append(NextLine);
-            for(Aperture a : apertureVector){
-                String apertureChain = "";
-                ArrayList<Pair<Integer, Integer>> shapes = a.getApertures();
-                apertureChain += Double.toString(a.getIntensity()) + '\n';
 
-                //Filas de aperturas
-                for(int i = 0; i < gDim; i++){
-                    //Columnas de las aperturas
-                    for(int j = 0; j < gDim; j++){
+        Plan plan = particle.getCurrentPlan();
 
-                        if(j > shapes.get(i).getFirst() && j < shapes.get(i).getSecond() && shapes.get(i).getFirst() != -2 ){
-                            apertureChain += 1;
-                        }else if (shapes.get(i).getFirst() == -2){
-                            apertureChain += -1;
-                        }else{
-                            apertureChain += 0;
+        for(Beam beam: plan.getAngle_beam()){
+            int gDim = beam.getCollimatorDim();
+            Vector<Aperture> apertureVector = beam.getApertures();
+            String fileName2 = UID + "-Apertures"+beam.getIdBeam();
+
+            try{
+                FileWriter matrixCSV = new FileWriter(apertureFolderPath+fileName2+ ".csv");
+                matrixCSV.append(String.valueOf(beam.getIdBeam()));
+                matrixCSV.append(NextLine);
+                for(Aperture a : apertureVector){
+                    String apertureChain = "";
+                    ArrayList<Pair<Integer, Integer>> shapes = a.getApertures();
+                    apertureChain += Double.toString(a.getIntensity()) + '\n';
+
+                    //Filas de aperturas
+                    for(int i = 0; i < gDim; i++){
+                        //Columnas de las aperturas
+                        for(int j = 0; j < gDim; j++){
+
+                            if(j > shapes.get(i).getFirst() && j < shapes.get(i).getSecond() && shapes.get(i).getFirst() != -2 ){
+                                apertureChain += 1;
+                            }else if (shapes.get(i).getFirst() == -2){
+                                apertureChain += -1;
+                            }else{
+                                apertureChain += 0;
+                            }
+                            apertureChain += delimiter;
                         }
-                        apertureChain += delimiter;
+                        apertureChain+="\n";
                     }
                     apertureChain+="\n";
+                    matrixCSV.append(apertureChain);
                 }
-                apertureChain+="\n";
-                matrixCSV.append(apertureChain);
+                matrixCSV.flush();
+                matrixCSV.close();
+            }catch (IOException e){
+                e.printStackTrace();
             }
-            matrixCSV.flush();
-            matrixCSV.close();
-        }catch (IOException e){
-            e.printStackTrace();
         }
-
-
+        System.out.println("DONE - UID Experiment: " + id);
     }
 
-    public void collimatorIndex(Collimator collimator){
-        String collimatorPath = "./import/collimatorIndex/";
-        ArrayList<Integer> angles = collimator.getAngles();
-        for(Integer angle: angles){
-            Vector<Pair<Double,Double>> angleCoordMatr = collimator.getAngleCoordMatr().get(angle);
-            Vector<Pair<Integer,Integer>> angleCoordNew = collimator.getAngleCoord().get(angle);
-            if(angleCoordNew.size() != angleCoordMatr.size()){
-                System.out.println("ERROR, LOS BEAMLETS NO TIENEN LA MISMA DIMENSION, REVISAR COLLIMATOR");
-            }else{
-                int Seamless = angleCoordNew.size();
-                String fileName = UID + "- COLLIMATOR INDEX ROW "+angle;
-                try{
-                    FileWriter matrixCSV = new FileWriter(collimatorPath+fileName+ ".csv");
-                    matrixCSV.append(String.valueOf(angle));
-                    matrixCSV.append("\n");
-                    for(int i = 0; i < Seamless; i++){
-                        Pair<Double,Double> oldRow = angleCoordMatr.get(i);
-                        Pair<Integer,Integer> newRow = angleCoordNew.get(i);
-                        String rowString = (i+1) +" <"+oldRow.getFirst() + "," + oldRow.getSecond() +"> ---- <" + newRow.getFirst() + "," + newRow.getSecond() +"> \n";
-                        matrixCSV.append(rowString);
-                    }
-                    matrixCSV.flush();
-                    matrixCSV.close();
-                }catch (IOException e){
-                    e.printStackTrace();
-                }
-            }
-
-        }
-    }
 
     public void IntensityVector(Plan p){
         Vector<Integer> nBeamLetsByBeam = new Vector<>();
@@ -163,10 +168,76 @@ public class Reporter {
         }catch (IOException e){
             e.printStackTrace();
         }
-
     }
 
-    public void printAperturesToAMPL(Plan tp){
+    private void exportIntensityMatrixAndApertures(Particle particle){
+        final String NextLine = "\n";
+        final String delimiter = ",";
+        Plan tp = particle.getCurrentPlan();
+        ArrayList<Beam> beams = tp.getAngle_beam();
+        for (int b = 0; b < tp.getNBeam(); b++){
+            Beam beam = beams.get(b);
+            String fileName = generalFolderPath+UID + "-Desc_Beam"+beam.getIdBeam()+".txt";
+            Matrix intensityMatrix = beam.getIntensitisMatrix();
+            Vector<Aperture> aperturesSet = beam.getApertures();
+
+            try{
+                FileWriter beamTXT = new FileWriter(fileName);
+                beamTXT.append("Beam,"+String.valueOf(beam.getIdBeam()));
+                beamTXT.append(NextLine);
+
+                // Writting Intensity Matrix on File
+                for(int i = 0; i < intensityMatrix.getX(); i++){
+                    for(int j = 0; j < intensityMatrix.getY(); j++){
+                        String value = String.valueOf(intensityMatrix.getPos(i,j));
+                        beamTXT.append(value).append(delimiter);
+                    }
+                    beamTXT.append(NextLine);
+                }
+                beamTXT.append(NextLine);
+
+                // Writting Apertures on file
+                for(int a = 0; a < aperturesSet.size(); a++){
+                    Aperture aperture = aperturesSet.get(a);
+                    double intensity = aperture.getIntensity();
+                    ArrayList<Pair<Integer,Integer>> shapes = aperture.getApertures();
+
+                    beamTXT.append("Aperture,"+intensity);
+                    beamTXT.append(NextLine);
+
+                    for(int i = 0; i < intensityMatrix.getX(); i++){
+                        Pair<Integer, Integer> pair = shapes.get(i);
+                        for(int j = 0; j < intensityMatrix.getY(); j++){
+                            String value;
+                            // Cerrada permanentemente
+                            if(intensityMatrix.getPos(i,j) == -1){
+                                value = String.valueOf(-1);
+                            }else{
+                                // Abierta
+                                if( j > pair.getFirst() && j < pair.getSecond() ){
+                                    value = String.valueOf(1);
+                                }else{
+                                    // Cerrada
+                                    value = String.valueOf(0);
+                                }
+                            }
+                            beamTXT.append(value).append(delimiter);
+                        }
+                        beamTXT.append(NextLine);
+                    }
+                    beamTXT.append(NextLine);
+                }
+                beamTXT.flush();
+                beamTXT.close();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+        System.out.println("DONE - UID Experiment: " + id);
+    }
+
+    public void printAperturesToAMPL(Particle particle){
+        Plan tp = particle.getCurrentPlan();
         int[] beamAngles = tp.getBeamletsByBeam();
         for(int i = 0; i < beamAngles.length; i++){
             int totalBeamlets = beamAngles[i];
