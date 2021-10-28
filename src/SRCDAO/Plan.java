@@ -4,7 +4,6 @@ import gurobi.GRBException;
 import source.*;
 
 import java.util.ArrayList;
-import java.util.Vector;
 
 public class Plan {
     private double eval;
