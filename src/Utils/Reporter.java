@@ -13,12 +13,14 @@ import source.Collimator;
 import source.Matrix;
 import source.Pair;
 
-public class CreateCSV {
+public class Reporter {
     private final Integer id = (int)(50*Math.random());
 
     String UID = String.valueOf(id);
 
-    public CreateCSV(Particle particle) {
+    public Reporter(){}
+
+    public Reporter(Particle particle) {
         String intensityFolderPath = "./intensityFolder/";
         String apertureFolderPath = "./apertureFolder/";
         Plan plan = particle.getCurrentPlan();

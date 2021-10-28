@@ -1,6 +1,6 @@
 package com.company;
 import Swarms.*;
-import Utils.CreateCSV;
+import Utils.Reporter;
 import source.*;
 import java.io.FileNotFoundException;
 import java.io.File;
@@ -141,8 +141,8 @@ public class Main {
         //Particle configuration
         int setup = 4;
         int diffSetup = 4;
-        int nThreads = 3;
-        boolean optimizedIntensity = true;
+        int nThreads = 1;
+        boolean optimizedIntensity = false;
         /*
             OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1; 
             CLOSED_MIN_SETUP = 2; CLOSED_MAX_SETUP = 3;
@@ -150,8 +150,8 @@ public class Main {
         */
 
         //Parametros PSO
-        int size = 100;                     //Particle size
-        int iter = 10;                     //Pso Iterations
+        int size = 2;                     //Particle size
+        int iter = 10;                      //Pso Iterations
         
         double c1Aperture = 0.9321;         // Coef Global
         double c2Aperture = 0.9949;         // Coef Personal
@@ -195,7 +195,7 @@ public class Main {
             optimizedIntensity = true;
         }
         // Editando iteraciones en funcion de las particulas
-        iter = 400000/size;
+        iter = 2;
 
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
         System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture + " - cn: "+ cnAperture);
@@ -244,10 +244,11 @@ public class Main {
         Long finalAlgorithmTime = System.currentTimeMillis();
 
         System.out.println("Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
-        /*
+
+
         //Get the Solution of the algorithm
         Particle particle = swarm.getBestGlobalParticle();
-        */
+        Reporter reporte = new Reporter(particle, 6);
 
     }
 }
