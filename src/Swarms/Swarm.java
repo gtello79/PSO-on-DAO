@@ -34,6 +34,10 @@ public class Swarm {
     private boolean callablefunctions = false;
     private Vector<double[]> evalTrack;
 
+    static final int MOVEMENT_THREAD = 0;
+    static final int EVAL_THREAD = 1;
+    private int OPTIMIZE_THREAD = 2;
+
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
     public Swarm(ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity , int initial_intensity, int step_intensity,
                  int open_apertures, int setup, int diffSetup ,ArrayList<Volumen> volumen, Collimator collimator,
@@ -93,6 +97,7 @@ public class Swarm {
         setCnIntensity(cnIntensity);
 
         CalculateNewBestGlobal();
+
         double[] initialRecord = new double[2];
         initialRecord[0] = 0.0;
         initialRecord[1] = this.bestGlobalEval;
@@ -102,48 +107,89 @@ public class Swarm {
     }
 
     /*Running PSO Algorithm*/
+    //Move particles using differents alternatives
     public void MoveSwarms(){
-
+        Long initialAlgorithmTime = System.currentTimeMillis();
         System.out.println("MOVING SWARMS");
+        if(callablefunctions){
+            MoveSwarmsOnConcurrent();
+        }else{
+            MoveSwarmsOnSecuencing();
+        }
+        Long finalAlgorithmTime = System.currentTimeMillis();
+
+        System.out.println("Apertures UnUsed: "+ this.bestGlobalParticle.getAperturesUnUsed());
+        //System.out.println(this.bestGlobalParticle.getTotalUnUsedApertures());
+        //System.out.println("Initial solution: " + firstSolution  + " - Final solution: "+ bestGlobalEval + " - last Change: "+ lastChange);
+        System.out.println(firstSolution  + " " + bestGlobalEval + " " + globalUpdateCount + " " + lastChange);
+        System.out.println("Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
+    }
+
+    //Move the particles with concurrent process
+    public void MoveSwarmsOnConcurrent(){
+
+        for(int i = 0; i < this.getIter(); i++){
+            boolean change;
+
+            // Habilitacion de función por paralelismo
+            Long initialAlgorithmTime = System.currentTimeMillis();
+            this.caseParticlesThread(this.MOVEMENT_THREAD);
+            Long finalAlgorithmTime = System.currentTimeMillis();
+
+            Long initialEvalTime = System.currentTimeMillis();
+            this.caseParticlesThread(this.EVAL_THREAD);
+            Long finalEvalTime = System.currentTimeMillis();
+
+
+            System.out.println("Movement Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000F) + " [seg]");
+            System.out.println("Evaluation Time: " + ((finalEvalTime - initialEvalTime) / 1000F) + " [seg]");
+
+            if(i%10 == 0 && i > 1 && optimizedIntensity){
+                System.out.println("----- Optimizacion de intensidades ------");
+                Long initial_time_intensity = System.currentTimeMillis();
+
+                this.caseParticlesThread(this.OPTIMIZE_THREAD);
+                Long final_time_optimize = System.currentTimeMillis();
+                System.out.println("Tiempo de optimizacion " + ((final_time_optimize-initial_time_intensity)/1000F) + "[seg]");
+            }
+
+            change = CalculateNewBestGlobal();
+            if(change){
+                this.globalUpdateCount++;
+                setLastChange(i);
+
+                double[] finalRecord = new double[2];
+                finalRecord[0] = (double)i;
+                finalRecord[1] = this.bestGlobalEval;
+                evalTrack.add(finalRecord);
+            }
+
+            System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
+        }
+    }
+
+    //Move the particles with secuencing process
+    public void MoveSwarmsOnSecuencing(){
+
         for(int i = 0; i < getIter(); i++){
             boolean change;
-            // Habilitacion de función por paralelismo
-            if(callablefunctions){
-                Long initialAlgorithmTime = System.currentTimeMillis();
-                ParticlesMovementThreads();
-                Long finalAlgorithmTime = System.currentTimeMillis();
-                System.out.println("Movement Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000F) + " [seg]");
 
-                Long initialEvalTime = System.currentTimeMillis();
-                evalParticlesThread();
-                Long finalEvalTime = System.currentTimeMillis();
-                System.out.println("Evaluation Time: " + ((finalEvalTime - initialEvalTime) / 1000F) + " [seg]");
+            Long initialAlgorithmTime = System.currentTimeMillis();
+            calculateVelocity();
+            calculatePosition();
+            Long finalAlgorithmTime = System.currentTimeMillis();
 
-                if(i%10 == 0 && i > 1 && optimizedIntensity){
-                    System.out.println("Optimizacion de intensidad");
-                    OptimizateIntensities();
-                    evalParticlesThread();
-                }
 
-            }
-            else{
-                Long initialAlgorithmTime = System.currentTimeMillis();
-                calculateVelocity();
-                calculatePosition();
-                Long finalAlgorithmTime = System.currentTimeMillis();
-                System.out.println("Movemment Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000F) + " [seg]");
+            Long initialEvalTime = System.currentTimeMillis();
+            evalParticles();
+            Long finalEvalTime = System.currentTimeMillis();
 
-                Long initialEvalTime = System.currentTimeMillis();
-                evalParticles();
-                Long finalEvalTime = System.currentTimeMillis();
-                System.out.println("Evaluation Time: " + ((finalEvalTime - initialEvalTime) / 1000F) + " [seg]");
+            System.out.println("Movemment Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000F) + " [seg]");
+            System.out.println("Evaluation Time: " + ((finalEvalTime - initialEvalTime) / 1000F) + " [seg]");
 
-                if(i%10 == 0 && i > 1 && optimizedIntensity) {
-                    System.out.println("Optimizacion de intensidad");
-                    OptimizateIntensities();
-                    evalParticles();
-                }
-
+            if(i%10 == 0 && i > 1 && optimizedIntensity) {
+                System.out.println("Optimizacion de intensidad");
+                OptimizateIntensities();
             }
 
             change = CalculateNewBestGlobal();
@@ -158,25 +204,39 @@ public class Swarm {
             }
             System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
         }
-        System.out.println("Apertures UnUsed: ");
-        System.out.println(this.bestGlobalParticle.getTotalUnUsedApertures());
-
-        System.out.println("Evaluation Track");
-        for(int t = 0; t < this.evalTrack.size(); t++){
-            double[] track = this.evalTrack.get(t);
-            System.out.println(track[0] + " - " + track[1]);
-        }
-
-
-        System.out.println("Initial solution: " + firstSolution  + " - Final solution: "+ bestGlobalEval + " - last Change: "+ lastChange);
-        System.out.println(firstSolution  + " " + bestGlobalEval + " " + globalUpdateCount + " " + lastChange);
     }
 
+    public void caseParticlesThread(int idSetup){
+        // Guardar objetos ejecutados en hilos (particulas)
+        List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
+        // Pool ejecutora de las funciones
+        ExecutorService pool2 = Executors.newFixedThreadPool(threadsToUse);
+
+        //Guardar objetos ejecutados
+        for(int j=0; j < swarm.size(); j++) {
+            Particle p = swarm.get(j);
+            if(idSetup == MOVEMENT_THREAD){
+                p.setBestGlobal(this.bestGlobalParticle);
+            }
+
+            p.setSetupRunnerThread(idSetup);
+            calls.add(Executors.callable(p));
+        }
+        // Da inicio a la ejecucion de los hilos
+        try {
+            pool2.invokeAll(calls);
+        } catch (InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        // Permite manejar el termino de los metodos llamados por los threads
+        pool2.shutdown();
+    }
 
     public void calculateVelocity(){
         for (Particle particle : swarm) {
             particle.CalculateVelocity(getC1Aperture(), getC2Aperture(),getInnerAperture(),getCnAperture(),
-                                        getC1Intensity(),getC2Intensity(),getInnerIntensity(), getCnIntensity(), getBestGlobalParticle());
+                    getC1Intensity(),getC2Intensity(),getInnerIntensity(), getCnIntensity(), getBestGlobalParticle());
         }
     }
 
@@ -198,6 +258,7 @@ public class Swarm {
         }
     }
 
+
     public boolean CalculateNewBestGlobal() {
         boolean changeGlobal = false;
 
@@ -208,60 +269,8 @@ public class Swarm {
                 changeGlobal = true;
             }
         }
+
         return changeGlobal;
-    }
-
-    public void evalParticlesThread(){
-        int threadsToUse = 3;
-
-        // Guardar objetos ejecutados en hilos (particulas)
-        List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
-
-        // Pool ejecutora de las funciones
-        ExecutorService pool2 = Executors.newFixedThreadPool(threadsToUse);
-
-        //Guardar objetos ejecutados
-        for(int j=0; j<swarm.size(); j++) {
-            Particle p = swarm.get(j);
-            p.setBestGlobal(p);
-            calls.add(Executors.callable(swarm.get(j)));
-        }
-
-        // Da inicio a la ejecucion de los hilos
-        try {
-            pool2.invokeAll(calls);
-        } catch (InterruptedException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
-        // Permite manejar el termino de los metodos llamados por los threads
-        pool2.shutdown();
-
-
-    }
-
-    public void ParticlesMovementThreads(){
-
-        // Guardar objetos ejecutados en hilos (particulas)
-        List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
-
-        // Pool ejecutora de las funciones
-        ExecutorService pool2 = Executors.newFixedThreadPool(threadsToUse);
-
-        //Guardar objetos ejecutados
-        for(int j=0; j<swarm.size(); j++) {
-            calls.add(Executors.callable(swarm.get(j)));
-        }
-
-        // Da inicio a la ejecucion de los hilos
-        try {
-            pool2.invokeAll(calls);
-        } catch (InterruptedException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
-        // Permite manejar el termino de los metodos llamados por los threads
-        pool2.shutdown();
     }
 
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
@@ -291,10 +300,6 @@ public class Swarm {
 
     public int getGlobalUpdateCount() {
         return globalUpdateCount;
-    }
-
-    public void setGlobalUpdateCount() {
-        this.globalUpdateCount += 1;
     }
 
     public double getC1Aperture() {
@@ -363,10 +368,6 @@ public class Swarm {
 
     public void setLastChange(int lastChange){
         this.lastChange = lastChange;
-    }
-
-    public int getLastChange(){
-        return this.lastChange;
     }
 
     private void setThreadsToUse(int threadsToUse){
