@@ -141,7 +141,7 @@ public class Main {
         //Particle configuration
         int setup = 4;
         int diffSetup = 4;
-        int nThreads = 1;
+        int nThreads = 3;
         boolean optimizedIntensity = false;
         /*
             OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1; 
@@ -150,8 +150,8 @@ public class Main {
         */
 
         //Parametros PSO
-        int size = 2;                     //Particle size
-        int iter = 10;                      //Pso Iterations
+        int size = 160;                     //Particle size
+        int iter = 100;                      //Pso Iterations
         
         double c1Aperture = 0.9321;         // Coef Global
         double c2Aperture = 0.9949;         // Coef Personal
@@ -195,11 +195,11 @@ public class Main {
             optimizedIntensity = true;
         }
         // Editando iteraciones en funcion de las particulas
-        iter = 2;
+        //iter = 20;
 
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
-        System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture + " - cn: "+ cnAperture);
-        System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity + " - cn: "+ cnIntensity);
+        System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture + "- cn: "+ cnAperture);
+        System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity + "- cn: "+ cnIntensity);
         System.out.println("nThreads: " + nThreads);
         ArrayList<Double> w = new ArrayList<>();
         w.add(1.0);
@@ -234,21 +234,20 @@ public class Main {
         }
 
 
-        Long initialAlgorithmTime = System.currentTimeMillis();
+
         // Creating the swarm
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
                                 c1Aperture, c2Aperture, inerAperture, cnAperture,
                                 c1Intensity, c2Intensity, inerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
         
         swarm.MoveSwarms();
-        Long finalAlgorithmTime = System.currentTimeMillis();
 
-        System.out.println("Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
 
 
         //Get the Solution of the algorithm
         Particle particle = swarm.getBestGlobalParticle();
-        Reporter reporte = new Reporter(particle, 6);
+        //Reporter reporter = new Reporter(particle, 7);
+        //Reporter reporter1 = new Reporter(particle, 6);
 
     }
 }

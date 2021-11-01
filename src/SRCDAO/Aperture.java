@@ -107,10 +107,8 @@ public class Aperture {
     public void velAperture(double wAperture, double c1Aperture, double c2Aperture, double cnAperture ,Aperture BGlobal, Aperture BPersonal){
         double r1 = Math.random();
         double r2 = Math.random();
-
         ArrayList<Pair<Integer,Integer>> BG = BGlobal.getApertures();
         ArrayList<Pair<Integer,Integer>> BP = BPersonal.getApertures();
-
         for(int i = 0; i < collimator.getxDim(); i++){
             Pair<Integer,Integer> aux_G = BG.get(i);
             Pair<Integer,Integer> aux_P = BP.get(i);
