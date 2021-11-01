@@ -112,8 +112,8 @@ public class Plan {
                 newModel = new Gurobi_Solver(this, volumen, beamIndex, dd, w);
                 setIntensity(newModel.newIntensity);
                 double objFunction = newModel.objVal;
-                System.out.println("Solver: " + newModel.objVal);
-                //setEval(newModel.objVal); // -> Recuperar valor de la funcion objetivo
+                //System.out.println("Solver: " + newModel.objVal);
+                setEval(objFunction); // -> Recuperar valor de la funcion objetivo
             } catch (GRBException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -176,6 +176,10 @@ public class Plan {
     }
 
     /*--------------------------------------------------------- GETTER AND SETTERS -----------------------------------------------------*/
+    public int getTotalAperturesUnsed(){
+        return this.totalAperturesUnsed;
+    }
+
     public ArrayList<Double> getFluenceMap(){
         ArrayList<Double> intensityVector = new ArrayList<Double>();
 
