@@ -26,6 +26,7 @@ public class Reporter {
     private static final int ALL_APERTURES_TXT = 4;
     private static final int ALL_APERTURES_AMPL = 5;
     private static final int ALL_COMPONENTS_TXT = 6;
+    private static final int INTENSITY_VECTOR_TXT = 7;
 
 
     public Reporter(Particle particle, int function){
@@ -42,7 +43,6 @@ public class Reporter {
                 break;
 
             case ALL_APERTURES_TXT:
-
                 break;
 
             case ALL_APERTURES_AMPL:
@@ -52,7 +52,11 @@ public class Reporter {
             case ALL_COMPONENTS_TXT:
                 exportIntensityMatrixAndApertures(particle);
                 break;
+
+            case INTENSITY_VECTOR_TXT:
+                IntensityVector(particle);
         }
+        System.out.println("DONE - UID Experiment: " + id);
     }
 
 
@@ -64,7 +68,12 @@ public class Reporter {
         for(Beam beam: plan.getAngle_beam()){
 
             Matrix matrix = beam.getIntensitisMatrix();
-            String fileName = UID + "-intensityMatrix"+beam.getIdBeam();
+            String fileName = "";
+            if(particle.getOptimizeIntensityFlag()){
+                fileName = UID + "-intensityMatrixWithGurobi"+beam.getIdBeam();
+            }else{
+                fileName = UID + "-intensityMatrix"+beam.getIdBeam();
+            }
             String filePath = intensityFolderPath+ fileName+ ".csv";
 
             try{
@@ -87,7 +96,6 @@ public class Reporter {
                 e.printStackTrace();
             }
         }
-        System.out.println("DONE - UID Experiment: " + id);
     }
 
     private void apertureMatrix(Particle particle){
@@ -135,31 +143,22 @@ public class Reporter {
                 e.printStackTrace();
             }
         }
-        System.out.println("DONE - UID Experiment: " + id);
     }
 
 
-    public void IntensityVector(Plan p){
+    public void IntensityVector(Particle particle){
+        Plan p = particle.getCurrentPlan();
         Vector<Integer> nBeamLetsByBeam = new Vector<>();
-        String IntensityVectorPath = "./import/";
-        String fileName = UID +" - FluenceMap.csv";
+        String IntensityVectorPath = "./OutPlots/intensityFolder/";
+        String fileName = UID +"-FluenceMap.txt";
         for(Beam b: p.getAngle_beam())
             nBeamLetsByBeam.add(b.getTotalBeamlets());
         System.out.println(nBeamLetsByBeam);
-        int beamIndex = 0;
         try{
-            FileWriter matrixCSV = new FileWriter(IntensityVectorPath+fileName+ ".csv");
+            FileWriter matrixCSV = new FileWriter(IntensityVectorPath+fileName);
             String vectorChain = "";
-            int count = 0;
             for(double i: p.getFluenceMap()){
-                vectorChain += i + " \n";
-                count++;
-                if(count == nBeamLetsByBeam.get(beamIndex)){
-                    vectorChain += " \n";
-                    beamIndex++;
-                    count = 0;
-                }
-
+                vectorChain += i + ", ";
 
             }
             matrixCSV.append(vectorChain);
@@ -177,12 +176,19 @@ public class Reporter {
         ArrayList<Beam> beams = tp.getAngle_beam();
         for (int b = 0; b < tp.getNBeam(); b++){
             Beam beam = beams.get(b);
-            String fileName = generalFolderPath+UID + "-Desc_Beam"+beam.getIdBeam()+".txt";
+            String fileName;
+            if(particle.getOptimizeIntensityFlag()){
+                fileName = generalFolderPath+ UID + "-Desc_BeamWithGurobi"+beam.getIdBeam()+".txt";
+            }else{
+                fileName = generalFolderPath+ UID + "-Desc_Beam"+beam.getIdBeam()+".txt";
+            }
             Matrix intensityMatrix = beam.getIntensitisMatrix();
             Vector<Aperture> aperturesSet = beam.getApertures();
 
             try{
                 FileWriter beamTXT = new FileWriter(fileName);
+                beamTXT.append("Score,"+tp.getEval());
+                beamTXT.append(NextLine);
                 beamTXT.append("Beam,"+String.valueOf(beam.getIdBeam()));
                 beamTXT.append(NextLine);
 
@@ -233,7 +239,6 @@ public class Reporter {
                 e.printStackTrace();
             }
         }
-        System.out.println("DONE - UID Experiment: " + id);
     }
 
     public void printAperturesToAMPL(Particle particle){
