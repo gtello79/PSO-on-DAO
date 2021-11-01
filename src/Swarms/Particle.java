@@ -25,6 +25,11 @@ public class Particle extends Thread{
 
     static final int MOVEMENT_THREAD = 0;
     static final int EVAL_THREAD = 1;
+    static final int OPTIMIZE_THREAD = 2;
+
+    //Indica si la particula fue optimizada por gurobi
+    private boolean optimizateFlag = false;
+
 
     /*-------------------------------------------------------------METHODS -------------------------------------------*/
     public Particle(int idParticle, ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures,
@@ -38,23 +43,21 @@ public class Particle extends Thread{
 
         setBestPersonal(this.currentPlan);
         setBestFitness(currentPlan.getEval());
-        setupRunnerThread = 0;
     }
 
     public Particle(Particle p){
+        this.idParticle = p.idParticle;
         this.currentPlan = new Plan(p.currentPlan);
         this.bestPersonal = new Plan(p.bestPersonal);
         this.fitness = p.fitness;
         this.bestFitness = p.bestFitness;
-        this.setupRunnerThread = 0;
     }
 
     public void evalParticle(){
         double lastFitness = this.fitness;
         this.fitness = currentPlan.eval();
-        //System.out.println("Particle "+idParticle+": " +  lastFitness + " -> " + fitness);
         CalculateBestPersonal();
-
+        System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
     }
 
     public void CalculateVelocity(double c1Aperture,  double c2Aperture, double wAperture, double cnAperture,
@@ -68,7 +71,14 @@ public class Particle extends Thread{
     }
 
     public void OptimizateIntensities(){
+        double lastFitness = this.fitness;
+        this.optimizateFlag = true;
+
         currentPlan.OptimizateIntensities();
+
+        this.fitness = this.currentPlan.getEval();
+        CalculateBestPersonal();
+        System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
     }
 
     public void CalculateBestPersonal(){
@@ -80,7 +90,6 @@ public class Particle extends Thread{
 
     @Override
     public void run(){
-
         switch (setupRunnerThread){
 
             case MOVEMENT_THREAD:
@@ -89,12 +98,14 @@ public class Particle extends Thread{
                                     c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
                 // Calcular posicion
                 CalculatePosition();
-                setupRunnerThread = 1;
                 break;
             case EVAL_THREAD:
                 // Evaluar particula
                 evalParticle();
-                setupRunnerThread = 0;
+                break;
+
+            case OPTIMIZE_THREAD:
+                OptimizateIntensities();
                 break;
         }
     }
@@ -102,6 +113,10 @@ public class Particle extends Thread{
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public ArrayList<Integer> getTotalUnUsedApertures(){
         return this.currentPlan.getAperturesUnUsed();
+    }
+
+    public int getAperturesUnUsed(){
+        return this.currentPlan.getTotalAperturesUnsed();
     }
 
     public double getFitness() {
@@ -192,4 +207,11 @@ public class Particle extends Thread{
         this.bestGlobal = new Particle(p);
     }
 
+    public void setSetupRunnerThread(int idSetup){
+        this.setupRunnerThread=idSetup;
+    }
+
+    public boolean getOptimizeIntensityFlag(){
+        return this.optimizateFlag;
+    }
 }
