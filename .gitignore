@@ -1,9 +1,6 @@
-apertureFolder
-intensityFolder
-import
-ExperimentsFiles/
+OutPlots/*
+import/*
+ExperimentsFiles/*
 FinalResults/
-IRace/
 src/data
-src/last_data
 PSO.iml
