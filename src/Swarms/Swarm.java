@@ -118,11 +118,12 @@ public class Swarm {
         }
         Long finalAlgorithmTime = System.currentTimeMillis();
 
+        int totalAperturesUnUsed = this.bestGlobalParticle.getAperturesUnUsed();
         System.out.println("Apertures UnUsed: "+ this.bestGlobalParticle.getAperturesUnUsed());
         //System.out.println(this.bestGlobalParticle.getTotalUnUsedApertures());
         //System.out.println("Initial solution: " + firstSolution  + " - Final solution: "+ bestGlobalEval + " - last Change: "+ lastChange);
-        System.out.println(firstSolution  + " " + bestGlobalEval + " " + globalUpdateCount + " " + lastChange);
         System.out.println("Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
+        System.out.println(firstSolution  + " " + bestGlobalEval + " " + globalUpdateCount + " " + lastChange + " " + totalAperturesUnUsed);
     }
 
     //Move the particles with concurrent process

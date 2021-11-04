@@ -61,7 +61,7 @@ def main():
                     + " c1Aperture " + str(c1_aperture) + " c2Aperture " + str(c2_aperture) + " inerAperture " + str(iner_aperture) \
                     + " c1Intensity " + str(c1_intensity) + " c2Intensity " + str(c2_intensity) + " inerIntensity " + str(iner_intensity)
                     
-    execute_command = "java -cp src com.company.Main " + config_params
+    execute_command = "java -classpath ./production/PSO:$LD_LIBRARY_PATH/gurobi.jar com.company.Main " + config_params
     
     for i in instance:
         system(execute_command + " i " + str(i) )

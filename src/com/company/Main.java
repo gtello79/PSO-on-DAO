@@ -15,8 +15,7 @@ public class Main {
     public static HashMap<String, String> mappingArg(String [] args){
         
         HashMap<String, String> params = new HashMap<>();
-
-        for(int i = 0; i < args.length ; i+=2){
+        for(int i = 0; i < args.length  ; i+=2){
             String param = args[i];
             String value = args[i+1];
             params.put(param, value);    
@@ -126,7 +125,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-
         HashMap<String, String> params = mappingArg(args);
 
         //Instance 0-70-140-210-280 CERR PACKAGE
@@ -141,7 +139,7 @@ public class Main {
         //Particle configuration
         int setup = 4;
         int diffSetup = 4;
-        int nThreads = 3;
+        int nThreads = 1;
         boolean optimizedIntensity = false;
         /*
             OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1; 
@@ -165,7 +163,8 @@ public class Main {
         
         if(params.containsKey("size")) 
             size = Integer.parseInt(params.get("size"));
-        
+        if(params.containsKey("iter"))
+            iter = Integer.parseInt(params.get("iter"));
         if(params.containsKey("c1Aperture")) 
             c1Aperture = Double.parseDouble(params.get("c1Aperture"));
         if(params.containsKey("c2Aperture")) 
@@ -194,9 +193,8 @@ public class Main {
         if(params.containsKey("intensityOptimized")){
             optimizedIntensity = true;
         }
-        // Editando iteraciones en funcion de las particulas
-        //iter = 20;
 
+        System.out.println("Instance " + instanceId );
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
         System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture + "- cn: "+ cnAperture);
         System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity + "- cn: "+ cnIntensity);
