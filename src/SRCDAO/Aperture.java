@@ -262,4 +262,16 @@ public class Aperture {
         return A;
     }
 
+    public void setOpenRow(int indexRow){
+        Pair<Integer,Integer> limits = collimator.getActiveRange(indexRow, angle);
+        if( limits.getFirst() > -1){
+            Pair<Integer,Integer> row = A.get(indexRow);
+            int firstLeft = limits.getFirst()-1;
+            int secondLeft = limits.getSecond()+1;
+            Pair<Integer, Integer> newRow = new Pair(firstLeft, secondLeft);
+            A.set(indexRow, newRow);
+        }
+
+    }
+
 }

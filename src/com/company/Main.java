@@ -131,7 +131,7 @@ public class Main {
         int instanceId = 71;
 
         //MLC Configuration    
-        int max_intensity = 20; //10 x apertura - probar este parametro
+        int max_intensity = 10; //10 x apertura - probar este parametro
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;

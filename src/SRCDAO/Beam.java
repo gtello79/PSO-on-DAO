@@ -185,6 +185,65 @@ public class Beam {
         }
     }
 
+    public void regenerateApertures(){
+
+        // Mapa de beamlets expuestos por las aperturas que tienen intensidad mayor a 1
+        double minIntensity = 1.0;
+        ArrayList<Pair<Integer, Integer>> expusedBeamlets = new ArrayList<>();
+        ArrayList<Integer> unUsed = new ArrayList();
+
+        for(int a = 0; a < A.size(); a++){
+            //Toma una apertura
+            Aperture aperture = A.get(a);
+
+            // Solo considera las aperturas con intensidades que son mayores a 1
+            if (aperture.getIntensity() < minIntensity) {
+                unUsed.add(a);
+                continue;
+            }
+
+            //Toma las posiciones de esa apertura y las mapea
+            ArrayList<Pair<Integer,Integer>> apertureRows = A.get(a).getApertures();
+            //Si no hay una apertura ingresada, toma la primera que observa
+            if(expusedBeamlets.size() == 0){
+                expusedBeamlets.addAll(apertureRows);
+            }else{
+                //Si no, compara las posiciones de la apertura ingresada y la de las hojas que este contiene
+                for(int r = 0; r < apertureRows.size(); r++){
+                    Pair<Integer, Integer> row = apertureRows.get(r);
+
+                    if(collimator.getActiveRange(r,angle).getFirst() < 0)
+                        continue;
+
+                    int firstPosition = expusedBeamlets.get(r).getFirst();
+                    int secondPosition = expusedBeamlets.get(r).getSecond();
+
+                    if(row.getFirst() < firstPosition || row.getSecond() > secondPosition){
+                        firstPosition = row.getFirst();
+                        secondPosition = row.getSecond();
+                        Pair<Integer, Integer> newPosition = new Pair(firstPosition, secondPosition);
+                        expusedBeamlets.set(r, newPosition);
+                    }
+                }
+            }
+        }
+
+        //Se reabren las aperturas inutilizadas completamente
+        for(int r = 0; r < expusedBeamlets.size(); r++){
+            Pair<Integer, Integer> row = expusedBeamlets.get(r);
+
+            Pair<Integer,Integer> limits = collimator.getActiveRange(r, angle);
+            if(limits.getFirst() < 0)
+                continue;
+
+            if(row.getFirst()+1 > limits.getFirst() ){
+                int selectedAperture = (int)(Math.random()*unUsed.size());
+                A.get(selectedAperture).setOpenRow(r);
+            }
+        }
+
+    }
+
     /* ------------------------------------------------- GETTER Y SETTERS ---------------------------------------------------*/
 
     public boolean setIntensityByAperture(double[] intensitySolver){

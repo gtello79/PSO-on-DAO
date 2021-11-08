@@ -11,9 +11,9 @@ def main():
     UID = str(int(random.random()*1000))
     exp_iter = 30
     results = []
-    instance = 30
-    nThreads = 1
-    intensityOptimized = True
+    instance = 20
+    nThreads = 3
+    intensityOptimized = False
     # Default params
     size = 160
 
@@ -96,7 +96,7 @@ def main():
             print(e.with_traceback)
         #Guardar resultados
         actual_exp = open(result_path, 'r')
-        
+
         final_exp = actual_exp.readlines()[-1]
         results.append(final_exp)
         print(final_exp)
