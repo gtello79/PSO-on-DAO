@@ -8,12 +8,6 @@ public class Beam {
     //ID BEAM
     private int angle;
 
-    //Representacion del collimator
-    private final Collimator collimator;
-
-    //Representacion de la matriz de intensidad
-    private final Matrix I;
-
     //Informacion de la configuracion tecnica del angulo
     private int maxApertures;
     private int maxIntensity;
@@ -24,14 +18,21 @@ public class Beam {
     private int setup;
     private int collimatorDim;
     private int totalBeamlets;
+    private int aperturesUnused;
+
+    //Representacion del collimator
+    private final Collimator collimator;
+
+    //Representacion de la matriz de intensidad
+    private final Matrix I;
 
     /* Apertures (representation 1):
      * Each aperture is represented by a vector of pairs A[i] = (x_ini, x_fin)
      * and an intensity range open (x_ini+1, x_fin-1) of row "r" for aperture d: A[d][r](x_ini, x_fin)
     */
-    private final Vector<Aperture> A;
+    private ArrayList<Aperture> A;
     private ArrayList<Double> fluenceMap;
-    private int aperturesUnused;
+
 
 
     /* ------------------------------------------- GENERAL METHODS ------------------------------------------------------- */
@@ -48,7 +49,7 @@ public class Beam {
         setTotalBeamlets(collimator.getNangleBeamlets(angle));
 
         this.collimator = collimator;
-        this.A = new Vector<>();
+        this.A = new ArrayList<>();
         this.fluenceMap = new ArrayList<>();
         this.aperturesUnused = 0;
 
@@ -82,9 +83,9 @@ public class Beam {
         setTotalBeamlets(b.getTotalBeamlets());
 
         this.collimator = new Collimator(b.collimator);
-        this.A = new Vector<>();
+        this.A = new ArrayList<>();
         this.fluenceMap = new ArrayList<>();
-        this.aperturesUnused = 0;
+        this.aperturesUnused = b.aperturesUnused;
 
         if(openApertures==-1)
             setOpenApertures(maxApertures);
@@ -129,7 +130,7 @@ public class Beam {
 
     public void generateIntensities(){
         this.aperturesUnused = 0;
-        Pair<Integer,Integer> aux;
+        Pair<Integer,Integer> limits;
         clearIntensity();
 
         for(int a = 0; a < A.size(); a++) {
@@ -139,18 +140,16 @@ public class Beam {
             if(apIntensity < 1.0){
                 this.aperturesUnused++;
             }
-            //Intensidad 0 -> No hay necesidad de iterar
-            if(apIntensity == 0.0){
-                continue;
-            }
 
             for (int i = 0; i < collimator.getxDim(); i++) {
-                aux = collimator.getActiveRange(i, angle);
+                limits = collimator.getActiveRange(i, angle);
 
-                if (aux.getFirst() < 0 || ap.getOpBeam(i).getFirst() < -1 )
-                    continue;
+                if ( limits.getFirst() == -1)
+                     continue;
 
-                for (int j = ap.getOpBeam(i).getFirst()+1 ; j < ap.getOpBeam(i).getSecond(); j++) {
+                Pair<Integer, Integer> apertureRow = ap.getOpBeam(i);
+
+                for (int j = apertureRow.getFirst()+1 ; j < apertureRow.getSecond(); j++) {
                     double newIntensity = (this.I.getPos(i, j) + apIntensity);
                     I.setPos(i,j, newIntensity);
                 }
@@ -162,8 +161,10 @@ public class Beam {
     public void clearIntensity(){
         // Rellenado de la matriz de intensidad
         for(int i = 0; i < collimator.getxDim(); i++){
+            Pair<Integer,Integer> limits = collimator.getActiveRange(i, angle);
+
             for(int j = 0; j < collimator.getyDim(); j++){
-                if(j >= collimator.getActiveRange(i,angle).getFirst() && j <= collimator.getActiveRange(i,angle).getSecond() ) {
+                if(j >= limits.getFirst() && j <= limits.getSecond() ) {
                     this.I.setPos(i,j,0);
                 }else{
                     this.I.setPos(i,j,-1);
@@ -176,87 +177,212 @@ public class Beam {
         this.fluenceMap = new ArrayList<>();
 
         for(int i = 0; i < collimator.getxDim(); i++){
-            Pair<Integer,Integer> x = collimator.getActiveRange(i,angle);
-            if( x.getFirst() < 0 )
+            Pair<Integer,Integer> limit = collimator.getActiveRange(i,angle);
+            if( limit.getFirst() == -1 )
                 continue;
-            for(int j = x.getFirst(); j <= x.getSecond(); j++){
+
+            for(int j = limit.getFirst(); j <= limit.getSecond(); j++){
                 fluenceMap.add(I.getPos(i,j));
             }
         }
     }
 
     public void regenerateApertures(){
+        ArrayList<Pair<Integer,Integer>> functionalApertures = this.getTransposeMatrix();
+        ArrayList<Integer> aperturesUnUsedList = new ArrayList<>();
 
-        // Mapa de beamlets expuestos por las aperturas que tienen intensidad mayor a 1
-        double minIntensity = 1.0;
-        ArrayList<Pair<Integer, Integer>> expusedBeamlets = new ArrayList<>();
-        ArrayList<Integer> unUsed = new ArrayList();
-
+        //Reconocimiento de aperturas con baja intensidad
         for(int a = 0; a < A.size(); a++){
-            //Toma una apertura
             Aperture aperture = A.get(a);
+            if(aperture.getIntensity() < 1.0)
+                aperturesUnUsedList.add(a);
+        }
 
-            // Solo considera las aperturas con intensidades que son mayores a 1
-            if (aperture.getIntensity() < minIntensity) {
-                unUsed.add(a);
-                continue;
+        for(int a = 0; a < aperturesUnUsedList.size(); a++){
+            int indexAperture = aperturesUnUsedList.get(a);
+            Aperture aperture = A.get(indexAperture);
+
+            for(int indexRow = 0; indexRow < collimator.getxDim(); indexRow++){
+                Pair<Integer,Integer> limits = collimator.getActiveRange(indexRow, angle);
+                if(limits.getFirst() == -1)
+                    continue;
+
+                Pair<Integer, Integer> functionalRow = functionalApertures.get(indexRow);
+
+                if(functionalRow.getFirst()+1 == limits.getFirst() && functionalRow.getSecond()-1 == limits.getSecond()){
+                    //La fila es completamente irradiada -> Se ciera en las apertura inutilizadas
+                    Pair<Integer,Integer> newRow =  new Pair(limits.getFirst(), limits.getFirst()+1);
+                    aperture.setRow(indexRow, newRow);
+                    continue;
+
+                }else if(functionalRow.getFirst()+1 > limits.getFirst() && functionalRow.getSecond()-1 < limits.getSecond()){
+                    //Falta irradiar por la izquierda y por la derecha
+                    if(Math.random() <= 0.5){
+
+                        //De forma aleatoria, la apertura irradiara por la izquierda
+                        int apertureLeft = limits.getFirst() - 1;
+                        int apertureRight = functionalRow.getFirst() + 1;
+                        Pair<Integer,Integer> newRow = new Pair(apertureLeft, apertureRight);
+
+                        aperture.setRow(indexRow, newRow);
+
+                        functionalRow = new Pair(apertureLeft, functionalRow.getSecond());
+
+                    }else{
+                        //De forma aleatoria, la apertura irradiara por la derecha
+                        int apertureLeft = functionalRow.getSecond() - 1;
+                        int apertureRight = limits.getSecond() + 1;
+
+                        Pair<Integer,Integer> newRow = new Pair(apertureLeft, apertureRight);
+
+                        aperture.setRow(indexRow, newRow);
+
+                        functionalRow = new Pair(functionalRow.getFirst(), apertureRight);
+                    }
+                }else{
+
+                    // Falta irradiar unicamente por la izquierda
+                    if(functionalRow.getFirst()+1 > limits.getFirst() ) {
+                        //System.out.println("Moviendo hoja a la izquierda");
+
+                        int apertureLeft = limits.getFirst() - 1;
+                        int apertureRight = functionalRow.getFirst() + 1;
+
+                        Pair<Integer,Integer> newRow = new Pair(apertureLeft, apertureRight);
+                        aperture.setRow(indexRow, newRow);
+
+                        functionalRow = new Pair(apertureLeft, functionalRow.getSecond());
+
+                    }else if(functionalRow.getSecond()-1 < limits.getSecond() ){
+                        // Falta irradiar unicamente por la derecha
+
+                        int apertureLeft = functionalRow.getSecond() - 1;
+                        int apertureRight = limits.getSecond() + 1;
+                        Pair<Integer,Integer> newRow = new Pair(apertureLeft, apertureRight);
+
+                        aperture.setRow(indexRow, newRow);
+                        functionalRow = new Pair(functionalRow.getFirst(), apertureRight);
+
+                    }
+                }
+                functionalApertures.set(indexRow, functionalRow);
             }
 
-            //Toma las posiciones de esa apertura y las mapea
-            ArrayList<Pair<Integer,Integer>> apertureRows = A.get(a).getApertures();
-            //Si no hay una apertura ingresada, toma la primera que observa
-            if(expusedBeamlets.size() == 0){
-                expusedBeamlets.addAll(apertureRows);
-            }else{
-                //Si no, compara las posiciones de la apertura ingresada y la de las hojas que este contiene
-                for(int r = 0; r < apertureRows.size(); r++){
-                    Pair<Integer, Integer> row = apertureRows.get(r);
 
-                    if(collimator.getActiveRange(r,angle).getFirst() < 0)
-                        continue;
+        }
 
-                    int firstPosition = expusedBeamlets.get(r).getFirst();
-                    int secondPosition = expusedBeamlets.get(r).getSecond();
+    }
 
-                    if(row.getFirst() < firstPosition || row.getSecond() > secondPosition){
-                        firstPosition = row.getFirst();
-                        secondPosition = row.getSecond();
-                        Pair<Integer, Integer> newPosition = new Pair(firstPosition, secondPosition);
-                        expusedBeamlets.set(r, newPosition);
+    // Get a general aperture with the shapes adjusted using intensity > 1
+    public ArrayList<Pair<Integer,Integer>> BuildTransposeAperture(){
+        ArrayList<Pair<Integer,Integer>> aperturesOnOperation = new ArrayList<>();
+
+        for(int a = 0; a < A.size(); a++){
+            Aperture aperture = A.get(a);
+
+            if(aperture.getIntensity() >= 1.0){
+                if(aperturesOnOperation.size() == 0){
+                    //Get a template of the first aperture with intensity mayor of 1.0
+                    aperturesOnOperation = new ArrayList(aperture.getApertures());
+                }else{
+                    for(int r = 0; r < aperturesOnOperation.size(); r++ ){
+
+                        //Compare the index of each row on the current aperture with the Template Generated
+                        Pair<Integer,Integer> rowLimits = collimator.getActiveRange(r, angle);
+                        if(rowLimits.getFirst() == -1)
+                            continue;
+
+                        Pair<Integer,Integer> rowAperture = aperture.getOpBeam(r);
+                        Pair<Integer,Integer> rowTranspose = aperturesOnOperation.get(r);
+
+                        int firstLeaf = rowTranspose.getFirst();
+                        int secondLeaf = rowTranspose.getSecond();
+
+                        if(rowAperture.getFirst() <= firstLeaf ){
+                            firstLeaf = rowAperture.getFirst();
+                        }
+
+                        if(rowAperture.getSecond() >= secondLeaf){
+                            secondLeaf = rowAperture.getSecond();
+                        }
+
+                        aperturesOnOperation.set(r, new Pair(firstLeaf, secondLeaf));
+
                     }
                 }
             }
         }
 
-        //Se reabren las aperturas inutilizadas completamente
-        for(int r = 0; r < expusedBeamlets.size(); r++){
-            Pair<Integer, Integer> row = expusedBeamlets.get(r);
+        //Se asegura que no exista un sector intermedio sin irradiar
+        for(int r = 0; r < aperturesOnOperation.size(); r++){
+            Pair<Integer,Integer> row = aperturesOnOperation.get(r);
+            ArrayList<Integer> beamletsOnRow = new ArrayList<>();
 
-            Pair<Integer,Integer> limits = collimator.getActiveRange(r, angle);
-            if(limits.getFirst() < 0)
+            if(row.getFirst() == -2)
                 continue;
 
-            if(row.getFirst()+1 > limits.getFirst() ){
-                int selectedAperture = (int)(Math.random()*unUsed.size());
-                A.get(selectedAperture).setOpenRow(r);
+            //Beamlets utilizados en la fila actual
+            for(int x = row.getFirst()+1; x < row.getSecond(); x++){
+                beamletsOnRow.add(x);
+            }
+
+            //Check if the beamlet is proyected at least one time for an Aperture
+            ArrayList<Integer> copyBeamlets = new ArrayList<>();
+            for(int a = 0; a < A.size(); a++) {
+                Aperture aperture = A.get(a);
+                if (aperture.getIntensity() >= 1.0) {
+                    Pair<Integer,Integer> apertureRow = aperture.getOpBeam(r);
+                    for(int b = 0; b < beamletsOnRow.size(); b++){
+                        int beamlet = beamletsOnRow.get(b);
+                        if(beamlet >= apertureRow.getFirst() && beamlet <= apertureRow.getSecond()){
+                            copyBeamlets.add(beamlet);
+                        }
+                    }
+                }
+            }
+            //Delete the proyected beamlets and only stay the beamlets hide between leaf
+            for(Integer b: copyBeamlets)
+                beamletsOnRow.remove(b);
+
+            //Translate the Leaf's to irradiate the beamLets abandoned
+            if(beamletsOnRow.size() != 0){
+                Pair<Integer,Integer> newRow = null;
+                Collections.sort(beamletsOnRow);
+
+                int maxindex = beamletsOnRow.get(beamletsOnRow.size() - 1);
+                int minindex = beamletsOnRow.get(0);
+
+                int d1 = Math.abs(minindex - row.getSecond() - 1);
+                int d2 = Math.abs(maxindex - row.getFirst() + 1 );
+
+                if( d1 <= d2){
+                    newRow = new Pair(row.getFirst(), minindex+1);
+                }else{
+                    newRow = new Pair(row.getSecond(), maxindex-1);
+                }
+                aperturesOnOperation.set(r, newRow);
+
             }
         }
 
+        return aperturesOnOperation;
     }
 
     /* ------------------------------------------------- GETTER Y SETTERS ---------------------------------------------------*/
 
-    public boolean setIntensityByAperture(double[] intensitySolver){
-        if(A.size() != intensitySolver.length){
-            System.out.println("ERROR EN LAS INTENSIDADES OBTENIDAS");
-            return false;
-        }else {
-            for (int a = 0; a < A.size(); a++) {
-                Aperture aperture = A.get(a);
-                aperture.setIntensity(intensitySolver[a]);
-            }
+    public void setApertures(ArrayList<Aperture> lastApertures){
+        ArrayList<Aperture> newApertures = new ArrayList<>();
+        for(Aperture aperture: lastApertures){
+            Aperture newAper = new Aperture(aperture);
+            newApertures.add(newAper);
         }
-        return true;
+    }
+
+    public void setIntensityByAperture(double[] intensitySolver){
+        for (int a = 0; a < A.size(); a++) {
+            Aperture aperture = A.get(a);
+            aperture.setIntensity(intensitySolver[a]);
+        }
     }
 
     public boolean getProyectedBeamLetByAperture(int idAperture, int indexBeamlet){
@@ -276,77 +402,44 @@ public class Beam {
         return intensity;
     }
 
-    public int getAperturesUnused(){
-        return this.aperturesUnused;
-    }
+    public int getAperturesUnused(){ return this.aperturesUnused; }
 
-    public ArrayList<Double> getIntensityVector(){
-        return fluenceMap;
-    }
+    public ArrayList<Double> getIntensityVector(){ return fluenceMap; }
 
-    public int getIdBeam() {
-        return angle;
-    }
+    public int getIdBeam() { return angle; }
 
-    public void setAngle(int angle) {
-        this.angle = angle;
-    }
+    public void setAngle(int angle) { this.angle = angle; }
 
-    public void setMax_apertures(int maxApertures) {
-        this.maxApertures = maxApertures;
-    }
+    public void setMax_apertures(int maxApertures) { this.maxApertures = maxApertures; }
 
-    public void setMax_intensity(int max_intensity) {
-        this.maxIntensity = max_intensity;
-    }
+    public void setMax_intensity(int max_intensity) { this.maxIntensity = max_intensity; }
 
-    public void setMinIntensity(int minIntensity) {
-        this.minIntensity = minIntensity;
-    }
+    public void setMinIntensity(int minIntensity) { this.minIntensity = minIntensity; }
 
-    public void setInitialIntensity(int initialIntensity) {
-        this.initialIntensity = initialIntensity;
-    }
+    public void setInitialIntensity(int initialIntensity) { this.initialIntensity = initialIntensity; }
 
-    public void setStep_intensity(int step_intensity) {
-        this.stepIntensity = step_intensity;
-    }
+    public void setStep_intensity(int step_intensity) { this.stepIntensity = step_intensity; }
 
-    public void setOpenApertures(int openApertures) {
-        this.openApertures = openApertures;
-    }
+    public void setOpenApertures(int openApertures) { this.openApertures = openApertures; }
 
-    public void setSetup(int setup) {
-        this.setup = setup;
-    }
+    public void setSetup(int setup) { this.setup = setup; }
 
-    public Matrix getIntensitisMatrix(){
-        return I;
-    }
+    public Matrix getIntensitisMatrix(){ return I; }
 
-    public Aperture getAperture(int id){
-        return A.get(id);
-    }
+    public Aperture getAperture(int id){ return A.get(id); }
 
-    public Vector<Aperture> getApertures(){
-        return A;
-    }
+    public ArrayList<Aperture> getApertures(){ return this.A; }
 
-    public int getCollimatorDim() {
-        return collimatorDim;
-    }
+    public int getCollimatorDim() { return collimatorDim; }
 
-    public void setCollimatorDim(int collimatorDim) {
-        this.collimatorDim = collimatorDim;
-    }
+    public void setCollimatorDim(int collimatorDim) { this.collimatorDim = collimatorDim; }
 
-    public int getTotalBeamlets() {
-        return totalBeamlets;
-    }
+    public int getTotalBeamlets() { return totalBeamlets; }
 
-    public void setTotalBeamlets(int totalBeamlets) {
-        this.totalBeamlets = totalBeamlets;
-    }
+    public void setTotalBeamlets(int totalBeamlets) { this.totalBeamlets = totalBeamlets; }
+
+    public ArrayList<Pair<Integer, Integer>> getTransposeMatrix(){ return this.BuildTransposeAperture(); }
+
 
     /* ------------------------------------------------ PSO METHODS ----------------------------------*/
     public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture, double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Beam BGlobal, Beam BPersonal){

@@ -1,5 +1,6 @@
 package Swarms;
 import SRCDAO.*;
+import Utils.Reporter;
 import source.Collimator;
 import source.Volumen;
 
@@ -9,9 +10,7 @@ public class Particle extends Thread{
     int idParticle;
     private double fitness;
     private double bestFitness;
-    private Plan bestPersonal;
-    private Plan currentPlan;
-    private Particle bestGlobal;
+
     private int setupRunnerThread;
     private double c1ApertureThread;
     private double c2ApertureThread;
@@ -23,12 +22,16 @@ public class Particle extends Thread{
     private double innerIntensityThread;
     private double cnIntensityThread;
 
+    private Particle bestGlobal;
+    private Plan bestPersonal;
+    private Plan currentPlan;
+
     static final int MOVEMENT_THREAD = 0;
     static final int EVAL_THREAD = 1;
     static final int OPTIMIZE_THREAD = 2;
+    static final int REPAIR_SOLUTION = 3;
 
-    //Indica si la particula fue optimizada por gurobi
-    private boolean optimizateFlag = false;
+
 
 
     /*-------------------------------------------------------------METHODS -------------------------------------------*/
@@ -43,14 +46,16 @@ public class Particle extends Thread{
 
         setBestPersonal(this.currentPlan);
         setBestFitness(currentPlan.getEval());
+
     }
 
     public Particle(Particle p){
         this.idParticle = p.idParticle;
-        this.currentPlan = new Plan(p.currentPlan);
-        this.bestPersonal = new Plan(p.bestPersonal);
         this.fitness = p.fitness;
         this.bestFitness = p.bestFitness;
+
+        this.currentPlan = new Plan(p.currentPlan);
+        this.bestPersonal = new Plan(p.bestPersonal);
     }
 
     public void evalParticle(){
@@ -59,6 +64,36 @@ public class Particle extends Thread{
         CalculateBestPersonal();
         System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
     }
+
+    public void OptimizateIntensities(){
+        double lastFitness = this.fitness;
+
+        currentPlan.OptimizateIntensities();
+
+        this.fitness = this.currentPlan.getEval();
+        CalculateBestPersonal();
+        System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
+    }
+
+    public void regenerateApertures(){
+        double lastFitness = this.fitness;
+
+        //Se regenera la solucion
+        this.currentPlan.regenerateApertures();
+
+        // Se optimiza las intensidades
+        currentPlan.OptimizateIntensities();
+
+        // Se evalua la solucion
+        this.fitness = this.currentPlan.getEval();
+
+        //Actualizacion del best personal
+        CalculateBestPersonal();
+        System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
+
+    }
+
+    /*---------------------------------------------------- PSO METHODS--------------------------------------------------------------------------------*/
 
     public void CalculateVelocity(double c1Aperture,  double c2Aperture, double wAperture, double cnAperture,
                                   double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Particle bGlobal){
@@ -70,16 +105,6 @@ public class Particle extends Thread{
         currentPlan.CalculatePosition();
     }
 
-    public void OptimizateIntensities(){
-        double lastFitness = this.fitness;
-        this.optimizateFlag = true;
-
-        currentPlan.OptimizateIntensities();
-
-        this.fitness = this.currentPlan.getEval();
-        CalculateBestPersonal();
-        System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
-    }
 
     public void CalculateBestPersonal(){
         if(this.fitness < bestFitness){
@@ -88,29 +113,7 @@ public class Particle extends Thread{
         }
     }
 
-    @Override
-    public void run(){
-        switch (setupRunnerThread){
-
-            case MOVEMENT_THREAD:
-                // Calcular velocidad
-                CalculateVelocity(c1ApertureThread, c2ApertureThread, innerApertureThread, cnApertureThread,
-                                    c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
-                // Calcular posicion
-                CalculatePosition();
-                break;
-            case EVAL_THREAD:
-                // Evaluar particula
-                evalParticle();
-                break;
-
-            case OPTIMIZE_THREAD:
-                OptimizateIntensities();
-                break;
-        }
-    }
-
-    /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
+    /*---------------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public ArrayList<Integer> getTotalUnUsedApertures(){
         return this.currentPlan.getAperturesUnUsed();
     }
@@ -139,64 +142,37 @@ public class Particle extends Thread{
         return this.currentPlan;
     }
 
-    public double getC1ApertureThread() {
-        return c1ApertureThread;
-    }
-
     public void setC1ApertureThread(double c1ApertureThread) {
         this.c1ApertureThread = c1ApertureThread;
-    }
-
-    public double getC2ApertureThread() {
-        return c2ApertureThread;
     }
 
     public void setC2ApertureThread(double c2ApertureThread) {
         this.c2ApertureThread = c2ApertureThread;
     }
 
-    public double getInnerApertureThread() {
-        return innerApertureThread;
-    }
 
     public void setInnerApertureThread(double innerApertureThread) {
         this.innerApertureThread = innerApertureThread;
     }
 
-    public double getCnApertureThread() {
-        return cnApertureThread;
-    }
 
     public void setCnApertureThread(double cnApertureThread) {
         this.cnApertureThread = cnApertureThread;
     }
 
-    public double getC1IntensityThread() {
-        return c1IntensityThread;
-    }
 
     public void setC1IntensityThread(double c1IntensityThread) {
         this.c1IntensityThread = c1IntensityThread;
     }
 
-    public double getC2IntensityThread() {
-        return c2IntensityThread;
-    }
 
     public void setC2IntensityThread(double c2IntensityThread) {
         this.c2IntensityThread = c2IntensityThread;
     }
 
-    public double getInnerIntensityThread() {
-        return innerIntensityThread;
-    }
 
     public void setInnerIntensityThread(double innerIntensityThread) {
         this.innerIntensityThread = innerIntensityThread;
-    }
-
-    public double getCnIntensityThread() {
-        return cnIntensityThread;
     }
 
     public void setCnIntensityThread(double cnIntensityThread) {
@@ -211,7 +187,32 @@ public class Particle extends Thread{
         this.setupRunnerThread=idSetup;
     }
 
-    public boolean getOptimizeIntensityFlag(){
-        return this.optimizateFlag;
+    // --------------------------------------- THREADS METHODS (NO TOCAR) ----------------------------------
+    @Override
+    public void run(){
+        switch (setupRunnerThread){
+
+            case MOVEMENT_THREAD:
+                // Calcular velocidad
+                this.CalculateVelocity(c1ApertureThread, c2ApertureThread, innerApertureThread, cnApertureThread,
+                        c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
+                // Calcular posicion
+                this.CalculatePosition();
+                break;
+
+            case EVAL_THREAD:
+                // Evaluar particula
+                this.evalParticle();
+                break;
+
+            case OPTIMIZE_THREAD:
+                this.OptimizateIntensities();
+                break;
+
+            case REPAIR_SOLUTION:
+                this.regenerateApertures();
+                break;
+        }
     }
+
 }

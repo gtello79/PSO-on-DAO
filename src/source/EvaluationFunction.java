@@ -22,11 +22,14 @@ public class EvaluationFunction {
     //Numero de beamlets x tejido (hasta el momento se espera que todos sean iguales)
     private final ArrayList<Integer> nbBeamLets;
 
+    private double[] distribution;
 
     public EvaluationFunction(ArrayList<Volumen> volumes)
     {
         setEvaluation(0.0);
         setNb_organs( volumes.size() );
+
+        distribution = new double[this.nbOrgans];
 
         nbVoxels = new ArrayList<>();
         nbBeamLets = new ArrayList<>();
@@ -98,7 +101,11 @@ public class EvaluationFunction {
                 }
 
             }
-            evaluation += pen/nbVoxels.get(o);
+            double penalizationOrg = pen/nbVoxels.get(o);
+
+            distribution[o] = penalizationOrg;
+            //System.out.println("Penalization "+ o + ": "+ penalizationOrg);
+            evaluation += penalizationOrg;
 
         }
 
@@ -115,6 +122,10 @@ public class EvaluationFunction {
 
     public void setNb_organs(int nbOrgans) {
         this.nbOrgans = nbOrgans;
+    }
+
+    public double[] getDistributionIntensity(){
+        return distribution;
     }
 
 

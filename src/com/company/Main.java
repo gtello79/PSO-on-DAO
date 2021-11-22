@@ -1,5 +1,6 @@
 package com.company;
 import Swarms.*;
+
 import Utils.Reporter;
 import source.*;
 import java.io.FileNotFoundException;
@@ -39,10 +40,9 @@ public class Main {
 
     public static Pair<String,String> getInstanceById(Integer index) throws FileNotFoundException {
 
-        String indexFile = "src/data/index_instances.txt";
+        String indexFile = "./data/index_instances.txt";
         String folder_coord = "1_1";
         File of = new File(indexFile);
-
         Scanner reading = new Scanner(of);
         
         int nLine = 1;
@@ -55,7 +55,7 @@ public class Main {
             nLine++;
         }
         
-        folder_coord = "src/data/"+folder_coord+"/";
+        folder_coord = "./data/"+folder_coord+"/";
         String instance_file = folder_coord + "Instance.txt";
         String coordinate_file = folder_coord + "coordinates_instance.txt";
         
@@ -101,9 +101,12 @@ public class Main {
         ArrayList<Volumen> Volumes = new ArrayList<>();
         String line;
         int nline = 0;
+        System.out.println("ORG FILE: "+ org_filename);
         File of = new File(org_filename);
-        if(!of.exists())
+        if(!of.exists()){
             System.out.println("ERROR: NO SE ENCUENTRA EL ARCHIVO " + org_filename);
+            System.exit(-1);
+        }
         System.out.println("READING VOLUMEN FILES");
         Scanner reading = new Scanner(of);
         while(reading.hasNextLine()){
@@ -139,8 +142,8 @@ public class Main {
         //Particle configuration
         int setup = 4;
         int diffSetup = 4;
-        int nThreads = 1;
-        boolean optimizedIntensity = false;
+        int nThreads = 3;
+        boolean optimizedIntensity = true;
         /*
             OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1; 
             CLOSED_MIN_SETUP = 2; CLOSED_MAX_SETUP = 3;
@@ -148,18 +151,18 @@ public class Main {
         */
 
         //Parametros PSO
-        int size = 160;                     //Particle size
-        int iter = 100;                      //Pso Iterations
+        int size = 10;                       //Particle size
+        int iter = 11;                      //Pso Iterations
         
-        double c1Aperture = 0.9321;         // Coef Global
-        double c2Aperture = 0.9949;         // Coef Personal
-        double inerAperture = 0.1314;       // Inner
-        double cnAperture = 1.4638;         // constriction Factor
+        double c1Aperture = 1.8751; //0.9321;         // Coef Global
+        double c2Aperture = 0.2134; //0.9949;         // Coef Personal
+        double innerAperture = 0.5774; //0.1314;       // Inner
+        double cnAperture = 1.6641; //1.4638;         // constriction Factor
 
-        double c1Intensity = 0.48;          // Coef Global
-        double c2Intensity = 1.4577;        // Coef Personal
-        double inerIntensity = 0.8432;      // Inner
-        double cnIntensity = 0.9911;        // constriction Factor
+        double c1Intensity = 0.3158; //0.48;          // Coef Global
+        double c2Intensity = 1.7017; //1.4577;        // Coef Personal
+        double innerIntensity = 0.5331; //0.8432;      // Inner
+        double cnIntensity =  1.2389; //0.9911;        // constriction Factor
         
         if(params.containsKey("size")) 
             size = Integer.parseInt(params.get("size"));
@@ -170,7 +173,7 @@ public class Main {
         if(params.containsKey("c2Aperture")) 
             c2Aperture = Double.parseDouble(params.get("c2Aperture"));
         if(params.containsKey("inerAperture")) 
-            inerAperture = Double.parseDouble(params.get("inerAperture"));
+            innerAperture = Double.parseDouble(params.get("inerAperture"));
         if(params.containsKey("cnAperture")) 
             cnAperture = Double.parseDouble(params.get("cnAperture"));
         
@@ -179,7 +182,7 @@ public class Main {
         if(params.containsKey("c2Intensity")) 
             c2Intensity = Double.parseDouble(params.get("c2Intensity"));
         if(params.containsKey("inerIntensity")) 
-            inerIntensity = Double.parseDouble(params.get("inerIntensity"));
+            innerIntensity = Double.parseDouble(params.get("inerIntensity"));
         if(params.containsKey("cnIntensity")) 
             cnIntensity = Double.parseDouble(params.get("cnIntensity"));
         if(params.containsKey("i")) 
@@ -194,11 +197,13 @@ public class Main {
             optimizedIntensity = true;
         }
 
+        //iter = 40000/size;
+
         System.out.println("Instance " + instanceId );
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
-        System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + inerAperture + "- cn: "+ cnAperture);
-        System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + inerIntensity + "- cn: "+ cnIntensity);
-        System.out.println("nThreads: " + nThreads);
+        System.out.println("Aperture  - c1: "+ c1Aperture  + "- c2: "+ c2Aperture  + "- w: " + innerAperture + "- cn: "+ cnAperture);
+        System.out.println("Intensity - c1: "+ c1Intensity + "- c2: "+ c2Intensity + "- w: " + innerIntensity + "- cn: "+ cnIntensity);
+        System.out.println("Optimization: " + optimizedIntensity  +" - nThreads: " + nThreads);
         ArrayList<Double> w = new ArrayList<>();
         w.add(1.0);
         w.add(1.0);
@@ -231,21 +236,20 @@ public class Main {
             maxApertures.add(5);
         }
 
-
-
         // Creating the swarm
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
-                                c1Aperture, c2Aperture, inerAperture, cnAperture,
-                                c1Intensity, c2Intensity, inerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
-        
+                                c1Aperture, c2Aperture, innerAperture, cnAperture,
+                                c1Intensity, c2Intensity, innerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
+
         swarm.MoveSwarms();
-
-
 
         //Get the Solution of the algorithm
         Particle particle = swarm.getBestGlobalParticle();
-        //Reporter reporter = new Reporter(particle, 7);
-        //Reporter reporter1 = new Reporter(particle, 6);
+
+
+
+        //System.out.println(" ------- PRINTING REPAIRED SOLUTION");
+        new Reporter(particle,6);
 
     }
 }

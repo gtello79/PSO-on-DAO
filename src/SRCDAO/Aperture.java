@@ -73,7 +73,7 @@ public class Aperture {
                     if( index1 == sLeaf ){
                         aux.add(new Pair(fLeaf, sLeaf));
                     }else{
-                        int index2 = (middle) + (int)(Math.random()*(sLeaf-middle));
+                        int index2 = (middle) + (int)(Math.random()*(sLeaf-middle+1));
                         aux.add(new Pair(index1,index2));
                     }
                 }else{
@@ -100,6 +100,32 @@ public class Aperture {
             setIntensity(r_intensity);
         }else{
             setIntensity(initial_intensity);
+        }
+    }
+
+    public void openApertureReparation(){
+        for(int r = 0; r < A.size(); r++){
+            Pair<Integer,Integer> row = A.get(r);
+            Pair<Integer,Integer> rowLimits = collimator.getActiveRange(r, angle);
+
+            if(rowLimits.getFirst() == -1)
+                continue;
+            if(row.getFirst()+1 == rowLimits.getFirst() && row.getSecond()-1 == rowLimits.getSecond())
+                continue;
+
+            int leftLeaf = row.getFirst() + 1;
+            int rightLeaf = row.getSecond() - 1;
+
+            int distanceLeft = leftLeaf - rowLimits.getFirst();
+            int distanceRight = rowLimits.getSecond() - rightLeaf;
+
+            //Resolving using the aperture representation
+            int newLeftLeaf = leftLeaf - (int)(distanceLeft*Math.random() - 1);
+            int newRightLeaf = (int)(distanceRight*Math.random() + 1) + rightLeaf;
+
+            Pair<Integer, Integer> newRow = new Pair(newLeftLeaf, newRightLeaf);
+
+            A.set(r, newRow);
         }
     }
 
@@ -138,16 +164,18 @@ public class Aperture {
         setVeloc_intensity(val);
     }
 
+    // Movement function used by pso to translate the apertures
     public void movAperture(){
 
         for(int i = 0; i < A.size(); i++){
 
+            Pair<Integer,Integer> limits = collimator.getActiveRange(i,angle);
             //Par <-2,-2> cerradas de forma definitiva
-            if(A.get(i).getFirst() < -1)
+            if(limits.getFirst() == -1)
                 continue;
 
-            int limit_inf = collimator.getActiveRange(i,angle).getFirst();
-            int limit_sup = collimator.getActiveRange(i,angle).getSecond();
+            int limit_inf = limits.getFirst();
+            int limit_sup = limits.getSecond();
 
             int first = (velocityA.get(i).getFirst() + A.get(i).getFirst());
             int second = (velocityA.get(i).getSecond() + A.get(i).getSecond());
@@ -171,6 +199,7 @@ public class Aperture {
         }
     }
 
+    // Movement Function used of PSO considering the intensities
     public void moveIntensity(double max_intensity){
         double val = getIntensity() + getVeloc_intensity();
 
@@ -184,59 +213,8 @@ public class Aperture {
         setIntensity(newIntensity);
     }
 
-    public boolean getProyectedBeamLet(int indexBeamlet){
-        int counterLocal = 0;
-        for(int i = 0; i < collimator.getxDim(); i++){
 
-            Pair<Integer, Integer> x = collimator.getActiveRange(i, angle);
-            Pair<Integer, Integer> positionApertures = A.get(i);
-
-            if(x.getFirst() < 0 ) {
-                continue;
-            }
-            for(int j = x.getFirst(); j <= x.getSecond(); j++){
-                if(counterLocal == indexBeamlet){
-                    if(j > positionApertures.getFirst() && j < positionApertures.getSecond() ){
-                        return true;
-                    }else{
-                        return false;
-                    }
-                }
-                counterLocal ++;
-            }
-        }
-        if(counterLocal != collimator.getNangleBeamlets(angle)){
-            System.out.println("ERROR: LA CANTIDAD DE BEAMLETS NO COINCIDE");
-            System.out.println("CONTADOS: "+ counterLocal + " REGISTRADOS: "+ collimator.getNangleBeamlets(angle));
-            System.exit(0);
-        }
-        return false;
-    }
     /*---------------------------------------------------GETTERS AND SETTERS------------------------------------------------------------*/
-
-    public Pair<Integer,Integer> getOpBeam(int i){
-        return A.get(i);
-    };
-
-    public void setAngle(int angle) {
-        this.angle = angle;
-    }
-
-    public double getIntensity() {
-        return intensity;
-    }
-
-    public void setIntensity(double intensity) {
-        this.intensity = intensity;
-    }
-
-    public double getVeloc_intensity() {
-        return veloc_intensity;
-    }
-
-    public void setVeloc_intensity(double veloc_intensity) {
-        this.veloc_intensity = veloc_intensity;
-    }
 
     public void setApertures(ArrayList<Pair<Integer,Integer>> Aperture){
         ArrayList<Pair<Integer,Integer>> newAper = new ArrayList<>();
@@ -258,20 +236,64 @@ public class Aperture {
         this.velocityA = new ArrayList(newVelocity);
     }
 
+    public void setRow(int indexRow, Pair<Integer,Integer> newRow){
+        Pair<Integer,Integer> limits = collimator.getActiveRange(indexRow,angle);
+        if( limits.getFirst() != -1 ){
+            this.A.set(indexRow, newRow);
+            this.setApertures(A);
+        }
+    }
+
+    public boolean getProyectedBeamLet(int indexBeamlet){
+
+        ArrayList<Pair<Integer,Integer>> coords = collimator.getAngleCoord().get(angle);
+        Pair<Integer,Integer> pos = coords.get(indexBeamlet);
+        Pair<Integer, Integer> limits = collimator.getActiveRange(pos.getFirst(), angle);
+
+        int i = pos.getFirst();
+        int j = pos.getSecond();
+
+        Pair<Integer, Integer> positionApertures = A.get(i);
+
+        //Evaluate the current row
+        if( limits.getFirst() == -1 ){
+            System.out.println("PROBLEM WITH INDEX GET PROYECTED BEAMLET");
+            System.exit(0);
+        }
+
+        if(j > positionApertures.getFirst() && j < positionApertures.getSecond() ){
+            return true;
+        }else{
+            return false;
+        }
+
+    }
+
+    public Pair<Integer,Integer> getOpBeam(int i){
+        return A.get(i);
+    };
+
+    public void setAngle(int angle) {
+        this.angle = angle;
+    }
+
+    public double getIntensity() { return intensity; }
+
+    public void setIntensity(double intensity) { this.intensity = intensity; }
+
+    public double getVeloc_intensity() {
+        return veloc_intensity;
+    }
+
+    public void setVeloc_intensity(double veloc_intensity) {
+        this.veloc_intensity = veloc_intensity;
+    }
+
     public ArrayList<Pair<Integer,Integer>> getApertures(){
         return A;
     }
 
-    public void setOpenRow(int indexRow){
-        Pair<Integer,Integer> limits = collimator.getActiveRange(indexRow, angle);
-        if( limits.getFirst() > -1){
-            Pair<Integer,Integer> row = A.get(indexRow);
-            int firstLeft = limits.getFirst()-1;
-            int secondLeft = limits.getSecond()+1;
-            Pair<Integer, Integer> newRow = new Pair(firstLeft, secondLeft);
-            A.set(indexRow, newRow);
-        }
 
-    }
+
 
 }

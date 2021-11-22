@@ -21,6 +21,7 @@ public class Volumen {
 
     //Constructor del volumen asociado
     public Volumen(String data) throws FileNotFoundException {
+        System.out.println("DATA: " + data);
         this.indexDAODDM = new Hashtable();
         this.valueDAODDM = new Hashtable();
         this.data = data;
@@ -44,7 +45,7 @@ public class Volumen {
 
     private void setData(String data) throws FileNotFoundException {
         int count = 0;
-        File cordFile = new File("src/"+data);
+        File cordFile = new File(data);
         String bladderDates = null;
 
         Vector<String> lines = new Vector<>();

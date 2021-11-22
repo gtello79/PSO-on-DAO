@@ -2,6 +2,7 @@ package Utils;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PipedReader;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -9,17 +10,19 @@ import SRCDAO.Aperture;
 import SRCDAO.Beam;
 import SRCDAO.Plan;
 import Swarms.Particle;
-import source.Collimator;
 import source.Matrix;
 import source.Pair;
 
 public class Reporter {
-    private final Integer id = (int)(80*Math.random());
+    private Integer id = (int)(80*Math.random());
 
     private String UID = String.valueOf(id);
     private String intensityFolderPath = "./OutPlots/intensityFolder/";
     private String apertureFolderPath = "./OutPlots/apertureFolder/";
     private String generalFolderPath = "./OutPlots/";
+    final String NextLine = "\n";
+    final String delimiter = ",";
+
     private static final int INTENSITY_MATRIX_CSV = 1;
     private static final int INTENSITY_MATRIX_TXT = 2;
     private static final int ALL_APERTURES_CSV = 3;
@@ -27,9 +30,13 @@ public class Reporter {
     private static final int ALL_APERTURES_AMPL = 5;
     private static final int ALL_COMPONENTS_TXT = 6;
     private static final int INTENSITY_VECTOR_TXT = 7;
-
+    private static final int REPAIR_PROCESS_TXT = 8;
+    private static final int TRANSPOSE_APERTURE_TXT = 9;
 
     public Reporter(Particle particle, int function){
+
+        UID = String.valueOf(id);
+        //System.out.println(UID);
         switch (function){
             case INTENSITY_MATRIX_CSV:
                 intensityMatrixToCSV(particle);
@@ -55,25 +62,95 @@ public class Reporter {
 
             case INTENSITY_VECTOR_TXT:
                 IntensityVector(particle);
+                break;
+
+            case TRANSPOSE_APERTURE_TXT:
+                printTrasposeMatrix(particle);
+                break;
         }
-        System.out.println("DONE - UID Experiment: " + id);
     }
 
+    public Reporter(Particle particle, int function, int id){
+        this.id = id;
+        UID = String.valueOf(id);
+        switch (function){
+            case INTENSITY_MATRIX_CSV:
+                intensityMatrixToCSV(particle);
+                break;
+
+            case INTENSITY_MATRIX_TXT:
+                break;
+
+            case ALL_APERTURES_CSV:
+                apertureMatrix(particle);
+                break;
+
+            case ALL_APERTURES_TXT:
+                break;
+
+            case ALL_APERTURES_AMPL:
+                printAperturesToAMPL(particle);
+                break;
+
+            case ALL_COMPONENTS_TXT:
+                exportIntensityMatrixAndApertures(particle);
+                break;
+
+            case INTENSITY_VECTOR_TXT:
+                IntensityVector(particle);
+
+        }
+    }
+
+    public Reporter(Plan plan, int function){
+        switch (function){
+            case INTENSITY_MATRIX_CSV:
+                //intensityMatrixToCSV(particle);
+                break;
+
+            case INTENSITY_MATRIX_TXT:
+                break;
+
+            case ALL_APERTURES_CSV:
+                //apertureMatrix(particle);
+                break;
+
+            case ALL_APERTURES_TXT:
+                break;
+
+            case ALL_APERTURES_AMPL:
+                //printAperturesToAMPL(particle);
+                break;
+
+            case ALL_COMPONENTS_TXT:
+                exportIntensityMatrixAndApertures(plan);
+                break;
+
+            case INTENSITY_VECTOR_TXT:
+                IntensityVector(plan);
+
+        }
+        System.out.println("DONE - UID Experiment: " + UID);
+    }
+
+    public Reporter(Beam beam, int function, int id){
+        this.id = id;
+        UID = String.valueOf(id);
+        printTrasposeMatrix(beam);
+    }
 
     private void intensityMatrixToCSV(Particle particle){
-        final String NextLine = "\n";
-        final String delimiter = ",";
         Plan plan = particle.getCurrentPlan();
+        intensityMatrixToCSV(plan);
+    }
+
+    private void intensityMatrixToCSV(Plan plan){
 
         for(Beam beam: plan.getAngle_beam()){
 
             Matrix matrix = beam.getIntensitisMatrix();
             String fileName = "";
-            if(particle.getOptimizeIntensityFlag()){
-                fileName = UID + "-intensityMatrixWithGurobi"+beam.getIdBeam();
-            }else{
-                fileName = UID + "-intensityMatrix"+beam.getIdBeam();
-            }
+            fileName = UID + "-intensityMatrix"+beam.getIdBeam();
             String filePath = intensityFolderPath+ fileName+ ".csv";
 
             try{
@@ -99,14 +176,11 @@ public class Reporter {
     }
 
     private void apertureMatrix(Particle particle){
-        final String NextLine = "\n";
-        final String delimiter = ",";
-
         Plan plan = particle.getCurrentPlan();
 
         for(Beam beam: plan.getAngle_beam()){
             int gDim = beam.getCollimatorDim();
-            Vector<Aperture> apertureVector = beam.getApertures();
+            ArrayList<Aperture> apertureVector = beam.getApertures();
             String fileName2 = UID + "-Apertures"+beam.getIdBeam();
 
             try{
@@ -148,16 +222,20 @@ public class Reporter {
 
     public void IntensityVector(Particle particle){
         Plan p = particle.getCurrentPlan();
+        IntensityVector(p);
+    }
+
+    public void IntensityVector(Plan plan){
         Vector<Integer> nBeamLetsByBeam = new Vector<>();
-        String IntensityVectorPath = "./OutPlots/intensityFolder/";
+
         String fileName = UID +"-FluenceMap.txt";
-        for(Beam b: p.getAngle_beam())
+        for(Beam b: plan.getAngle_beam())
             nBeamLetsByBeam.add(b.getTotalBeamlets());
         System.out.println(nBeamLetsByBeam);
         try{
-            FileWriter matrixCSV = new FileWriter(IntensityVectorPath+fileName);
+            FileWriter matrixCSV = new FileWriter(intensityFolderPath+fileName);
             String vectorChain = "";
-            for(double i: p.getFluenceMap()){
+            for(double i: plan.getFluenceMap()){
                 vectorChain += i + ", ";
 
             }
@@ -170,20 +248,20 @@ public class Reporter {
     }
 
     private void exportIntensityMatrixAndApertures(Particle particle){
-        final String NextLine = "\n";
-        final String delimiter = ",";
+
         Plan tp = particle.getCurrentPlan();
+        exportIntensityMatrixAndApertures(tp);
+    }
+
+    private void exportIntensityMatrixAndApertures(Plan tp){
         ArrayList<Beam> beams = tp.getAngle_beam();
         for (int b = 0; b < tp.getNBeam(); b++){
             Beam beam = beams.get(b);
             String fileName;
-            if(particle.getOptimizeIntensityFlag()){
-                fileName = generalFolderPath+ UID + "-Desc_BeamWithGurobi"+beam.getIdBeam()+".txt";
-            }else{
-                fileName = generalFolderPath+ UID + "-Desc_Beam"+beam.getIdBeam()+".txt";
-            }
+            fileName = generalFolderPath+ UID + "-Desc_Beam"+beam.getIdBeam()+".txt";
+
             Matrix intensityMatrix = beam.getIntensitisMatrix();
-            Vector<Aperture> aperturesSet = beam.getApertures();
+            ArrayList<Aperture> aperturesSet = beam.getApertures();
 
             try{
                 FileWriter beamTXT = new FileWriter(fileName);
@@ -257,4 +335,55 @@ public class Reporter {
         }
     }
 
+    public String getUID(){
+        return UID;
+    }
+
+    public void printTrasposeMatrix(Beam beam){
+        ArrayList<Pair<Integer,Integer>> shapes = beam.getTransposeMatrix();
+        String fileName = "TransposedMatrixBeam"+beam.getIdBeam();
+        Matrix intensityMatrix = beam.getIntensitisMatrix();
+
+        try{
+            FileWriter aperturetxt = new FileWriter(generalFolderPath+fileName+ ".txt");
+            aperturetxt.append("Beam,"+String.valueOf(beam.getIdBeam()));
+            aperturetxt.append(NextLine);
+
+            String apertureChain = "";
+
+            //Filas de aperturas
+            for(int i = 0; i < intensityMatrix.getX(); i++){
+                Pair<Integer, Integer> pair = shapes.get(i);
+                for(int j = 0; j < intensityMatrix.getY(); j++){
+                    String value;
+                    // Cerrada permanentemente
+                    if(intensityMatrix.getPos(i,j) == -1){
+                        value = String.valueOf(-1);
+                    }else{
+                        // Abierta
+                        if( j > pair.getFirst() && j < pair.getSecond() ){
+                            value = String.valueOf(1);
+                        }else{
+                            // Cerrada
+                            value = String.valueOf(0);
+                        }
+                    }
+                    aperturetxt.append(value).append(delimiter);
+                }
+                aperturetxt.append(NextLine);
+            }
+            apertureChain+="\n";
+            aperturetxt.append(apertureChain);
+            aperturetxt.flush();
+            aperturetxt.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void printTrasposeMatrix(Particle particle){
+        Plan tp = particle.getCurrentPlan();
+        Beam beam = tp.getByID(0);
+        printTrasposeMatrix(beam);
+    }
 }

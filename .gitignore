@@ -2,7 +2,7 @@ OutPlots/*
 import/*
 ExperimentsFiles/*
 FinalResults/
-src/data
+data/*
 production
 PSO.iml
 .mip1.log
