@@ -9,23 +9,23 @@ def main():
     folder_finals = './FinalResults/'
     
     UID = str(int(random.random()*1000))
-    exp_iter = 30
+    exp_iter = 20
     results = []
     instance = 20
     nThreads = 3
     intensityOptimized = False
     # Default params
-    size = 160
+    size = 418
 
-    c1_aperture = 0.9321
-    c2_aperture = 0.9949
-    iner_aperture = 0.1314
-    cn_aperture = 1.4638
+    c1_aperture = 1.8751
+    c2_aperture = 0.2134
+    iner_aperture = 0.5774
+    cn_aperture = 1.6641
 
-    c1_intensity = 0.48
-    c2_intensity = 1.4577
-    iner_intensity = 0.8432
-    cn_intensity = 0.9911
+    c1_intensity = 0.3158
+    c2_intensity = 1.7017
+    iner_intensity = 0.5331
+    cn_intensity = 1.2389
 
     if(argv.__contains__("size")):
         index = argv.index("size")
