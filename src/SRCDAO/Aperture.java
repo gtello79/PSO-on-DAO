@@ -14,6 +14,7 @@ public class Aperture {
 
     private ArrayList<Pair<Integer,Integer>> velocityA;
     private double veloc_intensity;
+    private int openedBeamlets;
 
     protected int OPEN_MIN_SETUP = 0;
     protected int OPEN_MAX_SETUP = 1;
@@ -26,21 +27,22 @@ public class Aperture {
         setAngle(angle);
         setIntensity(0.0);
         setVeloc_intensity(1.0);
+        setOpenedBeamlets(0);
         this.collimator = collimator;
         this.velocityA = new ArrayList<>();
         this.A = new ArrayList<>();
 
         for(int i = 0; i < collimator.getxDim(); i++)
-            velocityA.add(new Pair(0,0)); // -> Velocidad 0 para todas las filas
+            velocityA.add(new Pair(0,0)); // -> Velocidad 0 para todas las hojas
     }
 
     public Aperture(Aperture a){
-        setAngle(a.angle);
-        setIntensity(a.intensity);
-        setVeloc_intensity(a.veloc_intensity);
-        setVelocityA(a.velocityA);
-        setApertures(a.A);
-
+        setAngle(a.angle);                          // Copy the angle of the aperture
+        setIntensity(a.intensity);                  // Used to cp the intensity of the aperture
+        setVeloc_intensity(a.veloc_intensity);      // Used to cp the velocity of the intensity
+        setVelocityA(a.velocityA);                  // Used to copy the velocity aperture shape rows
+        setApertures(a.A);                          // Used to copy the aperture shape rows
+        setOpenedBeamlets(a.openedBeamlets);
     }
 
     public void initializeAperture(int type, int open_apertures){
@@ -103,32 +105,6 @@ public class Aperture {
         }
     }
 
-    public void openApertureReparation(){
-        for(int r = 0; r < A.size(); r++){
-            Pair<Integer,Integer> row = A.get(r);
-            Pair<Integer,Integer> rowLimits = collimator.getActiveRange(r, angle);
-
-            if(rowLimits.getFirst() == -1)
-                continue;
-            if(row.getFirst()+1 == rowLimits.getFirst() && row.getSecond()-1 == rowLimits.getSecond())
-                continue;
-
-            int leftLeaf = row.getFirst() + 1;
-            int rightLeaf = row.getSecond() - 1;
-
-            int distanceLeft = leftLeaf - rowLimits.getFirst();
-            int distanceRight = rowLimits.getSecond() - rightLeaf;
-
-            //Resolving using the aperture representation
-            int newLeftLeaf = leftLeaf - (int)(distanceLeft*Math.random() - 1);
-            int newRightLeaf = (int)(distanceRight*Math.random() + 1) + rightLeaf;
-
-            Pair<Integer, Integer> newRow = new Pair(newLeftLeaf, newRightLeaf);
-
-            A.set(r, newRow);
-        }
-    }
-
     /*----------------------------------------------------PSO METHODS--------------------------------------------------------------------------------*/
     public void velAperture(double wAperture, double c1Aperture, double c2Aperture, double cnAperture ,Aperture BGlobal, Aperture BPersonal){
         double r1 = Math.random();
@@ -144,10 +120,20 @@ public class Aperture {
                 continue;
 
             // Velocidad de la primera hoja (izquierda)
-            Integer first = (int)(cnAperture*(wAperture*velocityA.get(i).getFirst() + c1Aperture*r1*( aux_G.getFirst() - A.get(i).getFirst() )  +  c2Aperture*r2*(aux_P.getFirst() - A.get(i).getFirst() ) ));
+            Integer first = (int)( cnAperture*(
+                                    wAperture*velocityA.get(i).getFirst() +
+                                    c1Aperture*r1*( aux_G.getFirst() - A.get(i).getFirst() ) +
+                                    c2Aperture*r2*(aux_P.getFirst() - A.get(i).getFirst() )
+                                )
+                            );
 
             // Velocidad de la segunda hoja (derecha)
-            Integer second = (int)(cnAperture*(wAperture*velocityA.get(i).getSecond() + c1Aperture*r1*( aux_G.getSecond() - A.get(i).getSecond() )  +  c2Aperture*r2*(aux_P.getSecond() - A.get(i).getSecond() ) ));
+            Integer second = (int)( cnAperture*(
+                                        wAperture*velocityA.get(i).getSecond() +
+                                        c1Aperture*r1*( aux_G.getSecond() - A.get(i).getSecond() )  +
+                                        c2Aperture*r2*( aux_P.getSecond() - A.get(i).getSecond() )
+                                )
+                            );
 
             velocityA.set(i, new Pair(first, second));
         }
@@ -167,18 +153,20 @@ public class Aperture {
     // Movement function used by pso to translate the apertures
     public void movAperture(){
 
+        setOpenedBeamlets(0);
+        int counterOpenedBeamLets = 0;
         for(int i = 0; i < A.size(); i++){
 
             Pair<Integer,Integer> limits = collimator.getActiveRange(i,angle);
             //Par <-2,-2> cerradas de forma definitiva
-            if(limits.getFirst() == -1)
+            if(limits.getFirst() < 0)
                 continue;
-
-            int limit_inf = limits.getFirst();
-            int limit_sup = limits.getSecond();
 
             int first = (velocityA.get(i).getFirst() + A.get(i).getFirst());
             int second = (velocityA.get(i).getSecond() + A.get(i).getSecond());
+
+            int limit_inf = limits.getFirst();
+            int limit_sup = limits.getSecond();
 
             if(first < limit_inf  || first > limit_sup){
                 first = limit_inf-1;
@@ -196,7 +184,10 @@ public class Aperture {
 
             Pair<Integer, Integer> newApertures = new Pair(first, second);
             A.set(i, newApertures);
+
+            counterOpenedBeamLets += (second-first-1);
         }
+        setOpenedBeamlets(counterOpenedBeamLets);
     }
 
     // Movement Function used of PSO considering the intensities
@@ -217,55 +208,42 @@ public class Aperture {
     /*---------------------------------------------------GETTERS AND SETTERS------------------------------------------------------------*/
 
     public void setApertures(ArrayList<Pair<Integer,Integer>> Aperture){
-        ArrayList<Pair<Integer,Integer>> newAper = new ArrayList<>();
+        ArrayList<Pair<Integer,Integer>> newAperture = new ArrayList<>();
 
-        for(Pair<Integer,Integer> x: Aperture){
-            Pair<Integer, Integer> newShape = new Pair(x.getFirst(), x.getSecond());
-            newAper.add(newShape);
+        for(Pair<Integer,Integer> row: Aperture){
+            Pair<Integer, Integer> newRow = new Pair(row.getFirst(), row.getSecond());
+            newAperture.add(newRow);
         }
-        this.A = new ArrayList(newAper);
+        this.A = newAperture;
     }
 
     public void setVelocityA(ArrayList<Pair<Integer,Integer>> velocAperture){
         ArrayList<Pair<Integer,Integer>> newVelocity = new ArrayList<>();
 
-        for(Pair<Integer,Integer> x: velocAperture){
-            Pair<Integer,Integer> newShape = new Pair(x.getFirst(), x.getSecond());
-            newVelocity.add(newShape);
+        for(Pair<Integer,Integer> row: velocAperture){
+            Pair<Integer,Integer> newRow = new Pair(row.getFirst(), row.getSecond());
+            newVelocity.add(newRow);
         }
-        this.velocityA = new ArrayList(newVelocity);
+
+        this.velocityA = newVelocity;
     }
 
     public void setRow(int indexRow, Pair<Integer,Integer> newRow){
         Pair<Integer,Integer> limits = collimator.getActiveRange(indexRow,angle);
         if( limits.getFirst() != -1 ){
             this.A.set(indexRow, newRow);
-            this.setApertures(A);
+            this.setApertures(this.A);
         }
     }
 
+    //Consulta si el beamlet de la apertura es proyectado o no
     public boolean getProyectedBeamLet(int indexBeamlet){
+        Pair<Integer,Integer> beamLetsCoords = collimator.indexToPos(indexBeamlet, angle);
+        int x = beamLetsCoords.getFirst();
+        int y = beamLetsCoords.getSecond();
+        Pair<Integer,Integer> row = A.get(x);
 
-        ArrayList<Pair<Integer,Integer>> coords = collimator.getAngleCoord().get(angle);
-        Pair<Integer,Integer> pos = coords.get(indexBeamlet);
-        Pair<Integer, Integer> limits = collimator.getActiveRange(pos.getFirst(), angle);
-
-        int i = pos.getFirst();
-        int j = pos.getSecond();
-
-        Pair<Integer, Integer> positionApertures = A.get(i);
-
-        //Evaluate the current row
-        if( limits.getFirst() == -1 ){
-            System.out.println("PROBLEM WITH INDEX GET PROYECTED BEAMLET");
-            System.exit(0);
-        }
-
-        if(j > positionApertures.getFirst() && j < positionApertures.getSecond() ){
-            return true;
-        }else{
-            return false;
-        }
+        return (y > (row.getFirst()) && y < (row.getSecond()));
 
     }
 
@@ -287,6 +265,10 @@ public class Aperture {
 
     public void setVeloc_intensity(double veloc_intensity) {
         this.veloc_intensity = veloc_intensity;
+    }
+
+    public void setOpenedBeamlets(int opBeamLets) {
+        this.openedBeamlets = opBeamLets;
     }
 
     public ArrayList<Pair<Integer,Integer>> getApertures(){

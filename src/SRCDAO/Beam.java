@@ -5,8 +5,7 @@ import source.Pair;
 import source.*;
 
 public class Beam {
-    //ID BEAM
-    private int angle;
+    private int angle;              //ID BEAM
 
     //Informacion de la configuracion tecnica del angulo
     private int maxApertures;
@@ -20,11 +19,8 @@ public class Beam {
     private int totalBeamlets;
     private int aperturesUnused;
 
-    //Representacion del collimator
-    private final Collimator collimator;
-
-    //Representacion de la matriz de intensidad
-    private final Matrix I;
+    private final Collimator collimator;            //Representacion del collimator
+    private Matrix I;                               //Representacion de la matriz de intensidad
 
     /* Apertures (representation 1):
      * Each aperture is represented by a vector of pairs A[i] = (x_ini, x_fin)
@@ -33,18 +29,16 @@ public class Beam {
     private ArrayList<Aperture> A;
     private ArrayList<Double> fluenceMap;
 
-
-
     /* ------------------------------------------- GENERAL METHODS ------------------------------------------------------- */
-    public Beam(int angle, int maxApertures, int maxIntensity, int initialIntensity, int stepIntensity, int openApertures, int setup, Collimator collimator){
+    public Beam(int angle, int maxApertures, int maxIntensity, int minIntensity, int initialIntensity, int stepIntensity, int openApertures, int setup, Collimator collimator){
         setAngle(angle);
         setMax_apertures(maxApertures);
         setMax_intensity(maxIntensity);
+        setMinIntensity(minIntensity);
         setInitialIntensity(initialIntensity);
         setStep_intensity(stepIntensity);
         setOpenApertures(openApertures);
         setSetup(setup);
-        setMinIntensity(1);
         setCollimatorDim(collimator.getyDim());
         setTotalBeamlets(collimator.getNangleBeamlets(angle));
 
@@ -59,7 +53,7 @@ public class Beam {
         // Declaracion de la matriz de intensidad I y se inicializa
         this.I = new Matrix(collimator.getxDim(), collimator.getyDim());
 
-        // Rellenado de la matriz de intensidad
+        // Limpiado de beamlets con valor 0
         clearIntensity();
 
         // Initialize apertures
@@ -74,6 +68,7 @@ public class Beam {
         setAngle(b.angle);                  // Setea el ID del Beam
         setMax_apertures(b.maxApertures);
         setMax_intensity(b.maxIntensity);
+        setMinIntensity(b.minIntensity);
         setInitialIntensity(b.initialIntensity);
         setStep_intensity(b.stepIntensity);
         setOpenApertures(b.openApertures);
@@ -159,32 +154,34 @@ public class Beam {
     }
 
     public void clearIntensity(){
-        // Rellenado de la matriz de intensidad
+        // Para cada fila
         for(int i = 0; i < collimator.getxDim(); i++){
             Pair<Integer,Integer> limits = collimator.getActiveRange(i, angle);
-
+            // Para cada celda
             for(int j = 0; j < collimator.getyDim(); j++){
+                //Establece el beamlet con intensidad 0
                 if(j >= limits.getFirst() && j <= limits.getSecond() ) {
                     this.I.setPos(i,j,0);
                 }else{
+                    // Deja el beamlet -1 que significa "no utilizado"
                     this.I.setPos(i,j,-1);
                 }
             }
         }
     }
 
+    //Construye el vector de intensidad a partir de la matriz de intensidad
     public void buildIntensityVector(){
         this.fluenceMap = new ArrayList<>();
+        // A partir del total de beamlets, consulta la posición de cada uno de ellos
+        for(int i = 0; i < totalBeamlets; i++){
+            Pair<Integer,Integer> pos = collimator.indexToPos(i,angle);
+            int x = pos.getFirst();
+            int y = pos.getSecond();
 
-        for(int i = 0; i < collimator.getxDim(); i++){
-            Pair<Integer,Integer> limit = collimator.getActiveRange(i,angle);
-            if( limit.getFirst() == -1 )
-                continue;
-
-            for(int j = limit.getFirst(); j <= limit.getSecond(); j++){
-                fluenceMap.add(I.getPos(i,j));
-            }
+            this.fluenceMap.add(I.getPos(x,y));
         }
+
     }
 
     public void regenerateApertures(){
@@ -280,7 +277,7 @@ public class Beam {
         for(int a = 0; a < A.size(); a++){
             Aperture aperture = A.get(a);
 
-            if(aperture.getIntensity() >= 1.0){
+            if(aperture.getIntensity() >= minIntensity){
                 if(aperturesOnOperation.size() == 0){
                     //Get a template of the first aperture with intensity mayor of 1.0
                     aperturesOnOperation = new ArrayList(aperture.getApertures());
@@ -369,14 +366,6 @@ public class Beam {
     }
 
     /* ------------------------------------------------- GETTER Y SETTERS ---------------------------------------------------*/
-
-    public void setApertures(ArrayList<Aperture> lastApertures){
-        ArrayList<Aperture> newApertures = new ArrayList<>();
-        for(Aperture aperture: lastApertures){
-            Aperture newAper = new Aperture(aperture);
-            newApertures.add(newAper);
-        }
-    }
 
     public void setIntensityByAperture(double[] intensitySolver){
         for (int a = 0; a < A.size(); a++) {

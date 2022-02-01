@@ -2,6 +2,7 @@ from os import system
 from sys import argv
 import random
 import os
+from time import time
 
 def main():
 
@@ -9,7 +10,7 @@ def main():
     folder_finals = './FinalResults/'
     
     UID = str(int(random.random()*1000))
-    exp_iter = 20
+    exp_iter = 30
     results = []
     instance = 20
     nThreads = 3
@@ -64,10 +65,14 @@ def main():
     CURR_DIR = os.getcwd()
     print("CURR: {}".format(CURR_DIR))
     iter = int(40000/size)
+    init_time = time()
 
     #Compilacion
     compiler_command = "javac --class-path src:$LD_LIBRARY_PATH/gurobi.jar src/com/company/Main.java "
-    system(compiler_command)
+    try:
+        system(compiler_command)
+    except SystemError as e:
+        print(e)
 
     config_params = "i "               + str(instance)         + " size "          + str(size) +\
                     " c1Aperture "      + str(c1_aperture)      + " c2Aperture "    + str(c2_aperture) + \
@@ -111,7 +116,11 @@ def main():
     final_results.write(config_params)
     for r in results:
         final_results.write(r)
-
     final_results.close()
     
+    final_time = time()
+
+    total_exec_time = final_time - init_time
+    print(f'EXECUTION TIME: {total_exec_time} [s]')
+
 main()

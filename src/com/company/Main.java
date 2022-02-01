@@ -1,5 +1,6 @@
 package com.company;
 import Swarms.*;
+import Utils.Reporter;
 
 import Utils.Reporter;
 import source.*;
@@ -135,6 +136,7 @@ public class Main {
 
         //MLC Configuration    
         int max_intensity = 10; //10 x apertura - probar este parametro
+        int minIntensity = 1;
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;
@@ -152,7 +154,7 @@ public class Main {
 
         //Parametros PSO
         int size = 10;                       //Particle size
-        int iter = 11;                      //Pso Iterations
+        int iter = 21;                      //Pso Iterations
         
         double c1Aperture = 1.8751; //0.9321;         // Coef Global
         double c2Aperture = 0.2134; //0.9949;         // Coef Personal
@@ -194,7 +196,7 @@ public class Main {
             }
         }
         if(params.containsKey("intensityOptimized")){
-            optimizedIntensity = true;
+            optimizedIntensity = false;
         }
 
         //iter = 40000/size;
@@ -237,7 +239,7 @@ public class Main {
         }
 
         // Creating the swarm
-        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
+        Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, minIntensity, initial_intensity, step_intensity, open_apertures, setup, diffSetup, volumes, collimator,
                                 c1Aperture, c2Aperture, innerAperture, cnAperture,
                                 c1Intensity, c2Intensity, innerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
 
@@ -246,10 +248,6 @@ public class Main {
         //Get the Solution of the algorithm
         Particle particle = swarm.getBestGlobalParticle();
 
-
-
-        //System.out.println(" ------- PRINTING REPAIRED SOLUTION");
-        new Reporter(particle,6);
-
+        //Reporter r = new Reporter(particle, 7);
     }
 }

@@ -31,16 +31,13 @@ public class Particle extends Thread{
     static final int OPTIMIZE_THREAD = 2;
     static final int REPAIR_SOLUTION = 3;
 
-
-
-
     /*-------------------------------------------------------------METHODS -------------------------------------------*/
     public Particle(int idParticle, ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures,
-                    int max_intensity, int initial_intensity, int step_intensity,  int open_apertures, int setup,
+                    int max_intensity, int minIntensity, int initial_intensity, int step_intensity,  int open_apertures, int setup,
                     ArrayList<Volumen> volumen, Collimator collimator)
     {
         this.idParticle = idParticle;
-        this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity,
+        this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity, minIntensity, initial_intensity, step_intensity,
                                     open_apertures, setup, volumen, collimator);
         setFitness(currentPlan.getEval());
 
@@ -67,7 +64,6 @@ public class Particle extends Thread{
 
     public void OptimizateIntensities(){
         double lastFitness = this.fitness;
-
         currentPlan.OptimizateIntensities();
 
         this.fitness = this.currentPlan.getEval();
@@ -77,18 +73,11 @@ public class Particle extends Thread{
 
     public void regenerateApertures(){
         double lastFitness = this.fitness;
+        this.currentPlan.regenerateApertures();     // Se regenera la solucion
+        currentPlan.OptimizateIntensities();        // Se optimiza las intensidades
+        this.fitness = this.currentPlan.getEval();  // Se evalua la solucion
 
-        //Se regenera la solucion
-        this.currentPlan.regenerateApertures();
-
-        // Se optimiza las intensidades
-        currentPlan.OptimizateIntensities();
-
-        // Se evalua la solucion
-        this.fitness = this.currentPlan.getEval();
-
-        //Actualizacion del best personal
-        CalculateBestPersonal();
+        CalculateBestPersonal();                    //Actualizacion del best personal
         System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
 
     }
@@ -150,30 +139,23 @@ public class Particle extends Thread{
         this.c2ApertureThread = c2ApertureThread;
     }
 
-
     public void setInnerApertureThread(double innerApertureThread) {
         this.innerApertureThread = innerApertureThread;
     }
-
 
     public void setCnApertureThread(double cnApertureThread) {
         this.cnApertureThread = cnApertureThread;
     }
 
-
     public void setC1IntensityThread(double c1IntensityThread) {
         this.c1IntensityThread = c1IntensityThread;
     }
-
 
     public void setC2IntensityThread(double c2IntensityThread) {
         this.c2IntensityThread = c2IntensityThread;
     }
 
-
-    public void setInnerIntensityThread(double innerIntensityThread) {
-        this.innerIntensityThread = innerIntensityThread;
-    }
+    public void setInnerIntensityThread(double innerIntensityThread) { this.innerIntensityThread = innerIntensityThread; }
 
     public void setCnIntensityThread(double cnIntensityThread) {
         this.cnIntensityThread = cnIntensityThread;
@@ -198,6 +180,7 @@ public class Particle extends Thread{
                         c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
                 // Calcular posicion
                 this.CalculatePosition();
+
                 break;
 
             case EVAL_THREAD:
@@ -206,11 +189,32 @@ public class Particle extends Thread{
                 break;
 
             case OPTIMIZE_THREAD:
+                if(this.idParticle == 0){
+                    //Reporter r = new Reporter(this, 6);
+                    //System.out.println("Movement 1 "+ r.getUID());
+                }
+
                 this.OptimizateIntensities();
+
+                if(this.idParticle == 0){
+                    //Reporter r = new Reporter(this, 6);
+                    //System.out.println("Optimization "+ r.getUID());
+                }
                 break;
 
             case REPAIR_SOLUTION:
+
+                if(this.idParticle == 0){
+                    //Reporter r = new Reporter(this, 9);
+                    //System.out.println("Movement 2 "+ r.getUID());
+                }
+
                 this.regenerateApertures();
+
+                if(this.idParticle == 0){
+                    //Reporter r = new Reporter(this, 6);
+                    //System.out.println("Reparacion "+ r.getUID());
+                }
                 break;
         }
     }

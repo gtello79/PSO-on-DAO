@@ -1,39 +1,26 @@
 package source;
-
 import java.util.*;
-
 
 public class EvaluationFunction {
 
-    private double evaluation;
+    private double evaluation;                                  // Valor de Fluence Map en la funcion de evaluacion
+    private final ArrayList<ArrayList<Double>> Z;               // Dosis de distribucion por cada organano
+    private int nbOrgans;                                       // Cantidad de organos, incluyendo el tumor
+    private final ArrayList<Integer> nbVoxels;                  // Numero de voxels por cada organo
+    private final ArrayList<Matrix> DDM = new ArrayList<>();    // Doses Deposition Matrix
+    private final ArrayList<Integer> nbBeamLets;                // N beamlets x tejido
 
-    //dosis de distribucion por cada organano
-    private final ArrayList<ArrayList<Double>> Z;
-
-    //Numero de organos, incluyendo el tumor
-    private int nbOrgans;
-
-    //Numero de voxels por cada organo
-    private final ArrayList<Integer> nbVoxels;
-
-    //Doses Deposition Matrix
-    private final ArrayList<Matrix> DDM = new ArrayList<>();
-
-    //Numero de beamlets x tejido (hasta el momento se espera que todos sean iguales)
-    private final ArrayList<Integer> nbBeamLets;
-
-    private double[] distribution;
+    private double[] distribution;                              // Distribucion de la radiacion en cada organo
 
     public EvaluationFunction(ArrayList<Volumen> volumes)
     {
         setEvaluation(0.0);
         setNb_organs( volumes.size() );
+        this.distribution = new double[this.nbOrgans];
 
-        distribution = new double[this.nbOrgans];
-
-        nbVoxels = new ArrayList<>();
-        nbBeamLets = new ArrayList<>();
-        Z = new ArrayList<>(nbOrgans);
+        this.nbVoxels = new ArrayList<>();
+        this.nbBeamLets = new ArrayList<>();
+        this.Z = new ArrayList<>(nbOrgans);
 
         for(Volumen v: volumes) {
             DDM.add(v.getDDM());
@@ -43,14 +30,13 @@ public class EvaluationFunction {
         for (int i = 0; i < nbOrgans; i++)
             this.nbVoxels.add(volumes.get(i).getNb_voxels());
 
-        //Inicializando la 'matriz' o mapas Z con 0.0
+        //Inicializando los vectores de dosis para cada organo
         for(int i = 0; i < nbOrgans; i++){
             ArrayList thisRow = new ArrayList<Double>();
             for(int j = 0; j < nbVoxels.get(i) ; j++){
                 thisRow.add(0.0);
             }
             this.Z.add(thisRow);
-
         }
 
     }
@@ -104,9 +90,7 @@ public class EvaluationFunction {
             double penalizationOrg = pen/nbVoxels.get(o);
 
             distribution[o] = penalizationOrg;
-            //System.out.println("Penalization "+ o + ": "+ penalizationOrg);
             evaluation += penalizationOrg;
-
         }
 
         setEvaluation(evaluation);

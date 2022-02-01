@@ -44,8 +44,8 @@ public class Swarm {
 
 
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
-    public Swarm(ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity , int initial_intensity, int step_intensity,
-                 int open_apertures, int setup, int diffSetup ,ArrayList<Volumen> volumen, Collimator collimator,
+    public Swarm(ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity, int minIntensity,
+                 int initial_intensity, int step_intensity, int open_apertures, int setup, int diffSetup ,ArrayList<Volumen> volumen, Collimator collimator,
                  double c1Aperture, double c2Aperture, double innerAperture, double cnAperture, 
                  double c1Intensity, double c2Intensity, double innerIntensity, double cnIntensity, int size, int iter, int nThreads,
                  boolean optimizedIntensity) {
@@ -65,12 +65,14 @@ public class Swarm {
 
             if(i == 0){
                 //Particula diferenciada
-                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
+                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity, minIntensity, initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
                 setBestGlobalParticle(newParticle);
                 setBestGlobalEval(newParticle.getFitness());
+                newParticle.OptimizateIntensities();
             }else{
                 //Poblacion randomizada
-                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity,initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
+                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity, minIntensity, initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
+                newParticle.OptimizateIntensities();
             }
 
             /*Only used by Threads*/
@@ -131,7 +133,7 @@ public class Swarm {
 
         System.out.println(" ------- Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
         System.out.println(" ------- BEST FITNESS: "+ bestGlobalEval);
-        System.out.println(firstSolution  + " " + bestGlobalEval + " " + globalUpdateCount + " " + lastChange + " " + totalAperturesUnUsed);
+        System.out.println(firstSolution  + " " + bestGlobalEval + " " + totalAperturesUnUsed);
 
     }
 
