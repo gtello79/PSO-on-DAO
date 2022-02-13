@@ -191,9 +191,6 @@ public class Main {
             instanceId = Integer.parseInt(params.get("i"));
         if(params.containsKey("nThreads")){
             nThreads = Integer.parseInt(params.get("nThreads"));
-            if(nThreads > 3){
-                nThreads = 3;
-            }
         }
         if(params.containsKey("intensityOptimized")){
             optimizedIntensity = false;
