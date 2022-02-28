@@ -84,7 +84,7 @@ def main():
     if intensityOptimized:
         config_params += " intensityOptimized " + str(intensityOptimized)
 
-    execute_command = "java -classpath ./production/PSO:$LD_LIBRARY_PATH/gurobi.jar com.company.Main " + config_params
+    execute_command = "java -classpath ./src:$LD_LIBRARY_PATH/gurobi.jar com.company.Main " + config_params
 
     print("Experiments ID ", UID)
     print("PARAMS ", config_params)
