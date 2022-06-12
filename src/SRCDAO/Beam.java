@@ -18,6 +18,7 @@ public class Beam {
     private int collimatorDim;
     private int totalBeamlets;
     private int aperturesUnused;
+    private double beamOnTime;
 
     private final Collimator collimator;            //Representacion del collimator
     private Matrix I;                               //Representacion de la matriz de intensidad
@@ -46,6 +47,7 @@ public class Beam {
         this.A = new ArrayList<>();
         this.fluenceMap = new ArrayList<>();
         this.aperturesUnused = 0;
+        this.beamOnTime = 0.0;
 
         if(openApertures==-1)
             setOpenApertures(maxApertures);
@@ -81,6 +83,7 @@ public class Beam {
         this.A = new ArrayList<>();
         this.fluenceMap = new ArrayList<>();
         this.aperturesUnused = b.aperturesUnused;
+        this.beamOnTime = b.beamOnTime;
 
         if(openApertures==-1)
             setOpenApertures(maxApertures);
@@ -125,12 +128,15 @@ public class Beam {
 
     public void generateIntensities(){
         this.aperturesUnused = 0;
+        this.beamOnTime = 0.0;
         Pair<Integer,Integer> limits;
         clearIntensity();
 
         for(int a = 0; a < A.size(); a++) {
             Aperture ap = A.get(a);
             double apIntensity = ap.getIntensity();
+
+            this.beamOnTime += apIntensity;
 
             if(apIntensity < 1.0){
                 this.aperturesUnused++;
@@ -429,6 +435,9 @@ public class Beam {
 
     public ArrayList<Pair<Integer, Integer>> getTransposeMatrix(){ return this.BuildTransposeAperture(); }
 
+    public double getBeamOnTime() {
+        return this.beamOnTime;
+    }
 
     /* ------------------------------------------------ PSO METHODS ----------------------------------*/
     public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture, double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Beam BGlobal, Beam BPersonal){
@@ -443,9 +452,11 @@ public class Beam {
     }
 
     public void CalculatePosition(){
+        this.beamOnTime = 0.0;
         for(Aperture x: A){
             x.movAperture();
             x.moveIntensity(maxIntensity);
+            this.beamOnTime += x.getIntensity();
         }
         generateIntensities();
     }

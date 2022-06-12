@@ -29,6 +29,7 @@ public class Swarm {
     private int globalUpdateCount = 0;
     private int lastChange = 0;
     private int threadsToUse = 1;
+    private double beamOnTime;
     private boolean optimizedIntensity;
 
     private boolean callablefunctions = false;
@@ -56,6 +57,7 @@ public class Swarm {
         this.swarm = new ArrayList<>();
         this.evalTrack = new Vector<>();
         this.optimizedIntensity = optimizedIntensity;
+        this.beamOnTime = 0.0;
 
         /*A Particles set will be created*/
         for(int i = 0; i < size ; i++){
@@ -131,9 +133,11 @@ public class Swarm {
 
         int totalAperturesUnUsed = this.bestGlobalParticle.getAperturesUnUsed();
 
+        double bestBeamOnTime = this.bestGlobalParticle.getBeamOnTime();
+
         System.out.println(" ------- Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
         System.out.println(" ------- BEST FITNESS: "+ bestGlobalEval);
-        System.out.println(firstSolution  + " " + bestGlobalEval + " " + totalAperturesUnUsed);
+        System.out.println(bestGlobalEval + " " + totalAperturesUnUsed + " " + bestBeamOnTime);
 
     }
 

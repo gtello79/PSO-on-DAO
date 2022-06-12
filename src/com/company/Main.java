@@ -59,7 +59,7 @@ public class Main {
         folder_coord = "./data/"+folder_coord+"/";
         String instance_file = folder_coord + "Instance.txt";
         String coordinate_file = folder_coord + "coordinates_instance.txt";
-        
+        System.out.println(folder_coord);
         reading.close();
         return new Pair(instance_file, coordinate_file);
     }
@@ -132,7 +132,7 @@ public class Main {
         HashMap<String, String> params = mappingArg(args);
 
         //Instance 0-70-140-210-280 CERR PACKAGE
-        int instanceId = 71;
+        int instanceId = 73;
 
         //MLC Configuration    
         int max_intensity = 10; //10 x apertura - probar este parametro
@@ -140,12 +140,13 @@ public class Main {
         int initial_intensity = 4;
         int step_intensity = 2;
         int open_apertures = -1;
+        int max_apertures = 5;
 
         //Particle configuration
         int setup = 4;
         int diffSetup = 4;
         int nThreads = 3;
-        boolean optimizedIntensity = true;
+        boolean optimizedIntensity = false;
         /*
             OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1; 
             CLOSED_MIN_SETUP = 2; CLOSED_MAX_SETUP = 3;
@@ -153,18 +154,18 @@ public class Main {
         */
 
         //Parametros PSO
-        int size = 10;                       //Particle size
-        int iter = 21;                      //Pso Iterations
+        int size = 10;                                  //Particle size
+        int iter = 21;                                  //Pso Iterations
         
-        double c1Aperture = 1.8751; //0.9321;         // Coef Global
-        double c2Aperture = 0.2134; //0.9949;         // Coef Personal
-        double innerAperture = 0.5774; //0.1314;       // Inner
-        double cnAperture = 1.6641; //1.4638;         // constriction Factor
+        double c1Aperture = 1.8751; //0.9321;           // Coef Global
+        double c2Aperture = 0.2134; //0.9949;           // Coef Personal
+        double innerAperture = 0.5774; //0.1314;        // Inner
+        double cnAperture = 1.6641; //1.4638;           // constriction Factor
 
-        double c1Intensity = 0.3158; //0.48;          // Coef Global
-        double c2Intensity = 1.7017; //1.4577;        // Coef Personal
-        double innerIntensity = 0.5331; //0.8432;      // Inner
-        double cnIntensity =  1.2389; //0.9911;        // constriction Factor
+        double c1Intensity = 0.3158; //0.48;            // Coef Global
+        double c2Intensity = 1.7017; //1.4577;          // Coef Personal
+        double innerIntensity = 0.5331; //0.8432;       // Inner
+        double cnIntensity =  1.2389; //0.9911;         // constriction Factor
         
         if(params.containsKey("size")) 
             size = Integer.parseInt(params.get("size"));
@@ -232,7 +233,7 @@ public class Main {
         
         ArrayList<Integer> maxApertures = new ArrayList<>();
         for (int a = 0; a < angles.size(); a++) {
-            maxApertures.add(5);
+            maxApertures.add(max_apertures);
         }
 
         // Creating the swarm
@@ -245,6 +246,6 @@ public class Main {
         //Get the Solution of the algorithm
         Particle particle = swarm.getBestGlobalParticle();
 
-        //Reporter r = new Reporter(particle, 7);
+        Reporter r = new Reporter(particle, 6);
     }
 }

@@ -11,6 +11,7 @@ public class Plan {
     private int totalBeamLet;                           // Total de beamlets activos en BAC
     private int maxIntensityByAperture;                 // Intensidad Maxima por apertura
     private int totalAperturesUnsed;                    // Cantidad de aperturas inutilizadas
+    private double beamOnTime;
 
     private final Collimator collimator;                // Informacion del Collimator
     private final ArrayList<Volumen> volumen;           // DDM
@@ -49,6 +50,7 @@ public class Plan {
         this.volumen = volumen;
         this.beamletsByBeam = new int [nBeam];
         this.totalAperturesUnsed = 0;
+        this.beamOnTime = 0.0;
 
         // Creacion de los beam en BAC
         for (int i = 0; i < nBeam; i++) {
@@ -85,6 +87,7 @@ public class Plan {
         this.maxIntensityByAperture = p.maxIntensityByAperture;
         this.beamIndex = new int[getNBeam()];
         this.totalAperturesUnsed = p.totalAperturesUnsed;
+        this.beamOnTime = p.beamOnTime;
 
         this.setAngle_beam(p.getAngle_beam());
 
@@ -92,11 +95,13 @@ public class Plan {
     }
 
     public void buildTreatmentPlan(){
+        this.beamOnTime = 0.0;
         for(int i = 0; i < Angle_beam.size(); i++){
             // Tomar cada beam
             Beam b = Angle_beam.get(i);
             // Construirlo ( limpiar Intensity Map )
             b.generateIntensities();
+            this.beamOnTime += b.getBeamOnTime();
         }
     }
 
@@ -161,11 +166,13 @@ public class Plan {
 
     /*--------------------------------------------------------- GETTER AND SETTERS -----------------------------------------------------*/
     public ArrayList<Double> getFluenceMap(){
+        this.beamOnTime = 0.0;
         ArrayList<Double> intensityVector = new ArrayList<Double>();
         //Concatena los vectores de intensidad al Fluence Map
         for(Beam pivote: Angle_beam){
             ArrayList<Double> v =  pivote.getIntensityVector();
             intensityVector.addAll(v);
+            this.beamOnTime += pivote.getBeamOnTime();
         }
 
         return intensityVector;
@@ -236,6 +243,8 @@ public class Plan {
     public double getEval() {
         return eval;
     }
+
+    public double getBeamOnTime(){ return beamOnTime; }
 
     public void setEval(double eval) {
         this.eval = eval;

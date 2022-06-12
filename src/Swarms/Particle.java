@@ -25,6 +25,7 @@ public class Particle extends Thread{
     private Particle bestGlobal;
     private Plan bestPersonal;
     private Plan currentPlan;
+    private double beamOnTime;
 
     static final int MOVEMENT_THREAD = 0;
     static final int EVAL_THREAD = 1;
@@ -37,6 +38,7 @@ public class Particle extends Thread{
                     ArrayList<Volumen> volumen, Collimator collimator)
     {
         this.idParticle = idParticle;
+        this.beamOnTime = 0.0;
         this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity, minIntensity, initial_intensity, step_intensity,
                                     open_apertures, setup, volumen, collimator);
         setFitness(currentPlan.getEval());
@@ -50,6 +52,7 @@ public class Particle extends Thread{
         this.idParticle = p.idParticle;
         this.fitness = p.fitness;
         this.bestFitness = p.bestFitness;
+        this.beamOnTime = p.beamOnTime;
 
         this.currentPlan = new Plan(p.currentPlan);
         this.bestPersonal = new Plan(p.bestPersonal);
@@ -60,6 +63,9 @@ public class Particle extends Thread{
         this.fitness = currentPlan.eval();
         CalculateBestPersonal();
         System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
+
+        this.beamOnTime = this.currentPlan.getBeamOnTime();
+
     }
 
     public void OptimizateIntensities(){
@@ -87,7 +93,8 @@ public class Particle extends Thread{
     public void CalculateVelocity(double c1Aperture,  double c2Aperture, double wAperture, double cnAperture,
                                   double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Particle bGlobal){
 
-        currentPlan.CalculateVelocity(c1Aperture, c2Aperture, wAperture, cnAperture, c1Intensity, c2Intensity, wIntensity, cnIntensity, bGlobal.getCurrentPlan(), bestPersonal);
+        currentPlan.CalculateVelocity(c1Aperture, c2Aperture, wAperture, cnAperture, c1Intensity, c2Intensity,
+                                        wIntensity, cnIntensity, bGlobal.getCurrentPlan(), bestPersonal);
     }
 
     public void CalculatePosition(){
@@ -168,6 +175,8 @@ public class Particle extends Thread{
     public void setSetupRunnerThread(int idSetup){
         this.setupRunnerThread=idSetup;
     }
+
+    public double getBeamOnTime(){ return this.beamOnTime;}
 
     // --------------------------------------- THREADS METHODS (NO TOCAR) ----------------------------------
     @Override
