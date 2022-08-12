@@ -1,3 +1,4 @@
+from decimal import DivisionByZero
 import seaborn as sns
 from matplotlib import pyplot as plt
 import os
@@ -52,6 +53,7 @@ for id in id_experiments:
         index_line +=1 
 
         if index_line == 1:
+            print(line)
             continue
 
         line = line.strip().split()
@@ -66,4 +68,13 @@ for id in id_experiments:
             values[id].append(character)
         
     for key, value in values.items():
-        print(iter_labels[key], sum(value))
+
+        total_sum = sum(value)
+        n_values = len(value)
+
+        try:
+            mean = float(total_sum/n_values)
+        except DivisionByZero:
+            mean = 0
+
+        print(iter_labels[key], mean)
