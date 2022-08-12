@@ -194,7 +194,7 @@ public class Main {
             nThreads = Integer.parseInt(params.get("nThreads"));
         }
         if(params.containsKey("intensityOptimized")){
-            optimizedIntensity = false;
+            optimizedIntensity = true;
         }
 
         //iter = 40000/size;
