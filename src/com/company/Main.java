@@ -147,6 +147,8 @@ public class Main {
         int diffSetup = 4;
         int nThreads = 3;
         boolean optimizedIntensity = false;
+
+        boolean exportIntensityVector = true;
         /*
             OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1; 
             CLOSED_MIN_SETUP = 2; CLOSED_MAX_SETUP = 3;
@@ -242,10 +244,12 @@ public class Main {
                                 c1Intensity, c2Intensity, innerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
 
         swarm.MoveSwarms();
-
-        //Get the Solution of the algorithm
         Particle particle = swarm.getBestGlobalParticle();
 
-        Reporter r = new Reporter(particle, 6);
+        if(exportIntensityVector){
+            //Get the Solution of the algorithm
+            Reporter r = new Reporter(particle, 7);
+        }
+
     }
 }
