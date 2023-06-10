@@ -8,3 +8,4 @@ production
 PSO.iml
 .mip1.log
 .out1.lp
+*.class
