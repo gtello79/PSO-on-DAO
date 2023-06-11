@@ -246,7 +246,6 @@ public class Beam {
 
                     // Falta irradiar unicamente por la izquierda
                     if(functionalRow.getFirst()+1 > limits.getFirst() ) {
-                        //System.out.println("Moviendo hoja a la izquierda");
 
                         int apertureLeft = limits.getFirst() - 1;
                         int apertureRight = functionalRow.getFirst() + 1;
@@ -254,7 +253,7 @@ public class Beam {
                         Pair<Integer,Integer> newRow = new Pair(apertureLeft, apertureRight);
                         aperture.setRow(indexRow, newRow);
 
-                        functionalRow = new Pair(apertureLeft, functionalRow.getSecond());
+                        functionalRow = new Pair<>(apertureLeft, functionalRow.getSecond());
 
                     }else if(functionalRow.getSecond()-1 < limits.getSecond() ){
                         // Falta irradiar unicamente por la derecha

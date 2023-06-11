@@ -194,7 +194,7 @@ public class Plan {
             if(b.getIdBeam() == idBeamToSearch)
                 return b;
         }
-        System.out.println("ALERTA, BEAM "+ idBeamToSearch +" NO ENCONTRADO");
+        System.exit(1);
         return null;
     }
 

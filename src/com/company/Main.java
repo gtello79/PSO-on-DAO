@@ -132,7 +132,7 @@ public class Main {
         HashMap<String, String> params = mappingArg(args);
 
         //Instance 0-70-140-210-280 CERR PACKAGE
-        int instanceId = 73;
+        int instanceId = 85;
 
         //MLC Configuration    
         int max_intensity = 10; //10 x apertura - probar este parametro
@@ -198,8 +198,6 @@ public class Main {
         if(params.containsKey("intensityOptimized")){
             optimizedIntensity = true;
         }
-
-        iter = 40000/size;
 
         System.out.println("Instance " + instanceId );
         System.out.println("Size: "+ size+ "- iter: "+ iter); 

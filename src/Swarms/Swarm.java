@@ -134,9 +134,10 @@ public class Swarm {
         int totalAperturesUnUsed = this.bestGlobalParticle.getAperturesUnUsed();
 
         double bestBeamOnTime = this.bestGlobalParticle.getBeamOnTime();
-
+        System.out.println("Estadisticas");
         System.out.println(" ------- Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
         System.out.println(" ------- BEST FITNESS: "+ bestGlobalEval);
+        System.out.println("Best Fitness - #Ap Unused - Best BoT");
         System.out.println(bestGlobalEval + " " + totalAperturesUnUsed + " " + bestBeamOnTime);
 
     }
