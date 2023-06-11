@@ -199,7 +199,7 @@ public class Main {
             optimizedIntensity = true;
         }
 
-        //iter = 40000/size;
+        iter = 40000/size;
 
         System.out.println("Instance " + instanceId );
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
