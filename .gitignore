@@ -6,6 +6,6 @@ data/*
 production/*
 production
 PSO.iml
-mip1.log
-out1.lp
+*.log
+*.lp
 *.class
