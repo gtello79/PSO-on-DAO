@@ -149,18 +149,18 @@ public class Swarm {
             boolean change = false, change_1=false, change_2=false, change_3=false;
 
             // Habilitacion de función por paralelismo
-            this.caseParticlesThread(this.MOVEMENT_THREAD);
-            this.caseParticlesThread(this.EVAL_THREAD);
+            this.caseParticlesThread(MOVEMENT_THREAD);
+            this.caseParticlesThread(EVAL_THREAD);
 
             change_1 = CalculateNewBestGlobal();
 
             if(i%10 == 0 && i > 1 && optimizedIntensity){
                 System.out.println(" ------- Optimizacion de intensidades ---------");
-                this.caseParticlesThread(this.OPTIMIZE_THREAD);
+                this.caseParticlesThread(OPTIMIZE_THREAD);
                 change_2 = CalculateNewBestGlobal();
 
                 System.out.println(" ------- Reparación de solución ---------");
-                this.caseParticlesThread(this.REPAIR_SOLUTION);
+                this.caseParticlesThread(REPAIR_SOLUTION);
 
             }
 
@@ -390,7 +390,6 @@ public class Swarm {
         try {
             pool2.invokeAll(calls);
         } catch (InterruptedException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         // Permite manejar el termino de los metodos llamados por los threads

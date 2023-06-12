@@ -23,7 +23,7 @@ def main():
     c1_intensity = 1.0
     c2_intensity = 1.0
     iner_intensity = 1.0
-    instance = range(1,71)
+    instance = range(86,109)
 
     if(argv.__contains__("size")):
         index = argv.index("size")

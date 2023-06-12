@@ -244,7 +244,9 @@ public class Plan {
         return eval;
     }
 
-    public double getBeamOnTime(){ return beamOnTime; }
+    public double getBeamOnTime(){ 
+        return this.beamOnTime; 
+    }
 
     public void setEval(double eval) {
         this.eval = eval;

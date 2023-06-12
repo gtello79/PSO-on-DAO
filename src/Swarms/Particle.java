@@ -175,7 +175,9 @@ public class Particle extends Thread{
         this.setupRunnerThread=idSetup;
     }
 
-    public double getBeamOnTime(){ return this.beamOnTime;}
+    public double getBeamOnTime(){ 
+        return this.beamOnTime;
+    }
 
     // --------------------------------------- THREADS METHODS (NO TOCAR) ----------------------------------
     @Override
