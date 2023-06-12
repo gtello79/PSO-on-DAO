@@ -10,9 +10,9 @@ def main():
     folder_finals = './FinalResults/'
     
     UID = str(int(random.random()*1000))
-    exp_iter = 30
+    exp_iter = 10
     results = []
-    instance = 20
+    instance = 85
     nThreads = 3
     intensityOptimized = False
     # Default params

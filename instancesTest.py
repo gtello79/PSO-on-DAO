@@ -23,7 +23,7 @@ def main():
     c1_intensity = 1.0
     c2_intensity = 1.0
     iner_intensity = 1.0
-    instance = range(86,109)
+    instance = range(85,97)
 
     if(argv.__contains__("size")):
         index = argv.index("size")
@@ -54,15 +54,14 @@ def main():
         exp_iter = int(argv[index+1])
     
     #Compilacion
-    compiler_command = "javac --class-path src src/com/company/Main.java "
+    compiler_command = "javac --class-path src:$LD_LIBRARY_PATH/gurobi.jar src/com/company/Main.java "
     system(compiler_command)
 
     config_params = "size "+str(size)+" iter "+str(iter) \
                     + " c1Aperture " + str(c1_aperture) + " c2Aperture " + str(c2_aperture) + " inerAperture " + str(iner_aperture) \
                     + " c1Intensity " + str(c1_intensity) + " c2Intensity " + str(c2_intensity) + " inerIntensity " + str(iner_intensity)
                     
-    execute_command = "java -classpath ./production/PSO:$LD_LIBRARY_PATH/gurobi.jar com.company.Main " + config_params
-    
+    execute_command = "java -classpath ./src:$LD_LIBRARY_PATH/gurobi.jar com.company.Main " + config_params
     for i in instance:
         system(execute_command + " i " + str(i) )
         
