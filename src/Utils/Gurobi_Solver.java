@@ -123,7 +123,7 @@ public class Gurobi_Solver {
             for (int j = 0; j < this.aperture; ++j) {
                 indexI=i+1;
                 indexJ=j+1;
-                intensity[i][j] = model.addVar(minIntensity,10,0.0, GRB.CONTINUOUS ,"Intensity" +"["+ indexI + "." + indexJ+"]");
+                intensity[i][j] = model.addVar(minIntensity,20,0.0, GRB.CONTINUOUS ,"Intensity" +"["+ indexI + "." + indexJ+"]");
                 intensity[i][j].set(GRB.DoubleAttr.Start, sol.getIntensityByAperture(i,j));
             }
         }

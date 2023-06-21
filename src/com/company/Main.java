@@ -135,7 +135,7 @@ public class Main {
         int instanceId = 85;
 
         //MLC Configuration    
-        int max_intensity = 10; //10 x apertura - probar este parametro
+        int max_intensity = 20; //Apertura - probar este parametro
         int minIntensity = 1;
         int initial_intensity = 4;
         int step_intensity = 2;
@@ -198,6 +198,9 @@ public class Main {
         if(params.containsKey("intensityOptimized")){
             optimizedIntensity = true;
         }
+        if(params.containsKey("max_intensity")){
+            max_intensity = Integer.parseInt(params.get("max_intensity"));
+        }
 
         System.out.println("Instance " + instanceId );
         System.out.println("Size: "+ size+ "- iter: "+ iter); 
@@ -244,10 +247,11 @@ public class Main {
         swarm.MoveSwarms();
         Particle particle = swarm.getBestGlobalParticle();
 
-        if(exportIntensityVector){
-            //Get the Solution of the algorithm
-            Reporter r = new Reporter(particle, 7);
-        }
-
+        /* 
+            if(exportIntensityVector){
+                //Get the Solution of the algorithm
+                Reporter r = new Reporter(particle, 7);
+            }
+        */
     }
 }
