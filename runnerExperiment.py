@@ -74,7 +74,7 @@ def main():
     except SystemError as e:
         print(e)
 
-    config_params = "i "               + str(instance)         + " size "          + str(size) +\
+    config_params = "i "                + str(instance)         + " size "          + str(size) +\
                     " c1Aperture "      + str(c1_aperture)      + " c2Aperture "    + str(c2_aperture) + \
                     " inerAperture "    + str(iner_aperture)    + " c1Intensity "   + str(c1_intensity) +\
                     " c2Intensity "     + str(c2_intensity)     + " inerIntensity " + str(iner_intensity) + " iter " + str(iter)+ " nThreads " + str(nThreads)+ \
