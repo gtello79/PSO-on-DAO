@@ -247,11 +247,11 @@ public class Main {
         swarm.MoveSwarms();
         Particle particle = swarm.getBestGlobalParticle();
 
-        /* 
-            if(exportIntensityVector){
-                //Get the Solution of the algorithm
-                Reporter r = new Reporter(particle, 7);
+         
+        if(exportIntensityVector){
+            //Get the Solution of the algorithm
+            Reporter r = new Reporter(particle, 7);
             }
-        */
+
     }
 }
