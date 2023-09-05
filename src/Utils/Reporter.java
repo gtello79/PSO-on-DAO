@@ -230,7 +230,6 @@ public class Reporter {
         String fileName = UID +"-FluenceMap.txt";
         for(Beam b: plan.getAngle_beam())
             nBeamLetsByBeam.add(b.getTotalBeamlets());
-        System.out.println(nBeamLetsByBeam);
         try{
             FileWriter matrixCSV = new FileWriter(intensityFolderPath+fileName);
             String vectorChain = "";
