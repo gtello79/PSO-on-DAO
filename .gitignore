@@ -3,11 +3,11 @@ import/*
 ExperimentsFiles/*
 FinalResults/
 data/*
-production/*
-production
 PSO.iml
-*.log
+mip1.log
 *.lp
+*.log
 src/com/company/Main.class
+*.class
 *.classpath
 *.png

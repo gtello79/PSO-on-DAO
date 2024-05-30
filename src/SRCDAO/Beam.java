@@ -111,20 +111,20 @@ public class Beam {
     }
 
     public void initiliazeBeam(int type, int openApertures) {
-        Vector<Integer> levels = new Vector<>();
+        Vector<Double> levels = new Vector<>();
 
         // Calculate levels for random Intensity
         int l = (maxIntensity - minIntensity) / stepIntensity;
         for (int k = 0; k < maxApertures; k++) {
-            int i = minIntensity + stepIntensity * (int) (Math.random() * (l + 1));
+            double i = minIntensity + stepIntensity *(Math.random() * (l + 1));
             levels.add(i);
         }
 
         // Inicializacion de cada apertura
-        for (int i = 0; i < maxApertures; i++) {
+        for (int index_aperture = 0; index_aperture < maxApertures; index_aperture++) {
             Aperture aux = new Aperture(collimator, angle);
-            aux.initializeAperture(type, openApertures);
-            aux.initializeIntensity(type, minIntensity, maxIntensity, initialIntensity, levels.get(i));
+            aux.initializeAperture(type, openApertures, index_aperture);
+            aux.initializeIntensity(type, minIntensity, maxIntensity, initialIntensity, levels.get(index_aperture));
             openApertures--;
             A.add(aux);
         }

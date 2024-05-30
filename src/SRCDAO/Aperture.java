@@ -21,6 +21,7 @@ public class Aperture {
     protected int CLOSED_MIN_SETUP = 2 ;
     protected int CLOSED_MAX_SETUP = 3;
     protected int RAND_RAND_SETUP = 4;
+    protected int STATIC_SETUP = 5;
 
     /*--------------------------------------------------METHODS----------------------------------------------------------------------------*/
     public Aperture(Collimator collimator, int angle){
@@ -33,7 +34,7 @@ public class Aperture {
         this.A = new ArrayList<>();
 
         for(int i = 0; i < collimator.getxDim(); i++)
-            velocityA.add(new Pair(0,0)); // -> Velocidad 0 para todas las hojas
+            velocityA.add(new Pair<>(0,0)); // -> Velocidad 0 para todas las hojas
     }
 
     public Aperture(Aperture a){
@@ -45,14 +46,14 @@ public class Aperture {
         setOpenedBeamlets(a.openedBeamlets);
     }
 
-    public void initializeAperture(int type, int open_apertures){
+    public void initializeAperture(int type, int open_apertures, int id_aperture){
         ArrayList<Pair<Integer,Integer>> aux = new ArrayList<>();
 
         for(int i = 0; i < collimator.getxDim(); i++){
 
             if(collimator.getActiveRange(i,angle).getFirst() < 0){ //<-1,-1>
                 //Cerrada completamente por inactividad
-                aux.add(new Pair(-2, -2));
+                aux.add(new Pair<>(-2, -2));
             }
             else{
                 //Todos los beamlets de la fila i en el angulo 'angle'
@@ -78,7 +79,18 @@ public class Aperture {
                         int index2 = (middle) + (int)(Math.random()*(sLeaf-middle+1));
                         aux.add(new Pair(index1,index2));
                     }
-                }else{
+                }else if(type == STATIC_SETUP){
+                    // Se posiciona
+                    int index_1 = fLeaf;
+                    int index_2 = fLeaf + id_aperture + 2;
+
+                    if (index_2 >= sLeaf)
+                        index_2 = sLeaf;
+
+                    //Se mantiene la apertura inicial
+                    aux.add(new Pair(index_1,index_2));
+                }
+                else{
 
                     if(open_apertures > 0){
                         aux.add(new Pair(fLeaf,sLeaf));
@@ -93,13 +105,16 @@ public class Aperture {
         setApertures(aux);
     }
 
-    public void initializeIntensity(int type, int min_intensity, int max_intensity, int initial_intensity, int r_intensity){
+    public void initializeIntensity(int type, int min_intensity, int max_intensity, int initial_intensity, double r_intensity){
         if( type==OPEN_MIN_SETUP || type==CLOSED_MIN_SETUP ){
             setIntensity(min_intensity);
         }else if( type==OPEN_MAX_SETUP || type==CLOSED_MAX_SETUP ){
             setIntensity(max_intensity);
         }else if( type == RAND_RAND_SETUP){
             setIntensity(r_intensity);
+        }else if ( type == STATIC_SETUP){
+            double static_intensity = 5.6;
+            setIntensity(static_intensity);
         }else{
             setIntensity(initial_intensity);
         }
@@ -211,7 +226,7 @@ public class Aperture {
         ArrayList<Pair<Integer,Integer>> newAperture = new ArrayList<>();
 
         for(Pair<Integer,Integer> row: Aperture){
-            Pair<Integer, Integer> newRow = new Pair(row.getFirst(), row.getSecond());
+            Pair<Integer, Integer> newRow = new Pair<>(row.getFirst(), row.getSecond());
             newAperture.add(newRow);
         }
         this.A = newAperture;
@@ -274,8 +289,5 @@ public class Aperture {
     public ArrayList<Pair<Integer,Integer>> getApertures(){
         return A;
     }
-
-
-
 
 }
