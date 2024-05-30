@@ -8,4 +8,6 @@ production
 PSO.iml
 *.log
 *.lp
-*.class
+src/com/company/Main.class
+*.classpath
+*.png
