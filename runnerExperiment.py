@@ -4,6 +4,9 @@ import random
 import os
 from time import time
 
+LD_LIBRARY_GUROBI_PATH = '/opt/gurobi1101/linux64/lib/gurobi.jar'
+
+
 def main():
 
     folder_experiments = './ExperimentsFiles/'
@@ -68,7 +71,7 @@ def main():
     init_time = time()
 
     #Compilacion
-    compiler_command = "javac --class-path src:$LD_LIBRARY_PATH/gurobi.jar src/com/company/Main.java "
+    compiler_command = f"javac --class-path src:{LD_LIBRARY_GUROBI_PATH} src/com/company/Main.java "
     try:
         system(compiler_command)
     except SystemError as e:
@@ -84,7 +87,7 @@ def main():
     if intensityOptimized:
         config_params += " intensityOptimized " + str(intensityOptimized)
 
-    execute_command = "java -classpath ./src:$LD_LIBRARY_PATH/gurobi.jar com.company.Main " + config_params
+    execute_command = f"java -classpath ./src:{LD_LIBRARY_GUROBI_PATH} com.company.Main " + config_params
 
     print("Experiments ID ", UID)
     print("PARAMS ", config_params)
