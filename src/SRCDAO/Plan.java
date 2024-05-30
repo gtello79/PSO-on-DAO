@@ -1,6 +1,6 @@
 package SRCDAO;
 import Utils.Gurobi_Solver;
-import gurobi.GRBException;
+import com.gurobi.gurobi.GRBException;
 import source.*;
 
 import java.util.ArrayList;
