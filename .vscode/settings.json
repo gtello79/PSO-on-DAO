@@ -1,0 +1,7 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "/opt/gurobi1101/linux64/lib/gurobi.jar",
+        "/opt/javafx/lib/javafx.base.jar"
+    ]
+}
