@@ -1,63 +1,82 @@
 from os import system
 from sys import argv
-import random
 import os
 from time import time
+from argparse import ArgumentParser
 
+CURR_DIR = os.getcwd()
 LD_LIBRARY_GUROBI_PATH = '/opt/gurobi1101/linux64/lib/gurobi.jar'
+folder_experiments = './ExperimentsFiles/'
+folder_finals = './FinalResults/'
 
+def UUID_exp() -> str:
+    from datetime import datetime
+
+    # Get current date and time
+    now = datetime.now()
+
+    # Format date as YYYY-MM-DD
+    date_string = now.strftime("%Y%m%d")
+
+    # Format time as HH:MM (24-hour format)
+    time_string = now.strftime("%H%M")
+
+    # Combine date and time strings with a space
+    datetime_string = f"{date_string}_{time_string}"
+
+    return datetime_string
+
+UID = UUID_exp()
+
+def parse_arguments():
+    parser = ArgumentParser(description="PSO Algorithm Parameters")
+    parser.add_argument("--exp_iter", type=int, help="Experiment iteration")
+    parser.add_argument("--i", dest="instance", type=int, help="Instance number")
+    parser.add_argument("--size", type=int, help="Swarm size")
+    parser.add_argument(
+        "--c1Aperture", type=float, help="Learning constant c1 for aperture"
+    )
+    parser.add_argument(
+        "--c2Aperture", type=float, help="Learning constant c2 for aperture"
+    )
+    parser.add_argument("--inerAperture", type=float, help="Inertia for aperture")
+    parser.add_argument(
+        "--c1Intensity", type=float, help="Learning constant c1 for intensity"
+    )
+    parser.add_argument(
+        "--c2Intensity", type=float, help="Learning constant c2 for intensity"
+    )
+    parser.add_argument("--inerIntensity", type=float, help="Inertia for intensity")
+    parser.add_argument("--iter", type=int, help="N° Iteration for the swarm")
+
+    args = parser.parse_args()
+    return args
 
 def main():
 
-    folder_experiments = './ExperimentsFiles/'
-    folder_finals = './FinalResults/'
     
-    UID = str(int(random.random()*1000))
-    exp_iter = 10
     results = []
-    instance = 85
+    exp_iter = 10
     nThreads = 3
+    N_EVALUATIONS = 5000
     intensityOptimized = False
-    # Default params
-    size = 418
 
-    c1_aperture = 1.8751
-    c2_aperture = 0.2134
-    iner_aperture = 0.5774
+    params_args = parse_arguments()
+
     cn_aperture = 1.6641
-
-    c1_intensity = 0.3158
-    c2_intensity = 1.7017
-    iner_intensity = 0.5331
     cn_intensity = 1.2389
 
-    if(argv.__contains__("size")):
-        index = argv.index("size")
-        size = int(argv[index+1])
-    if(argv.__contains__("c1Aperture")):
-        index = argv.index("c1Aperture")
-        c1_aperture = float(argv[index+1])
-    if(argv.__contains__("c2Aperture")):
-        index = argv.index("c2Aperture")
-        c2_aperture = float(argv[index+1])
-    if(argv.__contains__("inerAperture")):
-        index = argv.index("inerAperture")
-        iner_aperture = float(argv[index+1])
-    if(argv.__contains__("c1Intensity")):
-        index = argv.index("c1Intensity")
-        c1_intensity = float(argv[index+1])
-    if(argv.__contains__("c2Intensity")):
-        index = argv.index("c2Intensity")
-        c2_intensity = float(argv[index+1])    
-    if(argv.__contains__("inerIntensity")):
-        index = argv.index("inerIntensity")
-        iner_intensity = float(argv[index+1])    
-    if(argv.__contains__("exp_iter")):
-        index = argv.index("exp_iter")
-        exp_iter = int(argv[index+1])
-    if(argv.__contains__("i")):
-        index = argv.index("i")
-        instance = int(argv[index+1])
+    # PSO PARAMETERS
+    instance = params_args.instance or 85
+    size = params_args.size or 418
+    c1_aper = params_args.c1Aperture or 1.8751
+    c2_aper = params_args.c2Aperture or 0.2134
+    w_aper = params_args.inerAperture or 0.5774
+    c1_int = params_args.c1Intensity or 0.3158
+    c2_int = params_args.c2Intensity or 1.7017
+    w_int = params_args.inerIntensity or 0.5331
+    iter = params_args.iter or (N_EVALUATIONS // size)
+
     if(argv.__contains__("cnAperture")):
         index = argv.index("cnAperture")
         cn_aperture = float(argv[index+1])
@@ -65,8 +84,7 @@ def main():
         index = argv.index("cnIntensity")
         cn_intensity = float(argv[index+1])
 
-    CURR_DIR = os.getcwd()
-    print("CURR: {}".format(CURR_DIR))
+
     iter = int(40000/size)
     init_time = time()
 
@@ -78,9 +96,9 @@ def main():
         print(e)
 
     config_params = "i "                + str(instance)         + " size "          + str(size) +\
-                    " c1Aperture "      + str(c1_aperture)      + " c2Aperture "    + str(c2_aperture) + \
-                    " inerAperture "    + str(iner_aperture)    + " c1Intensity "   + str(c1_intensity) +\
-                    " c2Intensity "     + str(c2_intensity)     + " inerIntensity " + str(iner_intensity) + " iter " + str(iter)+ " nThreads " + str(nThreads)+ \
+                    " c1Aperture "      + str(c1_aper)      + " c2Aperture "    + str(c2_aper) + \
+                    " inerAperture "    + str(w_aper)    + " c1Intensity "   + str(c1_int) +\
+                    " c2Intensity "     + str(c2_int)     + " inerIntensity " + str(w_int) + " iter " + str(iter)+ " nThreads " + str(nThreads)+ \
                     " cnAperture "      + str(cn_aperture)      + " cnIntensity "   + str(cn_intensity)  + " "
 
 
