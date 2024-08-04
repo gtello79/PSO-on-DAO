@@ -84,7 +84,7 @@ public class Aperture {
                     int index_1 = fLeaf;
                     int index_2 = fLeaf + id_aperture + 2;
 
-                    if (index_2 >= sLeaf)
+                    if (index_2 > sLeaf)
                         index_2 = sLeaf;
 
                     //Se mantiene la apertura inicial

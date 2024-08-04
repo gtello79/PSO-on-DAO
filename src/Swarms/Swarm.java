@@ -1,7 +1,9 @@
 package Swarms;
+
 import source.Collimator;
 import source.Volumen;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Vector;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 
 public class Swarm {
     private Particle bestGlobalParticle;
+    public static DecimalFormat df = new DecimalFormat("#.00");
 
     private double bestGlobalEval;
     private double c1Aperture;
@@ -42,43 +45,56 @@ public class Swarm {
     static final int OPTIMIZE_THREAD = 2;
     static final int REPAIR_SOLUTION = 3;
 
-
-
     /*---------------------------------------METHODS ---------------------------------------------------------------------------*/
-    public Swarm(ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures, int max_intensity, int minIntensity,
-                 int initial_intensity, int step_intensity, int open_apertures, int setup, int diffSetup ,ArrayList<Volumen> volumen, Collimator collimator,
-                 double c1Aperture, double c2Aperture, double innerAperture, double cnAperture, 
-                 double c1Intensity, double c2Intensity, double innerIntensity, double cnIntensity, int size, int iter, int nThreads,
-                 boolean optimizedIntensity) {
+    public Swarm(ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax, ArrayList<Integer> max_apertures,
+            int max_intensity, int minIntensity,
+            int initial_intensity, int step_intensity, int open_apertures, int setup, int diffSetup,
+            ArrayList<Volumen> volumen, Collimator collimator,
+            double c1Aperture, double c2Aperture, double innerAperture, double cnAperture,
+            double c1Intensity, double c2Intensity, double innerIntensity, double cnIntensity, int size, int iter,
+            int nThreads,
+            boolean optimizedIntensity) {
 
         setThreadsToUse(nThreads);
         setIter(iter);
 
         this.swarm = new ArrayList<>();
         this.evalTrack = new Vector<>();
-        this.optimizedIntensity = optimizedIntensity;
         this.beamOnTime = 0.0;
+        this.optimizedIntensity = optimizedIntensity;
 
-        /*A Particles set will be created*/
-        for(int i = 0; i < size ; i++){
+        // Seteando parametros de PSO
+        setC1Aperture(c1Aperture);
+        setC2Aperture(c2Aperture);
+        setInnerAperture(innerAperture);
+        setCnAperture(cnAperture);
+
+        setC1Intensity(c1Intensity);
+        setC2Intensity(c2Intensity);
+        setInnerIntensity(innerIntensity);
+        setCnIntensity(cnIntensity);
+
+        /* A Particles set will be created */
+        for (int i = 0; i < size; i++) {
             Particle newParticle;
-            System.out.println("Creating Particle: "+ i);
+            System.out.println("Creating Particle: " + i);
             this.globalUpdateCount = 0;
 
-            if(i == 0){
-                //Particula diferenciada
-                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity, minIntensity, initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
+            if (i == 0) {
+                // Particula diferenciada
+                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity, minIntensity,
+                        initial_intensity, step_intensity, open_apertures, diffSetup, volumen, collimator);
                 setBestGlobalParticle(newParticle);
                 setBestGlobalEval(newParticle.getFitness());
-                newParticle.OptimizateIntensities();
-            }else{
-                //Poblacion randomizada
-                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity, minIntensity, initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
-                newParticle.OptimizateIntensities();
+            } else {
+                // Poblacion randomizada
+                newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity, minIntensity,
+                        initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
             }
+            newParticle.OptimizateIntensities();
 
-            /*Only used by Threads*/
-            if(callablefunctions){
+            /* Only used by Threads */
+            if (callablefunctions) {
                 newParticle.setC1ApertureThread(c1Aperture);
                 newParticle.setC2ApertureThread(c2Aperture);
                 newParticle.setInnerApertureThread(innerAperture);
@@ -94,17 +110,6 @@ public class Swarm {
             System.out.println();
         }
 
-        //Seteando parametros de PSO
-        setC1Aperture(c1Aperture);
-        setC2Aperture(c2Aperture);
-        setInnerAperture(innerAperture);
-        setCnAperture(cnAperture);
-
-        setC1Intensity(c1Intensity);
-        setC2Intensity(c2Intensity);
-        setInnerIntensity(innerIntensity);
-        setCnIntensity(cnIntensity);
-
         CalculateNewBestGlobal();
 
         double[] initialRecord = new double[2];
@@ -115,38 +120,35 @@ public class Swarm {
 
     }
 
-    /*Running PSO Algorithm*/
-    //Move particles using differents alternatives
-    public void MoveSwarms(){
-        Long initialAlgorithmTime = System.currentTimeMillis();
+    /* Running PSO Algorithm */
+    // Move particles using differents alternatives
+    public void MoveSwarms() {
+        double initialAlgorithmTime = (double) System.currentTimeMillis();
         System.out.println(" ------- MOVING SWARMS");
-        if(callablefunctions){
+        if (callablefunctions) {
             MoveSwarmsOnConcurrent();
-        }else{
+        } else {
             MoveSwarmsOnSecuencing();
         }
 
-        Long finalAlgorithmTime = System.currentTimeMillis();
-
-        System.out.println(" ------- Apertures UnUsed: ");
-        System.out.println(this.bestGlobalParticle.getTotalUnUsedApertures());
+        double finalAlgorithmTime = (double)System.currentTimeMillis();
 
         int totalAperturesUnUsed = this.bestGlobalParticle.getAperturesUnUsed();
-
         double bestBeamOnTime = this.bestGlobalParticle.getBeamOnTime();
-        System.out.println("Estadisticas");
-        System.out.println(" ------- Processing Time: " + ((finalAlgorithmTime - initialAlgorithmTime) / 1000) + " [seg]");
-        System.out.println(" ------- BEST FITNESS: "+ bestGlobalEval);
+        double final_time = finalAlgorithmTime - initialAlgorithmTime;
+
+        System.out.println("ESTADISTICAS FINALES");
+        System.out.println(" ----- Processing Time: " + df.format(final_time) + " [seg]");
         System.out.println("Best Fitness - #Ap Unused - Best BoT");
-        System.out.println(bestGlobalEval + " " + totalAperturesUnUsed + " " + bestBeamOnTime);
+        System.out.println(bestGlobalEval + " " + totalAperturesUnUsed + " " + df.format(bestBeamOnTime));
 
     }
 
-    //Move the particles with concurrent process
-    public void MoveSwarmsOnConcurrent(){
+    // Move the particles with concurrent process
+    public void MoveSwarmsOnConcurrent() {
 
-        for(int i = 0; i < this.getIter(); i++){
-            boolean change = false, change_1=false, change_2=false, change_3=false;
+        for (int i = 0; i < this.getIter(); i++) {
+            boolean change = false, change_1 = false, change_2 = false, change_3 = false;
 
             // Habilitacion de función por paralelismo
             this.caseParticlesThread(MOVEMENT_THREAD);
@@ -154,7 +156,7 @@ public class Swarm {
 
             change_1 = CalculateNewBestGlobal();
 
-            if(i%10 == 0 && i > 1 && optimizedIntensity){
+            if (i % 10 == 0 && i > 1 && optimizedIntensity) {
                 System.out.println(" ------- Optimizacion de intensidades ---------");
                 this.caseParticlesThread(OPTIMIZE_THREAD);
                 change_2 = CalculateNewBestGlobal();
@@ -167,32 +169,33 @@ public class Swarm {
             change_3 = CalculateNewBestGlobal();
 
             change = change_1 || change_2 || change_3;
-            if(change){
+            if (change) {
                 this.globalUpdateCount++;
                 setLastChange(i);
 
                 double[] finalRecord = new double[2];
-                finalRecord[0] = (double)i;
+                finalRecord[0] = (double) i;
                 finalRecord[1] = this.bestGlobalEval;
                 evalTrack.add(finalRecord);
             }
 
-            System.out.println(" ------- Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
+            System.out.println(" ------- Iter " + i + " best solution: " + bestGlobalEval + ". Update count: "
+                    + this.getGlobalUpdateCount());
         }
     }
 
-    //Move the particles with secuencing process
-    public void MoveSwarmsOnSecuencing(){
+    // Move the particles with secuencing process
+    public void MoveSwarmsOnSecuencing() {
 
-        for(int i = 0; i < getIter(); i++){
-            boolean change1=false, change2=false, change3=false;
+        for (int i = 0; i < getIter(); i++) {
+            boolean change1 = false, change2 = false, change3 = false;
 
             calculateVelocity();
             calculatePosition();
 
             evalParticles();
             change1 = CalculateNewBestGlobal();
-            if(i%10 == 0 && i > 1 && optimizedIntensity) {
+            if (i % 10 == 0 && i > 1 && optimizedIntensity) {
                 System.out.println(" ------- Optimizacion de intensidades ---------");
                 OptimizateIntensities();
                 change2 = CalculateNewBestGlobal();
@@ -203,48 +206,49 @@ public class Swarm {
             change3 = CalculateNewBestGlobal();
 
             boolean generalChange = (change1 || change2 || change3);
-            if(generalChange){
+            if (generalChange) {
                 this.globalUpdateCount++;
                 setLastChange(i);
 
                 double[] finalRecord = new double[2];
-                finalRecord[0] = (double)i;
+                finalRecord[0] = (double) i;
                 finalRecord[1] = this.bestGlobalEval;
                 evalTrack.add(finalRecord);
             }
-            System.out.println("Iter "+ i +" best solution: "+ bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount() );
+            System.out.println("Iter " + i + " best solution: " + bestGlobalEval + ". Update count: "
+                    + this.getGlobalUpdateCount());
         }
     }
 
-    public void repairSolutions(){
-        for(Particle particle: swarm){
+    public void repairSolutions() {
+        for (Particle particle : swarm) {
             particle.regenerateApertures();
         }
     }
 
-    public void OptimizateIntensities(){
-        for(Particle particle: swarm){
+    public void OptimizateIntensities() {
+        for (Particle particle : swarm) {
             particle.OptimizateIntensities();
         }
     }
 
-    public void evalParticles(){
-        for(Particle particle: swarm){
+    public void evalParticles() {
+        for (Particle particle : swarm) {
             particle.evalParticle();
         }
     }
 
     /*---------------------------------------------------- PSO METHODS--------------------------------------------------------------------------------*/
 
-    public void calculateVelocity(){
+    public void calculateVelocity() {
         for (Particle particle : swarm) {
-            particle.CalculateVelocity(getC1Aperture(), getC2Aperture(),getInnerAperture(),getCnAperture(),
-                    getC1Intensity(),getC2Intensity(),getInnerIntensity(), getCnIntensity(), getBestGlobalParticle());
+            particle.CalculateVelocity(getC1Aperture(), getC2Aperture(), getInnerAperture(), getCnAperture(),
+                    getC1Intensity(), getC2Intensity(), getInnerIntensity(), getCnIntensity(), getBestGlobalParticle());
         }
     }
 
-    public void calculatePosition(){
-        for(Particle particle: swarm){
+    public void calculatePosition() {
+        for (Particle particle : swarm) {
             particle.CalculatePosition();
         }
     }
@@ -252,8 +256,8 @@ public class Swarm {
     public boolean CalculateNewBestGlobal() {
         boolean changeGlobal = false;
 
-        for (Particle particle: swarm){
-            if (particle.getFitness() < getBestGlobalEval() ) {
+        for (Particle particle : swarm) {
+            if (particle.getFitness() < getBestGlobalEval()) {
                 setBestGlobalParticle(particle);
                 setBestGlobalEval(particle.getFitness());
                 changeGlobal = true;
@@ -263,12 +267,12 @@ public class Swarm {
     }
 
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
-    private void setThreadsToUse(int threadsToUse){
+    private void setThreadsToUse(int threadsToUse) {
         this.threadsToUse = threadsToUse;
         this.callablefunctions = threadsToUse > 1;
-        if(this.callablefunctions){
-            System.out.println("Using "+this.threadsToUse + " Threads");
-        }else{
+        if (this.callablefunctions) {
+            System.out.println("Using " + this.threadsToUse + " Threads");
+        } else {
             System.out.println("Linear resolution");
         }
 
@@ -278,7 +282,9 @@ public class Swarm {
         return bestGlobalEval;
     }
 
-    public void setBestGlobalParticle(Particle bestGlobalParticle) { this.bestGlobalParticle = new Particle(bestGlobalParticle); }
+    public void setBestGlobalParticle(Particle bestGlobalParticle) {
+        this.bestGlobalParticle = new Particle(bestGlobalParticle);
+    }
 
     public int getIter() {
         return iter;
@@ -364,22 +370,23 @@ public class Swarm {
         this.innerIntensity = innerIntensity;
     }
 
-    public void setLastChange(int lastChange){
+    public void setLastChange(int lastChange) {
         this.lastChange = lastChange;
     }
 
-    // --------------------------------------- THREADS METHODS (NO TOCAR) ----------------------------------
+    // --------------------------------------- THREADS METHODS (NO TOCAR)
+    // ----------------------------------
 
-    public void caseParticlesThread(int idSetup){
+    public void caseParticlesThread(int idSetup) {
         // Guardar objetos ejecutados en hilos (particulas)
         List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
         // Pool ejecutora de las funciones
         ExecutorService pool2 = Executors.newFixedThreadPool(threadsToUse);
 
-        //Guardar objetos ejecutados
-        for(int j=0; j < swarm.size(); j++) {
+        // Guardar objetos ejecutados
+        for (int j = 0; j < swarm.size(); j++) {
             Particle p = swarm.get(j);
-            if(idSetup == MOVEMENT_THREAD){
+            if (idSetup == MOVEMENT_THREAD) {
                 p.setBestGlobal(this.bestGlobalParticle);
             }
 

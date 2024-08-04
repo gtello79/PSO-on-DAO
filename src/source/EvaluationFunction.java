@@ -32,7 +32,7 @@ public class EvaluationFunction {
 
         //Inicializando los vectores de dosis para cada organo
         for(int i = 0; i < nbOrgans; i++){
-            ArrayList thisRow = new ArrayList<Double>();
+            ArrayList<Double> thisRow = new ArrayList<Double>();
             for(int j = 0; j < nbVoxels.get(i) ; j++){
                 thisRow.add(0.0);
             }

@@ -3,7 +3,8 @@ package com.company;
 import Swarms.*;
 import Utils.Reporter;
 
-import source.*;
+import source.Volumen;
+import source.Collimator;
 import java.io.FileNotFoundException;
 import java.io.File;
 import java.util.ArrayList;
@@ -11,8 +12,13 @@ import java.util.Vector;
 
 import java.util.Scanner;
 import java.util.HashMap;
+import javafx.util.Pair;
 
 public class Main {
+
+    public static String EXPERIMENT_PATH = "./ExperimentsFiles/";
+    public static String INSTANCE_FILE = "./data/index_instances.txt";
+    public static String DATA_FILE = "./data/";
 
     public static HashMap<String, String> mappingArg(String[] args) {
 
@@ -41,27 +47,24 @@ public class Main {
 
     public static Pair<String, String> getInstanceById(Integer index) throws FileNotFoundException {
 
-        String indexFile = "./data/index_instances.txt";
         String folder_coord = "1_1";
-        File of = new File(indexFile);
+        File of = new File(INSTANCE_FILE);
         Scanner reading = new Scanner(of);
 
         int nLine = 1;
         while (reading.hasNextLine()) {
             String linea = reading.nextLine();
             if (nLine == index) {
-                folder_coord = linea;
+                folder_coord = DATA_FILE.concat(linea).concat("/");
                 break;
             }
             nLine++;
         }
-
-        folder_coord = "./data/" + folder_coord + "/";
-        String instance_file = folder_coord + "Instance.txt";
-        String coordinate_file = folder_coord + "coordinates_instance.txt";
-        System.out.println(folder_coord);
         reading.close();
-        return new Pair(instance_file, coordinate_file);
+
+        String instance_file = folder_coord.concat("Instance.txt");
+        String coordinate_file = folder_coord.concat("coordinates_instance.txt");
+        return new Pair<>(instance_file, coordinate_file);
     }
 
     public static Vector<Integer> get_angles(String nameFile) throws FileNotFoundException {
@@ -70,24 +73,15 @@ public class Main {
         Scanner reading = new Scanner(testInstance);
         int nLine = 0;
         while (reading.hasNextLine()) {
-            String linea = reading.nextLine();
-            char[] arreglo = linea.toCharArray();
-            String to_add = "";
-            int angle;
             if (nLine == 0) {
-                for (char index : arreglo) {
-                    if (index == ' ') {
-                        angle = Integer.parseInt(to_add);
-                        angles.add(angle);
-                        to_add = "";
-                    } else {
-                        to_add += Character.toString(index);
-                    }
-                }
-                if (isNumeric(to_add)) {
-                    angle = Integer.parseInt(to_add);
+                String linea = reading.nextLine();
+                String[] angles_list_str = linea.split(" ");
+                for(String angle_str: angles_list_str){
+                    Integer angle = Integer.parseInt(angle_str);
                     angles.add(angle);
                 }
+            }else{
+                break;
             }
             nLine++;
         }
@@ -104,10 +98,9 @@ public class Main {
         System.out.println("ORG FILE: " + org_filename);
         File of = new File(org_filename);
         if (!of.exists()) {
-            System.out.println("ERROR: NO SE ENCUENTRA EL ARCHIVO " + org_filename);
-            System.exit(-1);
+            throw new FileNotFoundException("ERROR: NO SE ENCUENTRA EL ARCHIVO " + org_filename);
         }
-        System.out.println("READING VOLUMEN FILES");
+
         Scanner reading = new Scanner(of);
         while (reading.hasNextLine()) {
             line = reading.nextLine();
@@ -129,11 +122,12 @@ public class Main {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
+
         HashMap<String, String> params = mappingArg(args);
-
-        int instanceId = 71;
-
+        ArrayList<Integer> maxApertures = new ArrayList<>();
+        
         // MLC Configuration
+        int instanceId = 71;
         int max_intensity = 20; // Apertura - probar este parametro
         int minIntensity = 0;
         int initial_intensity = 4;
@@ -155,18 +149,18 @@ public class Main {
          */
 
         // Parametros PSO
-        int size = 1; // Particle size
-        int iter = 21; // Pso Iterations
+        int size = 1;                   // SWARM size
+        int iter = 21;                  // Pso Iterations
 
-        double c1Aperture = 1.8751; // 0.9321; // Coef Global
-        double c2Aperture = 0.2134; // 0.9949; // Coef Personal
-        double innerAperture = 0.5774; // 0.1314; // Inner
-        double cnAperture = 1.6641; // 1.4638; // constriction Factor
+        double c1Aperture = 1.8751;     // Coef Global
+        double c2Aperture = 0.2134;     // Coef Personal
+        double innerAperture = 0.5774;  // Inner
+        double cnAperture = 1.6641;     // constriction Factor
 
-        double c1Intensity = 0.3158; // 0.48; // Coef Global
-        double c2Intensity = 1.7017; // 1.4577; // Coef Personal
-        double innerIntensity = 0.5331; // 0.8432; // Inner
-        double cnIntensity = 1.2389; // 0.9911; // constriction Factor
+        double c1Intensity = 0.3158;    // Coef Global
+        double c2Intensity = 1.7017;    // Coef Personal
+        double innerIntensity = 0.5331; // Inner
+        double cnIntensity = 1.2389;    // constriction Factor
 
         if (params.containsKey("size"))
             size = Integer.parseInt(params.get("size"));
@@ -200,7 +194,8 @@ public class Main {
         if (params.containsKey("max_intensity")) {
             max_intensity = Integer.parseInt(params.get("max_intensity"));
         }
-
+        
+        // Print parameters configurate on experiments
         System.out.println("Instance " + instanceId);
         System.out.println("Size: " + size + "- iter: " + iter);
         System.out.println("Aperture  - c1: " + c1Aperture + "- c2: " + c2Aperture + "- w: " + innerAperture + "- cn: "
@@ -208,6 +203,8 @@ public class Main {
         System.out.println("Intensity - c1: " + c1Intensity + "- c2: " + c2Intensity + "- w: " + innerIntensity
                 + "- cn: " + cnIntensity);
         System.out.println("Optimization: " + optimizedIntensity + " - nThreads: " + nThreads);
+
+
         ArrayList<Double> w = new ArrayList<>();
         w.add(1.0);
         w.add(1.0);
@@ -224,18 +221,18 @@ public class Main {
         Zmax.add(76.0);
 
         Pair<String, String> dataToLoad = getInstanceById(instanceId);
-        String file = dataToLoad.getFirst();
-        String file2 = dataToLoad.getSecond();
+        String volumenFile = dataToLoad.getKey();
+        String collimatorFile = dataToLoad.getValue();
 
-        Vector<Integer> angles = get_angles(file);
+        Vector<Integer> angles = get_angles(volumenFile);
 
         // Informacion del Collimator
-        Collimator collimator = new Collimator(file2, angles);
+        Collimator collimator = new Collimator(collimatorFile, angles);
 
         // Informacion de los organos desde DDM
-        ArrayList<Volumen> volumes = createVolumes(file);
+        ArrayList<Volumen> volumes = createVolumes(volumenFile);
 
-        ArrayList<Integer> maxApertures = new ArrayList<>();
+        // Build the maxApertures by Beam Angle
         for (int a = 0; a < angles.size(); a++) {
             maxApertures.add(max_apertures);
         }
@@ -247,12 +244,14 @@ public class Main {
                 c1Intensity, c2Intensity, innerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
 
         // swarm.MoveSwarms();
-
-        Particle particle = swarm.getBestGlobalParticle();
-        if (exportIntensityVector) {
+        /** 
+         * 
+         Particle particle = swarm.getBestGlobalParticle();
+         if (exportIntensityVector) {
             // Get the Solution of the algorithm
             Reporter r = new Reporter(particle, 6);
         }
+        */
 
     }
 }

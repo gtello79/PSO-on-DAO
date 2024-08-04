@@ -20,15 +20,15 @@ public class Volumen {
     private Hashtable<String, Double> valueDAODDM;
 
     //Constructor del volumen asociado
-    public Volumen(String data) throws FileNotFoundException {
-        System.out.println("DATA: " + data);
-        this.indexDAODDM = new Hashtable();
-        this.valueDAODDM = new Hashtable();
-        this.data = data;
+    public Volumen(String data_path) throws FileNotFoundException {
+        System.out.println("DATA: " + data_path);
+        this.indexDAODDM = new Hashtable<>();
+        this.valueDAODDM = new Hashtable<>();
+        this.data = data_path;
         this.nb_beamlets = 0;
         this.nbVoxels = 0;
 
-        this.setData(data);
+        this.setData(data_path);
     }
 
     public Volumen(Volumen v){
@@ -44,48 +44,46 @@ public class Volumen {
     }
 
     private void setData(String data) throws FileNotFoundException {
-        int count = 0;
-        File cordFile = new File(data);
-        String bladderDates = null;
-
         Vector<String> lines = new Vector<>();
+        File cordFile = new File(data);
+        
         if(!cordFile.exists()){
-            System.out.println("FILE "+ data + " DON'T FOUND");
-        }else{
-            //Lectura de archivo data
-            Scanner reader = new Scanner(cordFile);
-
-            //Lee cada linea del .dat asociasdo
-            while (reader.hasNextLine()){
-                if(count == 0) {
-                    //No considera la primera linea, solo la cantidad de beamlets
-                    bladderDates = reader.nextLine();
-                    String[] arrayLine = bladderDates.split("\t");
-                    String nBeamlets = arrayLine[arrayLine.length - 1];
-                    nBeamlets = nBeamlets.split(" ")[0];
-
-                    this.nb_beamlets = Integer.parseInt(nBeamlets);
-
-                }else{
-                    //Almacena cada linea correspondiente a la informacion de los voxels
-                    lines.add(reader.nextLine());
-                }
-                count+=1;
-            }
-            reader.close();
+            throw new FileNotFoundException("FILE "+ data + " DON'T FOUND");
         }
+        //Lectura de archivo data
+        Scanner reader = new Scanner(cordFile);
+            
+        //Lee cada linea del .dat asociasdo
+        int count = 0;
+        while (reader.hasNextLine()){
+            if(count == 0) {
+                //No considera la primera linea, solo la cantidad de beamlets
+                String bladderDates = reader.nextLine();
+                String[] arrayLine = bladderDates.split("\t");
+                String nBeamlets = arrayLine[arrayLine.length - 1];
+
+                nBeamlets = nBeamlets.split(" ")[0];
+                this.nb_beamlets = Integer.parseInt(nBeamlets);
+            }else{
+                //Almacena cada linea correspondiente a la informacion de los voxels
+                lines.add(reader.nextLine());
+            }
+            count+=1;
+        }
+        reader.close();
+
 
         //Total de Voxels asociados al organo/tumor
         this.nbVoxels = lines.size()-1;
+
         //Se crea la DDM inicializada en 0
         this.DDM = new Matrix(this.nbVoxels, this.nb_beamlets);
 
         //Recorre por voxel(fila) y luego por beamLet(columna)
         for(int i = 0; i < this.nbVoxels; i++){
 
-            String arrayLine = lines.get(i);
-            String[] dosesVector = arrayLine.split("\t");
             ArrayList<Integer> affectionBeamLets = new ArrayList<>();
+            String[] dosesVector = lines.get(i).split("\t");
 
             //Rellena para cada beamLet i
             for(int j = 0; j < this.nb_beamlets; j++){
@@ -122,6 +120,5 @@ public class Volumen {
     public Hashtable<String, Double> getValueDAODDM() {
         return this.valueDAODDM;
     }
-    //------------------------------------------------------------------- PRINTERS -------------------------------------------------
 
 }
