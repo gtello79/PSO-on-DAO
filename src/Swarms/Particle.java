@@ -37,14 +37,16 @@ public class Particle extends Thread{
                     ArrayList<Volumen> volumen, Collimator collimator)
     {
         this.idParticle = idParticle;
-        this.beamOnTime = 0.0;
         this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity, minIntensity, initial_intensity, step_intensity,
                                     open_apertures, setup, volumen, collimator);
-        setFitness(currentPlan.getEval());
 
+        // Update Plan Stats
+        setFitness(currentPlan.getEval());
+        setBeamOnTime(this.currentPlan.getBeamOnTime());
+        
+        // Set Best Personal
         setBestPersonal(this.currentPlan);
         setBestFitness(currentPlan.getEval());
-
     }
 
     public Particle(Particle p){
@@ -59,30 +61,32 @@ public class Particle extends Thread{
 
     public void evalParticle(){
         double lastFitness = this.fitness;
-        this.fitness = currentPlan.eval();
-        CalculateBestPersonal();
-        System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
 
-        this.beamOnTime = this.currentPlan.getBeamOnTime();
+        // Update Plan Stats
+        setFitness(this.currentPlan.getEval());
+        setBeamOnTime(this.currentPlan.getBeamOnTime());
+
+        CalculateBestPersonal();
+
+        System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
 
     }
 
     public void OptimizateIntensities(){
-        double lastFitness = this.fitness;
-        currentPlan.OptimizateIntensities();
 
-        this.fitness = this.currentPlan.getEval();
-        CalculateBestPersonal();
-        System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
+        // Se realiza la optimizacion de intensidades
+        this.currentPlan.OptimizateIntensities();
+
+        this.evalParticle();
     }
 
     public void regenerateApertures(){
         double lastFitness = this.fitness;
-        this.currentPlan.regenerateApertures();     // Se regenera la solucion
-        currentPlan.OptimizateIntensities();        // Se optimiza las intensidades
-        this.fitness = this.currentPlan.getEval();  // Se evalua la solucion
-
-        CalculateBestPersonal();                    //Actualizacion del best personal
+        this.currentPlan.regenerateApertures();
+        this.currentPlan.OptimizateIntensities();
+        this.fitness = this.currentPlan.getEval();
+        //Actualizacion del best personal
+        CalculateBestPersonal();
         System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
 
     }
@@ -161,7 +165,9 @@ public class Particle extends Thread{
         this.c2IntensityThread = c2IntensityThread;
     }
 
-    public void setInnerIntensityThread(double innerIntensityThread) { this.innerIntensityThread = innerIntensityThread; }
+    public void setInnerIntensityThread(double innerIntensityThread) { 
+        this.innerIntensityThread = innerIntensityThread; 
+    }
 
     public void setCnIntensityThread(double cnIntensityThread) {
         this.cnIntensityThread = cnIntensityThread;
@@ -173,6 +179,10 @@ public class Particle extends Thread{
 
     public void setSetupRunnerThread(int idSetup){
         this.setupRunnerThread=idSetup;
+    }
+
+    public double setBeamOnTime(double beamOnTime){
+        return this.beamOnTime = this.currentPlan.getBeamOnTime();
     }
 
     public double getBeamOnTime(){ 

@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import com.gurobi.gurobi.*;
+import com.gurobi.gurobi.GRBException;
+
 
 import SRCDAO.Plan;
 import source.Volumen;
@@ -48,7 +50,7 @@ public class Gurobi_Solver {
     Plan sol;
 
     public Gurobi_Solver(Plan sol, ArrayList<Volumen> volumen, int[] selAngles, double[] dd, ArrayList<Double> weight)
-            throws Exception {
+            throws GRBException {
 
         this.sol = sol;
         this.beams = sol.getNBeam();
@@ -103,7 +105,7 @@ public class Gurobi_Solver {
      * Setea el modelo que minimiza la penalizacion de todos los organos,
      * no tiene restricciones
      */
-    public void setModelPen() throws Exception {
+    public void setModelPen() throws GRBException {
         this.model = new GRBModel(env);
         model.set(GRB.StringAttr.ModelName, "Direct Aperture Optimization");
 
@@ -204,24 +206,20 @@ public class Gurobi_Solver {
                                 * radiation;
 
                         if (coefficent != 0 && o == 2) {
-
                             coefficent = coefficent * -1;
-                            voxelRadiation.addTerm(coefficent, intensity[beamIndex][a]);
-
-                        } else {
-                            voxelRadiation.addTerm(coefficent, intensity[beamIndex][a]);
-                        }
+                        } 
+                        voxelRadiation.addTerm(coefficent, intensity[beamIndex][a]);
                     }
                 }
 
-                if (o == 2) {
-                    // Si el organo es el tumor
-                    voxelRadiation.addConstant(eud[o]);
-                } else {
+
+                int constEud = eud[o];
+                if (o != 2) {
                     // Si el organo es OAR
-                    int constEud = eud[o] * -1;
-                    voxelRadiation.addConstant(constEud);
-                }
+                    constEud = eud[o] * -1;
+                } 
+                voxelRadiation.addConstant(constEud);
+
 
                 GRBLinExpr V = new GRBLinExpr();
                 V.addTerm(1, voxel[o][count_voxel]);
@@ -231,8 +229,7 @@ public class Gurobi_Solver {
                     model.addConstr(V, GRB.EQUAL, voxelRadiation, "voxelRadiation" + o + "[" + (count_voxel + 1) + "]");
                 } else {
                     // Si el organo es OAR
-                    model.addConstr(V, GRB.GREATER_EQUAL, voxelRadiation,
-                            "voxelRadiation" + o + "[" + (count_voxel + 1) + "]");
+                    model.addConstr(V, GRB.GREATER_EQUAL, voxelRadiation,"voxelRadiation" + o + "[" + (count_voxel + 1) + "]");
                 }
                 count_voxel++;
             }

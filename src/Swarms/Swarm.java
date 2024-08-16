@@ -87,10 +87,12 @@ public class Swarm {
                 setBestGlobalParticle(newParticle);
                 setBestGlobalEval(newParticle.getFitness());
             } else {
-                // Poblacion randomizada
+                // Particula normal
                 newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity, minIntensity,
                         initial_intensity, step_intensity, open_apertures, setup, volumen, collimator);
             }
+
+            // Intensity optimization
             newParticle.OptimizateIntensities();
 
             /* Only used by Threads */
@@ -123,8 +125,9 @@ public class Swarm {
     /* Running PSO Algorithm */
     // Move particles using differents alternatives
     public void MoveSwarms() {
-        double initialAlgorithmTime = (double) System.currentTimeMillis();
         System.out.println(" ------- MOVING SWARMS");
+
+        double initialAlgorithmTime = (double) System.currentTimeMillis();
         if (callablefunctions) {
             MoveSwarmsOnConcurrent();
         } else {
@@ -196,10 +199,10 @@ public class Swarm {
             evalParticles();
             change1 = CalculateNewBestGlobal();
             if (i % 10 == 0 && i > 1 && optimizedIntensity) {
-                System.out.println(" ------- Optimizacion de intensidades ---------");
+                
                 OptimizateIntensities();
                 change2 = CalculateNewBestGlobal();
-                System.out.println(" ------- Reparación de solución ---------");
+                
                 repairSolutions();
             }
 
@@ -221,12 +224,14 @@ public class Swarm {
     }
 
     public void repairSolutions() {
+        System.out.println(" ------- Reparación de solución ---------");
         for (Particle particle : swarm) {
             particle.regenerateApertures();
         }
     }
 
     public void OptimizateIntensities() {
+        System.out.println(" ------- Optimizacion de intensidades ---------");
         for (Particle particle : swarm) {
             particle.OptimizateIntensities();
         }

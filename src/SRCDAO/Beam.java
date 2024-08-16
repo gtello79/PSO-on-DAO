@@ -1,7 +1,8 @@
 package SRCDAO;
 
+import java.security.KeyException;
 import java.util.*;
-import source.Pair;
+
 import source.*;
 
 public class Beam {
@@ -393,13 +394,13 @@ public class Beam {
         return ap.getProyectedBeamLet(indexBeamlet);
     }
 
-    public Double getIntensityByAperture(int apertureIndex) throws Exception {
+    public Double getIntensityByAperture(int apertureIndex) throws KeyException {
         double intensity;
         try {
             intensity = A.get(apertureIndex).getIntensity();
-        } catch (Exception e) {
+        } catch (IndexOutOfBoundsException e) {
             e.printStackTrace();
-            throw new Exception("La intensidad no ha sido encontrada ");
+            throw new IndexOutOfBoundsException("La intensidad no ha sido encontrada ");
         }
         return intensity;
     }

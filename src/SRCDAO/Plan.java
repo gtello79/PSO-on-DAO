@@ -2,8 +2,11 @@ package SRCDAO;
 
 import Utils.Gurobi_Solver;
 import com.gurobi.gurobi.GRBException;
-import source.*;
+import source.Collimator;
+import source.EvaluationFunction;
+import source.Volumen;
 
+import java.security.KeyException;
 import java.util.ArrayList;
 
 public class Plan {
@@ -35,24 +38,25 @@ public class Plan {
             int initial_intensity, int step_intensity, int open_apertures, int setup, ArrayList<Volumen> volumen,
             Collimator collimator) {
 
-        System.out.println("------------ Initilizing plan. -----------------");
         setNBeam(collimator.getNbAngles());
         setW(w);
         setZMin(zMin);
         setZMax(zMax);
 
         this.Angle_beam = new ArrayList<>();
-        this.maxApertures = new ArrayList(maxApertures);
-        this.collimator = collimator;
-
-        this.ev = new EvaluationFunction(volumen);
         this.totalBeamLet = collimator.getNbBeamlets();
+        this.collimator = collimator;
+        this.volumen = volumen;
+        
+        this.maxApertures = new ArrayList<>(maxApertures);
         this.maxIntensityByAperture = max_intensity;
         this.beamIndex = new int[getNBeam()];
-        this.volumen = volumen;
         this.beamletsByBeam = new int[nBeam];
+
         this.totalAperturesUnsed = 0;
         this.beamOnTime = 0.0;
+        
+        this.ev = new EvaluationFunction(volumen);
 
         // Creacion de los beam en BAC
         for (int i = 0; i < nBeam; i++) {
@@ -63,8 +67,11 @@ public class Plan {
             this.beamletsByBeam[i] = new_beam.getTotalBeamlets();
         }
 
-        System.out.println("--Created " + Angle_beam.size() + " Stations Beams");
+        // Evaluate the plan
         eval();
+
+        // Report information about the plan
+        System.out.println("--Created " + Angle_beam.size() + " Stations Beams");
         System.out.println("--Initial Evaluation: " + getEval());
     }
 
@@ -100,7 +107,6 @@ public class Plan {
     public void buildTreatmentPlan() {
         this.beamOnTime = 0.0;
         for (int i = 0; i < Angle_beam.size(); i++) {
-            // Tomar cada beam
             Beam b = Angle_beam.get(i);
             // Construirlo ( limpiar Intensity Map )
             b.generateIntensities();
@@ -117,27 +123,24 @@ public class Plan {
         return val;
     }
 
-    public void OptimizateIntensities() {
+    public void OptimizateIntensities(){
         // Optimizate Intensities
         double[] dd = new double[3];
         dd[0] = zMax.get(0);
         dd[1] = zMax.get(1);
         dd[2] = zMax.get(2);
 
+        Gurobi_Solver newModel;
         try {
-            Gurobi_Solver newModel;
-            try {
-                newModel = new Gurobi_Solver(this, volumen, beamIndex, dd, w);
-                double objFunction = newModel.objVal;
-                setEval(objFunction); // Recuperar valor de la funcion objetivo
-                setIntensity(newModel.newIntensity); // Cambia intensidades obtenidas en cada apertura
-            } catch (GRBException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        } catch (Exception e) {
+            newModel = new Gurobi_Solver(this, volumen, beamIndex, dd, w);
+            double objFunction = newModel.objVal;
+            setEval(objFunction); // Recuperar valor de la funcion objetivo
+            setIntensity(newModel.newIntensity); // Cambia intensidades obtenidas en cada apertura
+        } catch (GRBException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
-        }
+        };
+
         buildTreatmentPlan();
     }
 
@@ -199,11 +202,11 @@ public class Plan {
         return null;
     }
 
-    public Double getIntensityByAperture(int indexBeam, int indexAperture) throws Exception {
+    public Double getIntensityByAperture(int indexBeam, int indexAperture) {
         double intensity = 0.0;
         try {
             intensity = Angle_beam.get(indexBeam).getIntensityByAperture(indexAperture);
-        } catch (Exception e) {
+        } catch (KeyException e) {
             e.printStackTrace();
         }
         return intensity;

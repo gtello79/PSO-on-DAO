@@ -3,14 +3,26 @@ import java.util.*;
 
 public class EvaluationFunction {
 
-    private double evaluation;                                  // Valor de Fluence Map en la funcion de evaluacion
-    private final ArrayList<ArrayList<Double>> Z;               // Dosis de distribucion por cada organano
-    private int nbOrgans;                                       // Cantidad de organos, incluyendo el tumor
-    private final ArrayList<Integer> nbVoxels;                  // Numero de voxels por cada organo
-    private final ArrayList<Matrix> DDM = new ArrayList<>();    // Doses Deposition Matrix
-    private final ArrayList<Integer> nbBeamLets;                // N beamlets x tejido
+    // Valor de Fluence Map en la funcion de evaluacion
+    private double evaluation;
 
-    private double[] distribution;                              // Distribucion de la radiacion en cada organo
+    // Dosis de distribucion por cada organano
+    private final ArrayList<ArrayList<Double>> Z;
+    
+    // Cantidad de organos, incluyendo el tumor
+    private int nbOrgans;
+    
+    // Numero de voxels por cada organo
+    private final ArrayList<Integer> nbVoxels;
+    
+    // Doses Deposition Matrix
+    private final ArrayList<Matrix> DDM = new ArrayList<>();
+    
+    // N beamlets x tejido
+    private final ArrayList<Integer> nbBeamLets;
+
+    // Distribucion de la radiacion en cada organo
+    private double[] distribution;
 
     public EvaluationFunction(ArrayList<Volumen> volumes)
     {
