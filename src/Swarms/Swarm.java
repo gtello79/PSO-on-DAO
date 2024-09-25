@@ -56,7 +56,7 @@ public class Swarm {
             boolean optimizedIntensity) {
 
         setThreadsToUse(nThreads);
-        setIter(iter);
+        this.iter = iter;
 
         this.swarm = new ArrayList<>();
         this.evalTrack = new Vector<>();
@@ -80,6 +80,8 @@ public class Swarm {
             System.out.println("Creating Particle: " + i);
             this.globalUpdateCount = 0;
 
+            int setupConfigured = setup;
+
             if (i == 0) {
                 // Particula diferenciada
                 newParticle = new Particle(i, w, Zmin, Zmax, max_apertures, max_intensity, minIntensity,
@@ -95,28 +97,29 @@ public class Swarm {
             // Intensity optimization
             newParticle.OptimizateIntensities();
 
-            /* Only used by Threads */
-            if (callablefunctions) {
-                newParticle.setC1ApertureThread(c1Aperture);
-                newParticle.setC2ApertureThread(c2Aperture);
-                newParticle.setInnerApertureThread(innerAperture);
-                newParticle.setCnApertureThread(cnAperture);
+            // Only used by Threads
+            newParticle.setC1ApertureThread(c1Aperture);
+            newParticle.setC2ApertureThread(c2Aperture);
+            newParticle.setInnerApertureThread(innerAperture);
+            newParticle.setCnApertureThread(cnAperture);
 
-                newParticle.setC1IntensityThread(c1Intensity);
-                newParticle.setC2IntensityThread(c2Intensity);
-                newParticle.setInnerIntensityThread(innerIntensity);
-                newParticle.setCnIntensityThread(cnIntensity);
-            }
-
+            newParticle.setC1IntensityThread(c1Intensity);
+            newParticle.setC2IntensityThread(c2Intensity);
+            newParticle.setInnerIntensityThread(innerIntensity);
+            newParticle.setCnIntensityThread(cnIntensity);
+            
             swarm.add(newParticle);
             System.out.println();
         }
 
         CalculateNewBestGlobal();
 
+        // Save the par iter-best value on each iteration
         double[] initialRecord = new double[2];
         initialRecord[0] = 0.0;
         initialRecord[1] = this.bestGlobalEval;
+
+        // Save de evolution of the best solution
         evalTrack.add(initialRecord);
         this.firstSolution = bestGlobalEval;
 
@@ -128,11 +131,10 @@ public class Swarm {
         System.out.println(" ------- MOVING SWARMS");
 
         double initialAlgorithmTime = (double) System.currentTimeMillis();
-        if (callablefunctions) {
-            MoveSwarmsOnConcurrent();
-        } else {
-            MoveSwarmsOnSecuencing();
-        }
+        
+        
+        MoveSwarmsOnConcurrent();
+        
 
         double finalAlgorithmTime = (double)System.currentTimeMillis();
 
@@ -275,11 +277,7 @@ public class Swarm {
     private void setThreadsToUse(int threadsToUse) {
         this.threadsToUse = threadsToUse;
         this.callablefunctions = threadsToUse > 1;
-        if (this.callablefunctions) {
-            System.out.println("Using " + this.threadsToUse + " Threads");
-        } else {
-            System.out.println("Linear resolution");
-        }
+        System.out.println("Using " + this.threadsToUse + " Threads");
 
     }
 
@@ -303,9 +301,6 @@ public class Swarm {
         return bestGlobalParticle;
     }
 
-    public void setIter(int iter) {
-        this.iter = iter;
-    }
 
     public int getGlobalUpdateCount() {
         return globalUpdateCount;

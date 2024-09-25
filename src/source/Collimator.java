@@ -101,8 +101,8 @@ public class Collimator {
         this.yDim = c.yDim;
         this.gDim = c.gDim;
 
-        this.angles = (ArrayList<Integer>) c.angles.clone();
-        this.coord_file = (ArrayList<Pair<Integer, String>>) c.coord_file.clone();
+        this.angles = new ArrayList<>(c.angles);
+        this.coord_file = new ArrayList<>(c.coord_file);
         this.angleCoord.putAll(c.angleCoord);
         this.allBeamletIndex.putAll(c.allBeamletIndex);
         this.angleCoordMatr.putAll(c.angleCoordMatr);

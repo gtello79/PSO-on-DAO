@@ -381,7 +381,7 @@ public class Reporter {
 
     public void printTrasposeMatrix(Particle particle){
         Plan tp = particle.getCurrentPlan();
-        Beam beam = tp.getByID(0);
+        Beam beam = tp.getBeamByID(0);
         printTrasposeMatrix(beam);
     }
 }

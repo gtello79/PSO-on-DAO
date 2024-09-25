@@ -1,8 +1,6 @@
 package com.company;
 
 import Swarms.*;
-import Utils.Reporter;
-
 import source.Volumen;
 import source.Collimator;
 import java.io.FileNotFoundException;
@@ -139,9 +137,8 @@ public class Main {
         int setup = 4;
         int diffSetup = 4;
         int nThreads = 3;
-        boolean optimizedIntensity = false;
+        boolean optimizedIntensity = true;
 
-        boolean exportIntensityVector = true;
         /*
          * OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1;
          * CLOSED_MIN_SETUP = 2; CLOSED_MAX_SETUP = 3;
@@ -150,7 +147,7 @@ public class Main {
 
         // Parametros PSO
         int size = 10;                   // SWARM size
-        int iter = 10;                  // Pso Iterations
+        int iter = 3;                  // Pso Iterations
 
         double c1Aperture = 1.8751;     // Coef Global
         double c2Aperture = 0.2134;     // Coef Personal
@@ -245,14 +242,6 @@ public class Main {
                 c1Intensity, c2Intensity, innerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
 
         swarm.MoveSwarms();
-        /** 
-         * 
-         Particle particle = swarm.getBestGlobalParticle();
-         if (exportIntensityVector) {
-            // Get the Solution of the algorithm
-            Reporter r = new Reporter(particle, 6);
-        }
-        */
 
     }
 }
