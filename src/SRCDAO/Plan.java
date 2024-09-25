@@ -80,7 +80,7 @@ public class Plan {
 
     // Constructor de copia de un Treatment Plan
     public Plan(Plan p) {
-        setEval(p.eval);
+
         setNBeam(p.nBeam);
         setTotalBeamlet(p.totalBeamLet);
         setTotalAperturesUnUsed(p.totalAperturesUnsed);
@@ -331,7 +331,7 @@ public class Plan {
     public void CalculatePosition() {
         for (Beam actual : Angle_beam) {
             actual.CalculatePosition();
-        }
+        }        
     }
 
 }

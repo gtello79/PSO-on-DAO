@@ -35,8 +35,6 @@ public class Swarm {
     private double beamOnTime;
     private boolean optimizedIntensity;
 
-    private boolean callablefunctions = false;
-
     private ArrayList<Particle> swarm;
     private Vector<double[]> evalTrack;
 
@@ -76,11 +74,10 @@ public class Swarm {
 
         /* A Particles set will be created */
         for (int i = 0; i < size; i++) {
-            Particle newParticle;
             System.out.println("Creating Particle: " + i);
+            
+            Particle newParticle;
             this.globalUpdateCount = 0;
-
-            int setupConfigured = setup;
 
             if (i == 0) {
                 // Particula diferenciada
@@ -132,18 +129,19 @@ public class Swarm {
 
         double initialAlgorithmTime = (double) System.currentTimeMillis();
         
-        
+        // Move the swarm on the search space
         MoveSwarmsOnConcurrent();
         
 
         double finalAlgorithmTime = (double)System.currentTimeMillis();
 
+        // Save algorithm statistics
         int totalAperturesUnUsed = this.bestGlobalParticle.getAperturesUnUsed();
         double bestBeamOnTime = this.bestGlobalParticle.getBeamOnTime();
         double final_time = finalAlgorithmTime - initialAlgorithmTime;
 
-        System.out.println("ESTADISTICAS FINALES");
-        System.out.println(" ----- Processing Time: " + df.format(final_time) + " [seg]");
+        System.out.println("----- ESTADISTICAS FINALES");
+        System.out.println("Processing Time: " + df.format(final_time) + " [seg]");
         System.out.println("Best Fitness - #Ap Unused - Best BoT");
         System.out.println(bestGlobalEval + " " + totalAperturesUnUsed + " " + df.format(bestBeamOnTime));
 
@@ -152,27 +150,30 @@ public class Swarm {
     // Move the particles with concurrent process
     public void MoveSwarmsOnConcurrent() {
 
-        for (int i = 0; i < this.getIter(); i++) {
+        for (int i = 0; i < this.iter; i++) {
             boolean change = false, change_1 = false, change_2 = false, change_3 = false;
 
-            // Habilitacion de función por paralelismo
+            // Movimiento de particulas en paralelo
             this.caseParticlesThread(MOVEMENT_THREAD);
             this.caseParticlesThread(EVAL_THREAD);
-
             change_1 = CalculateNewBestGlobal();
 
-            if (i % 10 == 0 && i > 1 && optimizedIntensity) {
+            // Optimizacion de particulas en paralelo
+            if (i % 10 == 0 && optimizedIntensity) {
                 System.out.println(" ------- Optimizacion de intensidades ---------");
                 this.caseParticlesThread(OPTIMIZE_THREAD);
                 change_2 = CalculateNewBestGlobal();
 
+            }
+            
+            // Reparacion de particulas en paralelo
+            if (i % 10 == 0 && optimizedIntensity) {
                 System.out.println(" ------- Reparación de solución ---------");
                 this.caseParticlesThread(REPAIR_SOLUTION);
-
+                change_3 = CalculateNewBestGlobal();
             }
 
-            change_3 = CalculateNewBestGlobal();
-
+            // Se verifica si hubo cambios en la solución
             change = change_1 || change_2 || change_3;
             if (change) {
                 this.globalUpdateCount++;
@@ -184,44 +185,7 @@ public class Swarm {
                 evalTrack.add(finalRecord);
             }
 
-            System.out.println(" ------- Iter " + i + " best solution: " + bestGlobalEval + ". Update count: "
-                    + this.getGlobalUpdateCount());
-        }
-    }
-
-    // Move the particles with secuencing process
-    public void MoveSwarmsOnSecuencing() {
-
-        for (int i = 0; i < getIter(); i++) {
-            boolean change1 = false, change2 = false, change3 = false;
-
-            calculateVelocity();
-            calculatePosition();
-
-            evalParticles();
-            change1 = CalculateNewBestGlobal();
-            if (i % 10 == 0 && i > 1 && optimizedIntensity) {
-                
-                OptimizateIntensities();
-                change2 = CalculateNewBestGlobal();
-                
-                repairSolutions();
-            }
-
-            change3 = CalculateNewBestGlobal();
-
-            boolean generalChange = (change1 || change2 || change3);
-            if (generalChange) {
-                this.globalUpdateCount++;
-                setLastChange(i);
-
-                double[] finalRecord = new double[2];
-                finalRecord[0] = (double) i;
-                finalRecord[1] = this.bestGlobalEval;
-                evalTrack.add(finalRecord);
-            }
-            System.out.println("Iter " + i + " best solution: " + bestGlobalEval + ". Update count: "
-                    + this.getGlobalUpdateCount());
+            System.out.println(" Iter " + i + " best solution: " + bestGlobalEval + ". Update count: " + this.getGlobalUpdateCount());
         }
     }
 
@@ -247,19 +211,6 @@ public class Swarm {
 
     /*---------------------------------------------------- PSO METHODS--------------------------------------------------------------------------------*/
 
-    public void calculateVelocity() {
-        for (Particle particle : swarm) {
-            particle.CalculateVelocity(getC1Aperture(), getC2Aperture(), getInnerAperture(), getCnAperture(),
-                    getC1Intensity(), getC2Intensity(), getInnerIntensity(), getCnIntensity(), getBestGlobalParticle());
-        }
-    }
-
-    public void calculatePosition() {
-        for (Particle particle : swarm) {
-            particle.CalculatePosition();
-        }
-    }
-
     public boolean CalculateNewBestGlobal() {
         boolean changeGlobal = false;
 
@@ -276,7 +227,6 @@ public class Swarm {
     /*-------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     private void setThreadsToUse(int threadsToUse) {
         this.threadsToUse = threadsToUse;
-        this.callablefunctions = threadsToUse > 1;
         System.out.println("Using " + this.threadsToUse + " Threads");
 
     }
@@ -287,10 +237,6 @@ public class Swarm {
 
     public void setBestGlobalParticle(Particle bestGlobalParticle) {
         this.bestGlobalParticle = new Particle(bestGlobalParticle);
-    }
-
-    public int getIter() {
-        return iter;
     }
 
     public void setBestGlobalEval(double newSolution) {
@@ -383,7 +329,7 @@ public class Swarm {
         // Pool ejecutora de las funciones
         ExecutorService pool2 = Executors.newFixedThreadPool(threadsToUse);
 
-        // Guardar objetos ejecutados
+        // Guardar objetos ejecutados - Establece configuracion de ejecucion
         for (int j = 0; j < swarm.size(); j++) {
             Particle p = swarm.get(j);
             if (idSetup == MOVEMENT_THREAD) {
@@ -393,7 +339,8 @@ public class Swarm {
             p.setSetupRunnerThread(idSetup);
             calls.add(Executors.callable(p));
         }
-        // Da inicio a la ejecucion de los hilos
+
+        // Da inicio a la ejecucion de los hilos - llama a metodo run en cada particle
         try {
             pool2.invokeAll(calls);
         } catch (InterruptedException e1) {
