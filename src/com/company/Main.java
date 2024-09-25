@@ -136,8 +136,8 @@ public class Main {
         int max_apertures = 5;
 
         // Particle configuration
-        int setup = 5;
-        int diffSetup = 5;
+        int setup = 4;
+        int diffSetup = 4;
         int nThreads = 3;
         boolean optimizedIntensity = false;
 
@@ -149,8 +149,8 @@ public class Main {
          */
 
         // Parametros PSO
-        int size = 1;                   // SWARM size
-        int iter = 21;                  // Pso Iterations
+        int size = 10;                   // SWARM size
+        int iter = 10;                  // Pso Iterations
 
         double c1Aperture = 1.8751;     // Coef Global
         double c2Aperture = 0.2134;     // Coef Personal
@@ -204,12 +204,13 @@ public class Main {
                 + "- cn: " + cnIntensity);
         System.out.println("Optimization: " + optimizedIntensity + " - nThreads: " + nThreads);
 
-
+        // Considering the weights for each volumen
         ArrayList<Double> w = new ArrayList<>();
         w.add(1.0);
         w.add(1.0);
         w.add(5.0);
 
+        
         ArrayList<Double> Zmin = new ArrayList<>();
         Zmin.add(0.0);
         Zmin.add(0.0);
@@ -243,7 +244,7 @@ public class Main {
                 c1Aperture, c2Aperture, innerAperture, cnAperture,
                 c1Intensity, c2Intensity, innerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
 
-        // swarm.MoveSwarms();
+        swarm.MoveSwarms();
         /** 
          * 
          Particle particle = swarm.getBestGlobalParticle();

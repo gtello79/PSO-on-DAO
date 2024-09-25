@@ -2,6 +2,9 @@
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
         "/opt/gurobi1101/linux64/lib/gurobi.jar",
-        "/opt/javafx/lib/javafx.base.jar"
+        "/opt/javafx/lib/javafx.base.jar",
+        "src/external/armlinux64/lib/gurobi.jar",
+        "/opt/javafx-sdk-22.0.2/lib/javafx.base.jar",
+        "/opt/gurobi1103/linux64/lib/gurobi.jar"
     ]
 }

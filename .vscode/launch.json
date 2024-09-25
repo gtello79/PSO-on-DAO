@@ -9,6 +9,13 @@
             "name": "Main",
             "request": "launch",
             "mainClass": "com.company.Main",
+            "projectName": "PSO-on-DAO_51c02a89"
+        },
+        {
+            "type": "java",
+            "name": "Main",
+            "request": "launch",
+            "mainClass": "com.company.Main",
             "projectName": "PSO-on-DAO_595d6771"
         },
         {
