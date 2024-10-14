@@ -120,9 +120,5 @@ public class EvaluationFunction {
         this.nbOrgans = nbOrgans;
     }
 
-    public double[] getDistributionIntensity(){
-        return distribution;
-    }
-
 
 }

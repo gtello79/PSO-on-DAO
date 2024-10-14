@@ -220,7 +220,7 @@ public class Beam {
                 if (functionalRow.getFirst() + 1 == limits.getFirst()
                         && functionalRow.getSecond() - 1 == limits.getSecond()) {
                     // La fila es completamente irradiada -> Se ciera en las apertura inutilizadas
-                    Pair<Integer, Integer> newRow = new Pair(limits.getFirst(), limits.getFirst() + 1);
+                    Pair<Integer, Integer> newRow = new Pair<>(limits.getFirst(), limits.getFirst() + 1);
                     aperture.setRow(indexRow, newRow);
                     continue;
 
@@ -232,22 +232,22 @@ public class Beam {
                         // De forma aleatoria, la apertura irradiara por la izquierda
                         int apertureLeft = limits.getFirst() - 1;
                         int apertureRight = functionalRow.getFirst() + 1;
-                        Pair<Integer, Integer> newRow = new Pair(apertureLeft, apertureRight);
+                        Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
                         aperture.setRow(indexRow, newRow);
 
-                        functionalRow = new Pair(apertureLeft, functionalRow.getSecond());
+                        functionalRow = new Pair<>(apertureLeft, functionalRow.getSecond());
 
                     } else {
                         // De forma aleatoria, la apertura irradiara por la derecha
                         int apertureLeft = functionalRow.getSecond() - 1;
                         int apertureRight = limits.getSecond() + 1;
 
-                        Pair<Integer, Integer> newRow = new Pair(apertureLeft, apertureRight);
+                        Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
                         aperture.setRow(indexRow, newRow);
 
-                        functionalRow = new Pair(functionalRow.getFirst(), apertureRight);
+                        functionalRow = new Pair<>(functionalRow.getFirst(), apertureRight);
                     }
                 } else {
 
@@ -257,7 +257,7 @@ public class Beam {
                         int apertureLeft = limits.getFirst() - 1;
                         int apertureRight = functionalRow.getFirst() + 1;
 
-                        Pair<Integer, Integer> newRow = new Pair(apertureLeft, apertureRight);
+                        Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
                         aperture.setRow(indexRow, newRow);
 
                         functionalRow = new Pair<>(apertureLeft, functionalRow.getSecond());
@@ -267,10 +267,10 @@ public class Beam {
 
                         int apertureLeft = functionalRow.getSecond() - 1;
                         int apertureRight = limits.getSecond() + 1;
-                        Pair<Integer, Integer> newRow = new Pair(apertureLeft, apertureRight);
+                        Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
                         aperture.setRow(indexRow, newRow);
-                        functionalRow = new Pair(functionalRow.getFirst(), apertureRight);
+                        functionalRow = new Pair<>(functionalRow.getFirst(), apertureRight);
 
                     }
                 }
@@ -291,7 +291,7 @@ public class Beam {
             if (aperture.getIntensity() >= minIntensity) {
                 if (aperturesOnOperation.size() == 0) {
                     // Get a template of the first aperture with intensity mayor of 1.0
-                    aperturesOnOperation = new ArrayList(aperture.getApertures());
+                    aperturesOnOperation = new ArrayList<Pair<Integer, Integer>>(aperture.getApertures());
                 } else {
                     for (int r = 0; r < aperturesOnOperation.size(); r++) {
 
@@ -315,7 +315,7 @@ public class Beam {
                             secondLeaf = rowAperture.getSecond();
                         }
 
-                        aperturesOnOperation.set(r, new Pair(firstLeaf, secondLeaf));
+                        aperturesOnOperation.set(r, new Pair<Integer,Integer>(firstLeaf, secondLeaf));
 
                     }
                 }
@@ -365,9 +365,9 @@ public class Beam {
                 int d2 = Math.abs(maxindex - row.getFirst() + 1);
 
                 if (d1 <= d2) {
-                    newRow = new Pair(row.getFirst(), minindex + 1);
+                    newRow = new Pair<Integer,Integer>(row.getFirst(), minindex + 1);
                 } else {
-                    newRow = new Pair(row.getSecond(), maxindex - 1);
+                    newRow = new Pair<Integer,Integer>(row.getSecond(), maxindex - 1);
                 }
                 aperturesOnOperation.set(r, newRow);
 

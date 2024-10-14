@@ -30,7 +30,6 @@ public class Plan {
     private final EvaluationFunction ev; // Funcion de evaluacion
     private int[] beamIndex; // ID de cada beam
     private int[] beamletsByBeam; // Cantidad de beamlets x beam
-    private double[] distributionIntensity;
 
     /*---------------------------------------------- METHODS -----------------------------------------------------------------------*/
 
@@ -71,7 +70,7 @@ public class Plan {
         }
 
         // Evaluate the plan
-        eval();
+        this.eval = eval();
 
         // Report information about the plan
         System.out.println("--Created " + Angle_beam.size() + " Stations Beams");
@@ -120,6 +119,8 @@ public class Plan {
             b.generateIntensities();
             this.beamOnTime += b.getBeamOnTime();
         }
+
+
     }
 
     // Generar clase para actualizar estadisticas del plan
@@ -139,8 +140,7 @@ public class Plan {
     public double eval() {
         this.fluenceMap = getFluenceMap();
         double val = ev.evalIntensityVector(fluenceMap, w, zMin, zMax);
-        this.distributionIntensity = ev.getDistributionIntensity();
-        setEval(val);
+
         return val;
     }
 
@@ -158,7 +158,6 @@ public class Plan {
             setEval(objFunction); // Recuperar valor de la funcion objetivo
             setIntensity(newModel.newIntensity); // Cambia intensidades obtenidas en cada apertura
         } catch (GRBException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         };
 
@@ -167,12 +166,9 @@ public class Plan {
 
     public int getProyectedBeamLetByApertureOnBeam(int indexBeam, int idAperture, int indexBeamlet) {
         Beam beam = Angle_beam.get(indexBeam);
-        int coef = 0;
+
         boolean projectionBeamLet = beam.getProyectedBeamLetByAperture(idAperture, indexBeamlet);
-        if (projectionBeamLet) {
-            coef += 1;
-        }
-        return coef;
+        return projectionBeamLet ? 1 : 0;
     }
 
     public void setIntensity(double[][] newIntensities) {
@@ -201,6 +197,19 @@ public class Plan {
         }
 
         return intensityVector;
+    }
+
+    public void updateFluenceMap() {
+        this.beamOnTime = 0.0;
+        ArrayList<Double> intensityVector = new ArrayList<Double>();
+        // Concatena los vectores de intensidad al Fluence Map
+        for (Beam pivote : Angle_beam) {
+            ArrayList<Double> v = pivote.getIntensityVector();
+            intensityVector.addAll(v);
+            this.beamOnTime += pivote.getBeamOnTime();
+        }
+
+        this.fluenceMap = intensityVector;
     }
 
     public ArrayList<Integer> getAperturesUnUsed() {

@@ -29,7 +29,6 @@ public class Reporter {
     private static final int ALL_APERTURES_AMPL = 5;
     private static final int ALL_COMPONENTS_TXT = 6;
     private static final int INTENSITY_VECTOR_TXT = 7;
-    private static final int REPAIR_PROCESS_TXT = 8;
     private static final int TRANSPOSE_APERTURE_TXT = 9;
 
     public Reporter(Particle particle, int function){

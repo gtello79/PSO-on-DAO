@@ -86,7 +86,6 @@ public class Gurobi_Solver {
         try {
             model.reset();
         } catch (GRBException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

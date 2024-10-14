@@ -11,20 +11,22 @@ public class Particle extends Thread{
     private double bestFitness;
 
     private int setupRunnerThread;
-    private double c1ApertureThread;
-    private double c2ApertureThread;
-    private double innerApertureThread;
-    private double cnApertureThread;
+    private double c1Aperture;
+    private double c2Aperture;
+    private double innerAperture;
+    private double cnAperture;
 
-    private double c1IntensityThread;
-    private double c2IntensityThread;
-    private double innerIntensityThread;
-    private double cnIntensityThread;
+    private double c1Intensity;
+    private double c2Intensity;
+    private double innerIntensity;
+    private double cnIntensity;
 
+    // PSO Stadistics for movement
     private Particle bestGlobal;
     private Plan bestPersonal;
     private Plan currentPlan;
     private double beamOnTime;
+    private int unsedApertures;
 
     static final int MOVEMENT_THREAD = 0;
     static final int EVAL_THREAD = 1;
@@ -41,12 +43,13 @@ public class Particle extends Thread{
                                     open_apertures, setup, volumen, collimator);
 
         // Update Plan Stats
-        setFitness(currentPlan.getEval());
-        setBeamOnTime(this.currentPlan.getBeamOnTime());
+        this.fitness = this.currentPlan.getEval();
+        this.updateBeamOnTime();
+        this.updateUnUserAperture();
         
         // Set Best Personal
         setBestPersonal(this.currentPlan);
-        setBestFitness(currentPlan.getEval());
+        setBestFitness(this.fitness);
     }
 
     public Particle(Particle p){
@@ -61,11 +64,13 @@ public class Particle extends Thread{
 
     public void evalParticle(){
         double lastFitness = this.fitness;
+        this.fitness = this.currentPlan.eval();
 
         // Update Plan Stats
-        setFitness(this.currentPlan.getEval());
-        setBeamOnTime(this.currentPlan.getBeamOnTime());
-
+        this.updateBeamOnTime();
+        this.updateUnUserAperture();
+        
+        //Actualizacion del best personal
         CalculateBestPersonal();
 
         System.out.println(idParticle+ ": "+ lastFitness + " -> " + this.fitness);
@@ -125,9 +130,6 @@ public class Particle extends Thread{
         return this.fitness;
     }
 
-    public void setFitness(double fitness) {
-        this.fitness = fitness;
-    }
 
     public void setBestFitness(double bestFitness) {
         this.bestFitness = bestFitness;
@@ -141,36 +143,36 @@ public class Particle extends Thread{
         return this.currentPlan;
     }
 
-    public void setC1ApertureThread(double c1ApertureThread) {
-        this.c1ApertureThread = c1ApertureThread;
+    public void setC1ApertureThread(double c1Aperture) {
+        this.c1Aperture = c1Aperture;
     }
 
-    public void setC2ApertureThread(double c2ApertureThread) {
-        this.c2ApertureThread = c2ApertureThread;
+    public void setC2ApertureThread(double c2Aperture) {
+        this.c2Aperture = c2Aperture;
     }
 
-    public void setInnerApertureThread(double innerApertureThread) {
-        this.innerApertureThread = innerApertureThread;
+    public void setInnerApertureThread(double innerAperture) {
+        this.innerAperture = innerAperture;
     }
 
-    public void setCnApertureThread(double cnApertureThread) {
-        this.cnApertureThread = cnApertureThread;
+    public void setCnApertureThread(double cnAperture) {
+        this.cnAperture = cnAperture;
     }
 
-    public void setC1IntensityThread(double c1IntensityThread) {
-        this.c1IntensityThread = c1IntensityThread;
+    public void setC1IntensityThread(double c1Intensity) {
+        this.c1Intensity= c1Intensity;
     }
 
-    public void setC2IntensityThread(double c2IntensityThread) {
-        this.c2IntensityThread = c2IntensityThread;
+    public void setC2IntensityThread(double c2Intensity) {
+        this.c2Intensity = c2Intensity;
     }
 
-    public void setInnerIntensityThread(double innerIntensityThread) { 
-        this.innerIntensityThread = innerIntensityThread; 
+    public void setInnerIntensityThread(double innerIntensity) { 
+        this.innerIntensity = innerIntensity; 
     }
 
-    public void setCnIntensityThread(double cnIntensityThread) {
-        this.cnIntensityThread = cnIntensityThread;
+    public void setCnIntensityThread(double cnIntensity) {
+        this.cnIntensity = cnIntensity;
     }
 
     public void setBestGlobal(Particle p){
@@ -181,8 +183,12 @@ public class Particle extends Thread{
         this.setupRunnerThread=idSetup;
     }
 
-    public double setBeamOnTime(double beamOnTime){
-        return this.beamOnTime = this.currentPlan.getBeamOnTime();
+    public void updateBeamOnTime(){
+        this.beamOnTime = this.currentPlan.getBeamOnTime();
+    }
+
+    public void updateUnUserAperture(){
+        this.unsedApertures = this.currentPlan.getTotalAperturesUnsed();
     }
 
     public double getBeamOnTime(){ 
@@ -196,11 +202,10 @@ public class Particle extends Thread{
 
             case MOVEMENT_THREAD:
                 // Calcular velocidad
-                this.CalculateVelocity(c1ApertureThread, c2ApertureThread, innerApertureThread, cnApertureThread,
-                        c1IntensityThread, c2IntensityThread, innerIntensityThread, cnIntensityThread, bestGlobal);
+                this.CalculateVelocity(c1Aperture, c2Aperture, innerAperture, cnAperture,
+                        c1Intensity, c2Intensity, innerIntensity, cnIntensity, bestGlobal);
                 // Calcular posicion
                 this.CalculatePosition();
-
                 break;
 
             case EVAL_THREAD:
@@ -209,32 +214,11 @@ public class Particle extends Thread{
                 break;
 
             case OPTIMIZE_THREAD:
-                if(this.idParticle == 0){
-                    //Reporter r = new Reporter(this, 6);
-                    //System.out.println("Movement 1 "+ r.getUID());
-                }
-
                 this.OptimizateIntensities();
-
-                if(this.idParticle == 0){
-                    //Reporter r = new Reporter(this, 6);
-                    //System.out.println("Optimization "+ r.getUID());
-                }
                 break;
 
             case REPAIR_SOLUTION:
-
-                if(this.idParticle == 0){
-                    //Reporter r = new Reporter(this, 9);
-                    //System.out.println("Movement 2 "+ r.getUID());
-                }
-
                 this.regenerateApertures();
-
-                if(this.idParticle == 0){
-                    //Reporter r = new Reporter(this, 6);
-                    //System.out.println("Reparacion "+ r.getUID());
-                }
                 break;
         }
     }
