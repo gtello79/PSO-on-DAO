@@ -87,8 +87,8 @@ public class Plan {
         setZMax(p.zMax);
         setFluenceMap(p.getFluenceMap());
 
-        this.Angle_beam = new ArrayList();
-        this.maxApertures = new ArrayList(p.maxApertures);
+        this.Angle_beam = new ArrayList<>();
+        this.maxApertures = new ArrayList<>(p.maxApertures);
         this.collimator = new Collimator(p.collimator);
 
         this.ev = p.ev;
@@ -137,7 +137,6 @@ public class Plan {
             setEval(objFunction); // Recuperar valor de la funcion objetivo
             setIntensity(newModel.newIntensity); // Cambia intensidades obtenidas en cada apertura
         } catch (GRBException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         };
 
@@ -219,7 +218,7 @@ public class Plan {
             newAngleBeam.add(beamAngle);
 
         }
-        this.Angle_beam = new ArrayList(newAngleBeam);
+        this.Angle_beam = new ArrayList<>(newAngleBeam);
     }
 
     public Integer getTotalApertureByBeam(int indexBeam) {
@@ -269,11 +268,11 @@ public class Plan {
     }
 
     public void setZMin(ArrayList<Double> zMin) {
-        this.zMin = new ArrayList(zMin);
+        this.zMin = new ArrayList<>(zMin);
     }
 
     public void setZMax(ArrayList<Double> zMaxVector) {
-        this.zMax = new ArrayList(zMaxVector);
+        this.zMax = new ArrayList<>(zMaxVector);
     }
 
     public void setTotalBeamlet(int totalBeamLet) {
@@ -285,7 +284,7 @@ public class Plan {
     }
 
     public void setFluenceMap(ArrayList<Double> fluenceMap) {
-        this.fluenceMap = new ArrayList(fluenceMap);
+        this.fluenceMap = new ArrayList<>(fluenceMap);
     }
 
     public void setTotalAperturesUnUsed(int totalAperturesUnUsed) {

@@ -28,11 +28,12 @@ public class Swarm {
     private double cnIntensity;
 
     private double firstSolution;
+    private int lastChange = 0;
+    private double beamOnTime;
+
     private int iter;
     private int globalUpdateCount = 0;
-    private int lastChange = 0;
     private int threadsToUse = 1;
-    private double beamOnTime;
     private boolean optimizedIntensity;
 
     private boolean callablefunctions = false;

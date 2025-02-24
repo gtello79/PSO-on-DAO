@@ -62,11 +62,11 @@ public class Aperture {
 
                 if(type == OPEN_MAX_SETUP || type == OPEN_MIN_SETUP){
                     //Abierta completamente para los beamlets activos
-                    aux.add(new Pair(fLeaf,sLeaf));
+                    aux.add(new Pair<>(fLeaf,sLeaf));
 
                 }else if(type == CLOSED_MAX_SETUP || type == CLOSED_MIN_SETUP) {
                     //Cerrada completamente (MEJORAR)
-                    aux.add(new Pair(fLeaf,fLeaf+1)); //<5,6>
+                    aux.add(new Pair<>(fLeaf,fLeaf+1)); //<5,6>
 
                 }else if(type == RAND_RAND_SETUP){
                     ///Se abre aleatoriamente las hojas
@@ -74,10 +74,10 @@ public class Aperture {
                     int index1 = fLeaf + (int)(Math.random()*(middle - fLeaf));
 
                     if( index1 == sLeaf ){
-                        aux.add(new Pair(fLeaf, sLeaf));
+                        aux.add(new Pair<>(fLeaf, sLeaf));
                     }else{
                         int index2 = (middle) + (int)(Math.random()*(sLeaf-middle+1));
-                        aux.add(new Pair(index1,index2));
+                        aux.add(new Pair<>(index1,index2));
                     }
                 }else if(type == STATIC_SETUP){
                     // Se posiciona
@@ -88,15 +88,15 @@ public class Aperture {
                         index_2 = sLeaf;
 
                     //Se mantiene la apertura inicial
-                    aux.add(new Pair(index_1,index_2));
+                    aux.add(new Pair<>(index_1,index_2));
                 }
                 else{
 
                     if(open_apertures > 0){
-                        aux.add(new Pair(fLeaf,sLeaf));
+                        aux.add(new Pair<>(fLeaf,sLeaf));
                     }else{
                         //Cerrada completamente por inactividad
-                        aux.add(new Pair(-2,-2));
+                        aux.add(new Pair<>(-2,-2));
                     }
                 }
             }
@@ -150,7 +150,7 @@ public class Aperture {
                                 )
                             );
 
-            velocityA.set(i, new Pair(first, second));
+            velocityA.set(i, new Pair<>(first, second));
         }
     }
 
@@ -197,7 +197,7 @@ public class Aperture {
                 second = (val)+1;
             }
 
-            Pair<Integer, Integer> newApertures = new Pair(first, second);
+            Pair<Integer, Integer> newApertures = new Pair<>(first, second);
             A.set(i, newApertures);
 
             counterOpenedBeamLets += (second-first-1);
@@ -236,7 +236,7 @@ public class Aperture {
         ArrayList<Pair<Integer,Integer>> newVelocity = new ArrayList<>();
 
         for(Pair<Integer,Integer> row: velocAperture){
-            Pair<Integer,Integer> newRow = new Pair(row.getFirst(), row.getSecond());
+            Pair<Integer,Integer> newRow = new Pair<>(row.getFirst(), row.getSecond());
             newVelocity.add(newRow);
         }
 

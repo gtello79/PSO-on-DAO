@@ -1,7 +1,6 @@
 package com.company;
 
 import Swarms.*;
-import Utils.Reporter;
 
 import source.Volumen;
 import source.Collimator;
@@ -141,7 +140,6 @@ public class Main {
         int nThreads = 3;
         boolean optimizedIntensity = false;
 
-        boolean exportIntensityVector = true;
         /*
          * OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1;
          * CLOSED_MIN_SETUP = 2; CLOSED_MAX_SETUP = 3;

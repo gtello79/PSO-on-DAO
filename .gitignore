@@ -12,4 +12,5 @@ src/com/company/Main.class
 *.classpath
 *.png
 .vscode
+.vscode/*
 *.json
