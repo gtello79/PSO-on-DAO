@@ -117,7 +117,7 @@ public class Beam {
         // Calculate levels for random Intensity
         int l = (maxIntensity - minIntensity) / stepIntensity;
         for (int k = 0; k < maxApertures; k++) {
-            double i = minIntensity + stepIntensity *(Math.random() * (l + 1));
+            double i = minIntensity + stepIntensity * (Math.random() * (l + 1));
             levels.add(i);
         }
 

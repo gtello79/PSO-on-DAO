@@ -16,12 +16,12 @@ public class Aperture {
     private double veloc_intensity;
     private int openedBeamlets;
 
-    protected int OPEN_MIN_SETUP = 0;
-    protected int OPEN_MAX_SETUP = 1;
-    protected int CLOSED_MIN_SETUP = 2 ;
-    protected int CLOSED_MAX_SETUP = 3;
-    protected int RAND_RAND_SETUP = 4;
-    protected int STATIC_SETUP = 5;
+    public static final int OPEN_MIN_SETUP = 0;
+    public static final int OPEN_MAX_SETUP = 1;
+    public static final int CLOSED_MIN_SETUP = 2;
+    public static final int CLOSED_MAX_SETUP = 3;
+    public static final int RAND_RAND_SETUP = 4;
+    public static final int STATIC_SETUP = 5;
 
     /*--------------------------------------------------METHODS----------------------------------------------------------------------------*/
     public Aperture(Collimator collimator, int angle){
@@ -65,8 +65,8 @@ public class Aperture {
                     aux.add(new Pair<>(fLeaf,sLeaf));
 
                 }else if(type == CLOSED_MAX_SETUP || type == CLOSED_MIN_SETUP) {
-                    //Cerrada completamente (MEJORAR)
-                    aux.add(new Pair<>(fLeaf,fLeaf+1)); //<5,6>
+                    //Cerrada completamente
+                    aux.add(new Pair<>(fLeaf,fLeaf+1));
 
                 }else if(type == RAND_RAND_SETUP){
                     ///Se abre aleatoriamente las hojas
@@ -106,17 +106,26 @@ public class Aperture {
     }
 
     public void initializeIntensity(int type, int min_intensity, int max_intensity, int initial_intensity, double r_intensity){
-        if( type==OPEN_MIN_SETUP || type==CLOSED_MIN_SETUP ){
-            setIntensity(min_intensity);
-        }else if( type==OPEN_MAX_SETUP || type==CLOSED_MAX_SETUP ){
-            setIntensity(max_intensity);
-        }else if( type == RAND_RAND_SETUP){
-            setIntensity(r_intensity);
-        }else if ( type == STATIC_SETUP){
-            double static_intensity = 5.6;
-            setIntensity(static_intensity);
-        }else{
-            setIntensity(initial_intensity);
+        // Usar switch con enum
+        switch (type) {
+            case OPEN_MIN_SETUP:
+            case CLOSED_MIN_SETUP:
+                setIntensity(min_intensity);
+                break;
+            case OPEN_MAX_SETUP:
+            case CLOSED_MAX_SETUP:
+                setIntensity(max_intensity);
+                break;
+            case RAND_RAND_SETUP:
+                setIntensity(r_intensity);
+                break;
+            case STATIC_SETUP:
+                final double STATIC_INTENSITY_VALUE = 1; // Constante con nombre
+                setIntensity(STATIC_INTENSITY_VALUE);
+                break;
+            default:
+                setIntensity(initial_intensity);
+                break;
         }
     }
 
@@ -150,7 +159,7 @@ public class Aperture {
                                 )
                             );
 
-            velocityA.set(i, new Pair<>(first, second));
+                            velocityA.set(i, new Pair<>(first, second));
         }
     }
 
