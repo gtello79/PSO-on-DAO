@@ -7,6 +7,7 @@ import com.gurobi.gurobi.GRBException;
 
 
 import SRCDAO.Plan;
+import robust.EscenarioController;
 import source.Volumen;
 
 /**
@@ -49,13 +50,15 @@ public class Gurobi_Solver {
     // DDM M;
     Plan sol;
 
-    public Gurobi_Solver(Plan sol, ArrayList<Volumen> volumen, int[] selAngles, double[] dd, ArrayList<Double> weight)
+    public Gurobi_Solver(Plan sol, int[] selAngles, double[] dd, ArrayList<Double> weight)
             throws GRBException {
 
         this.sol = sol;
         this.beams = sol.getNBeam();
         this.eud = doubletoint(dd);
-        this.organs = volumen.size();
+        this.M = EscenarioController.getDDMFromNominalScenario();
+        
+        this.organs = this.M.size();
         this.R = new int[organs];
         this.bmlts = sol.getBeamletsByBeam();
         this.weight = weight;
@@ -64,7 +67,6 @@ public class Gurobi_Solver {
 
         this.minIntensity = 0;
         this.maxIntensity = sol.getMaxIntensityByAperture() * this.aperture;
-        this.M = volumen;
 
         for (int i = 0; i < R.length; i++) {
             this.R[i] = M.get(i).getNb_voxels();
