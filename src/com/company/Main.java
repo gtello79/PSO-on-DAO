@@ -88,7 +88,6 @@ public class Main {
         int diffSetup = 4;
         int nThreads = 3;
         boolean optimizedIntensity = true;
-        boolean exportIntensityVector = false;
 
         /*
          * OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1;
