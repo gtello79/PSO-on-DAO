@@ -1,16 +1,17 @@
 package SRCDAO;
 
 import Utils.Gurobi_Solver;
+import robust.EscenarioController;
+
 import com.gurobi.gurobi.GRBException;
 import source.Collimator;
-import source.EvaluationFunction;
-import source.Volumen;
 
 import java.security.KeyException;
 import java.util.ArrayList;
 
 public class Plan {
     private double eval; // Valor del Plan dentro de la funcion de evaluacion
+    private ArrayList<Double> robustEval; // Valor de la funcion de evaluacion robusta
     private int nBeam; // Cantidad total de angulos en BAC
     private int totalBeamLet; // Total de beamlets activos en BAC
     private int maxIntensityByAperture; // Intensidad Maxima por apertura
@@ -18,7 +19,6 @@ public class Plan {
     private double beamOnTime;
 
     private final Collimator collimator; // Informacion del Collimator
-    private final ArrayList<Volumen> volumen; // DDM
     private ArrayList<Double> w;
     private ArrayList<Double> zMin;
     private ArrayList<Double> zMax;
@@ -26,17 +26,14 @@ public class Plan {
 
     private ArrayList<Beam> Angle_beam; // Contiene los beam angle
     private ArrayList<Double> fluenceMap;
-    private final EvaluationFunction ev; // Funcion de evaluacion
     private int[] beamIndex; // ID de cada beam
     private int[] beamletsByBeam; // Cantidad de beamlets x beam
-    private double[] distributionIntensity;
 
     /*---------------------------------------------- METHODS -----------------------------------------------------------------------*/
 
     public Plan(ArrayList<Double> w, ArrayList<Double> zMin, ArrayList<Double> zMax, ArrayList<Integer> maxApertures,
-            int max_intensity, int minIntensity,
-            int initial_intensity, int step_intensity, int open_apertures, int setup, ArrayList<Volumen> volumen,
-            Collimator collimator) {
+            int max_intensity, int minIntensity, int initial_intensity, int step_intensity, int open_apertures,
+            int setup, Collimator collimator) {
 
         setNBeam(collimator.getNbAngles());
         setW(w);
@@ -46,8 +43,7 @@ public class Plan {
         this.Angle_beam = new ArrayList<>();
         this.totalBeamLet = collimator.getNbBeamlets();
         this.collimator = collimator;
-        this.volumen = volumen;
-        
+
         this.maxApertures = new ArrayList<>(maxApertures);
         this.maxIntensityByAperture = max_intensity;
         this.beamIndex = new int[getNBeam()];
@@ -55,8 +51,7 @@ public class Plan {
 
         this.totalAperturesUnsed = 0;
         this.beamOnTime = 0.0;
-        
-        this.ev = new EvaluationFunction(volumen);
+        this.robustEval = new ArrayList<>();
 
         // Creacion de los beam en BAC
         for (int i = 0; i < nBeam; i++) {
@@ -68,7 +63,7 @@ public class Plan {
         }
 
         // Evaluate the plan
-        eval();
+        evalFunction();
 
         // Report information about the plan
         System.out.println("--Created " + Angle_beam.size() + " Stations Beams");
@@ -77,7 +72,7 @@ public class Plan {
 
     // Constructor de copia de un Treatment Plan
     public Plan(Plan p) {
-        setEval(p.eval);
+
         setNBeam(p.nBeam);
         setTotalBeamlet(p.totalBeamLet);
         setTotalAperturesUnUsed(p.totalAperturesUnsed);
@@ -91,8 +86,6 @@ public class Plan {
         this.maxApertures = new ArrayList<>(p.maxApertures);
         this.collimator = new Collimator(p.collimator);
 
-        this.ev = p.ev;
-        this.volumen = p.volumen;
         this.totalBeamLet = p.totalBeamLet;
         this.maxIntensityByAperture = p.maxIntensityByAperture;
         this.beamIndex = new int[getNBeam()];
@@ -101,29 +94,36 @@ public class Plan {
 
         this.setAngle_beam(p.getAngle_beam());
 
-        setEval(p.eval);
+        // Evaluate the robust fluence map
+        this.setEval(p.eval);
+        this.robustEval = EscenarioController.evaluateFluenceMap(p.fluenceMap, w, zMin, zMax);
     }
 
     public void buildTreatmentPlan() {
         this.beamOnTime = 0.0;
         for (int i = 0; i < Angle_beam.size(); i++) {
             Beam b = Angle_beam.get(i);
-            // Construirlo ( limpiar Intensity Map )
+
             b.generateIntensities();
             this.beamOnTime += b.getBeamOnTime();
         }
     }
 
     /* Funcion de evaluacion */
-    public double eval() {
+    public double evalFunction() {
+
+        // Eval objetive function
         this.fluenceMap = getFluenceMap();
-        double val = ev.evalIntensityVector(fluenceMap, w, zMin, zMax);
-        this.distributionIntensity = ev.getDistributionIntensity();
-        setEval(val);
+        double val = EscenarioController.evaluateOverFeatureEscenario(fluenceMap, w, zMin, zMax);
+        this.setEval(val);
+
+        // Evaluate the robust fluence map
+        this.robustEval = EscenarioController.evaluateFluenceMap(this.fluenceMap, w, zMin, zMax);
+
         return val;
     }
 
-    public void OptimizateIntensities(){
+    public void OptimizateIntensities() {
         // Optimizate Intensities
         double[] dd = new double[3];
         dd[0] = zMax.get(0);
@@ -132,25 +132,23 @@ public class Plan {
 
         Gurobi_Solver newModel;
         try {
-            newModel = new Gurobi_Solver(this, volumen, beamIndex, dd, w);
+            newModel = new Gurobi_Solver(this, beamIndex, dd, w);
             double objFunction = newModel.objVal;
             setEval(objFunction); // Recuperar valor de la funcion objetivo
             setIntensity(newModel.newIntensity); // Cambia intensidades obtenidas en cada apertura
         } catch (GRBException e) {
             e.printStackTrace();
-        };
+        }
 
         buildTreatmentPlan();
+        evalFunction();
     }
 
     public int getProyectedBeamLetByApertureOnBeam(int indexBeam, int idAperture, int indexBeamlet) {
         Beam beam = Angle_beam.get(indexBeam);
-        int coef = 0;
         boolean projectionBeamLet = beam.getProyectedBeamLetByAperture(idAperture, indexBeamlet);
-        if (projectionBeamLet) {
-            coef += 1;
-        }
-        return coef;
+
+        return projectionBeamLet ? 1 : 0;
     }
 
     public void setIntensity(double[][] newIntensities) {
@@ -164,6 +162,31 @@ public class Plan {
     public void regenerateApertures() {
         for (Beam actual : Angle_beam) {
             actual.regenerateApertures();
+        }
+    }
+
+    /*
+     * PSO METHODS
+     */
+
+    // Funcion que realiza la actualizacion de la velocidad de la particula
+    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture,
+            double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Plan Bsolution,
+            Plan Bpersonal) {
+        // Bsolution: Best Global solution ; 
+        // Bpersonal: Best Personal solution
+        for (Beam beam_i : Angle_beam) {
+            Beam B_Bsolution = Bsolution.getByID(beam_i.getIdBeam());
+            Beam B_BPersonal = Bpersonal.getByID(beam_i.getIdBeam());
+            beam_i.CalculateVelocity(c1Aperture, c2Aperture, wAperture, cnAperture, c1Intensity, c2Intensity,
+                    wIntensity, cnIntensity, B_Bsolution, B_BPersonal);
+        }
+    }
+
+    // Funcion que recalcula la posicion de la particula luego de calcular la velocidad
+    public void CalculatePosition() {
+        for (Beam actual : Angle_beam) {
+            actual.CalculatePosition();
         }
     }
 
@@ -291,30 +314,7 @@ public class Plan {
         this.totalAperturesUnsed = totalAperturesUnUsed;
     }
 
-    /*
-     * --------------------------------------- PSO METHODS
-     * ----------------------------------------
-     */
-
-    // Funcion que realiza la actualizacion de la velocidad de la particula
-    public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture,
-            double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Plan Bsolution,
-            Plan Bpersonal) {
-        // Bsolution: Best Global solution ; Bpersonal: Best Personal solution
-        for (Beam actual : Angle_beam) {
-            Beam B_Bsolution = Bsolution.getByID(actual.getIdBeam());
-            Beam B_BPersonal = Bpersonal.getByID(actual.getIdBeam());
-            actual.CalculateVelocity(c1Aperture, c2Aperture, wAperture, cnAperture, c1Intensity, c2Intensity,
-                    wIntensity, cnIntensity, B_Bsolution, B_BPersonal);
-        }
+    public ArrayList<Double> getRobustEval() {
+        return this.robustEval;
     }
-
-    // Funcion que recalcula la posicion de la particula luego de calcular la
-    // velocidad
-    public void CalculatePosition() {
-        for (Beam actual : Angle_beam) {
-            actual.CalculatePosition();
-        }
-    }
-
 }
