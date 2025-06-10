@@ -14,7 +14,7 @@ import SRCDAO.Beam;
 import SRCDAO.Plan;
 import Swarms.Particle;
 import source.Matrix;
-import source.Pair;
+import javafx.util.Pair;
 
 public class Reporter {
 
@@ -193,9 +193,9 @@ public class Reporter {
 
                     for (int i = 0; i < gDim; i++) {
                         for (int j = 0; j < gDim; j++) {
-                            if (j > shapes.get(i).getFirst() && j < shapes.get(i).getSecond() && shapes.get(i).getFirst() != -2) {
+                            if (j > shapes.get(i).getKey() && j < shapes.get(i).getValue() && shapes.get(i).getKey() != -2) {
                                 writer.append("1");
-                            } else if (shapes.get(i).getFirst() == -2) {
+                            } else if (shapes.get(i).getKey() == -2) {
                                 writer.append("-1");
                             } else {
                                 writer.append("0");
@@ -269,7 +269,7 @@ public class Reporter {
                             if (intensityMatrix.getPos(i, j) == -1) { // Lógica a revisar
                                 value = String.valueOf(-1);
                             } else {
-                                if (j > pair.getFirst() && j < pair.getSecond()) {
+                                if (j > pair.getKey() && j < pair.getValue()) {
                                     value = String.valueOf(1);
                                 } else {
                                     value = String.valueOf(0);
@@ -321,7 +321,7 @@ public class Reporter {
                     if (intensityMatrix.getPos(i, j) == -1) { // Lógica a revisar
                         value = String.valueOf(-1);
                     } else {
-                        if (j > pair.getFirst() && j < pair.getSecond()) {
+                        if (j > pair.getKey() && j < pair.getValue()) {
                             value = String.valueOf(1);
                         } else {
                             value = String.valueOf(0);

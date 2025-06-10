@@ -1,7 +1,7 @@
 package SRCDAO;
 
 import source.Collimator;
-import source.Pair;
+import javafx.util.Pair;
 
 import java.util.ArrayList;
 
@@ -51,14 +51,14 @@ public class Aperture {
 
         for(int i = 0; i < collimator.getxDim(); i++){
 
-            if(collimator.getActiveRange(i,angle).getFirst() < 0){ //<-1,-1>
+            if(collimator.getActiveRange(i,angle).getKey() < 0){ //<-1,-1>
                 //Cerrada completamente por inactividad
                 aux.add(new Pair<>(-2, -2));
             }
             else{
                 //Todos los beamlets de la fila i en el angulo 'angle'
-                int fLeaf = collimator.getActiveRange(i,angle).getFirst() - 1;
-                int sLeaf = collimator.getActiveRange(i,angle).getSecond() + 1;
+                int fLeaf = collimator.getActiveRange(i,angle).getKey() - 1;
+                int sLeaf = collimator.getActiveRange(i,angle).getValue() + 1;
 
                 if(type == OPEN_MAX_SETUP || type == OPEN_MIN_SETUP){
                     //Abierta completamente para los beamlets activos
@@ -140,22 +140,22 @@ public class Aperture {
             Pair<Integer,Integer> aux_P = BP.get(i);
 
             // Se mueven unicamente las que estan disponible para moverse
-            if( collimator.getActiveRange(i,angle).getFirst() < 0 )
+            if( collimator.getActiveRange(i,angle).getKey() < 0 )
                 continue;
 
             // Velocidad de la primera hoja (izquierda)
             Integer first = (int)( cnAperture*(
-                                    wAperture*velocityA.get(i).getFirst() +
-                                    c1Aperture*r1*( aux_G.getFirst() - A.get(i).getFirst() ) +
-                                    c2Aperture*r2*(aux_P.getFirst() - A.get(i).getFirst() )
+                                    wAperture*velocityA.get(i).getKey() +
+                                    c1Aperture*r1*( aux_G.getKey() - A.get(i).getKey() ) +
+                                    c2Aperture*r2*(aux_P.getKey() - A.get(i).getKey() )
                                 )
                             );
 
             // Velocidad de la segunda hoja (derecha)
             Integer second = (int)( cnAperture*(
-                                        wAperture*velocityA.get(i).getSecond() +
-                                        c1Aperture*r1*( aux_G.getSecond() - A.get(i).getSecond() )  +
-                                        c2Aperture*r2*( aux_P.getSecond() - A.get(i).getSecond() )
+                                        wAperture*velocityA.get(i).getValue() +
+                                        c1Aperture*r1*( aux_G.getValue() - A.get(i).getValue() )  +
+                                        c2Aperture*r2*( aux_P.getValue() - A.get(i).getValue() )
                                 )
                             );
 
@@ -183,14 +183,14 @@ public class Aperture {
 
             Pair<Integer,Integer> limits = collimator.getActiveRange(i,angle);
             //Par <-2,-2> cerradas de forma definitiva
-            if(limits.getFirst() < 0)
+            if(limits.getKey() < 0)
                 continue;
 
-            int first = (velocityA.get(i).getFirst() + A.get(i).getFirst());
-            int second = (velocityA.get(i).getSecond() + A.get(i).getSecond());
+            int first = (velocityA.get(i).getKey() + A.get(i).getKey());
+            int second = (velocityA.get(i).getValue() + A.get(i).getValue());
 
-            int limit_inf = limits.getFirst();
-            int limit_sup = limits.getSecond();
+            int limit_inf = limits.getKey();
+            int limit_sup = limits.getValue();
 
             if(first < limit_inf  || first > limit_sup){
                 first = limit_inf-1;
@@ -224,7 +224,7 @@ public class Aperture {
             val = 0.0;
         }
 
-        double newIntensity = ((double)Math.round(val*1000)/1000);
+        double newIntensity = val;
         setIntensity(newIntensity);
     }
 
@@ -235,7 +235,7 @@ public class Aperture {
         ArrayList<Pair<Integer,Integer>> newAperture = new ArrayList<>();
 
         for(Pair<Integer,Integer> row: Aperture){
-            Pair<Integer, Integer> newRow = new Pair<>(row.getFirst(), row.getSecond());
+            Pair<Integer, Integer> newRow = new Pair<>(row.getKey(), row.getValue());
             newAperture.add(newRow);
         }
         this.A = newAperture;
@@ -245,7 +245,7 @@ public class Aperture {
         ArrayList<Pair<Integer,Integer>> newVelocity = new ArrayList<>();
 
         for(Pair<Integer,Integer> row: velocAperture){
-            Pair<Integer,Integer> newRow = new Pair<>(row.getFirst(), row.getSecond());
+            Pair<Integer,Integer> newRow = new Pair<>(row.getKey(), row.getValue());
             newVelocity.add(newRow);
         }
 
@@ -254,7 +254,7 @@ public class Aperture {
 
     public void setRow(int indexRow, Pair<Integer,Integer> newRow){
         Pair<Integer,Integer> limits = collimator.getActiveRange(indexRow,angle);
-        if( limits.getFirst() != -1 ){
+        if( limits.getKey() != -1 ){
             this.A.set(indexRow, newRow);
             this.setApertures(this.A);
         }
@@ -263,11 +263,11 @@ public class Aperture {
     //Consulta si el beamlet de la apertura es proyectado o no
     public boolean getProyectedBeamLet(int indexBeamlet){
         Pair<Integer,Integer> beamLetsCoords = collimator.indexToPos(indexBeamlet, angle);
-        int x = beamLetsCoords.getFirst();
-        int y = beamLetsCoords.getSecond();
+        int x = beamLetsCoords.getKey();
+        int y = beamLetsCoords.getValue();
         Pair<Integer,Integer> row = A.get(x);
 
-        return (y > (row.getFirst()) && y < (row.getSecond()));
+        return (y > (row.getKey()) && y < (row.getValue()));
 
     }
 

@@ -1,6 +1,6 @@
 package com.company;
 
-import Swarms.*;
+import Swarms.Swarm;
 
 import source.Collimator;
 import java.io.FileNotFoundException;

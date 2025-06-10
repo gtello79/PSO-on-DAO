@@ -4,6 +4,7 @@ package source;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import javafx.util.Pair;
 
 public class Collimator {
 
@@ -122,8 +123,8 @@ public class Collimator {
 
         // Se lee la estructura con ID_Beam - Path Coordinates Beamlet
         for (Pair<Integer, String> temp : coord_file) {
-            angle = temp.getFirst();
-            String CoordinatePath = temp.getSecond();
+            angle = temp.getKey();
+            String CoordinatePath = temp.getValue();
             File coordFile = new File("./" + CoordinatePath);
 
             // Se procede a leer el archivo temp
@@ -185,8 +186,8 @@ public class Collimator {
             for (Pair<Double, Double> row : beamletsBeam) {
                 blperBeam++;
 
-                int newX = (int) (row.getFirst() + max);
-                int newY = (int) (row.getSecond() + max);
+                int newX = (int) (row.getKey() + max);
+                int newY = (int) (row.getValue() + max);
                 newCoords.add(new Pair<>(newX, newY));
             }
             this.nbAngleBeamlets.put(idBeam, blperBeam);
@@ -209,8 +210,8 @@ public class Collimator {
 
                 // A partir de un indice r asociado a cada fila, se busca los beamlets en ella
                 for (Pair<Integer, Integer> beamRow : beamletsBeam) {
-                    if (Integer.compare(r, beamRow.getFirst()) == 0) {
-                        filter.add(beamRow.getSecond());
+                    if (Integer.compare(r, beamRow.getKey()) == 0) {
+                        filter.add(beamRow.getValue());
                     }
                 }
 
@@ -238,8 +239,8 @@ public class Collimator {
 
     // Transformar la identificacion local (del beam), a una identificador global
     public Pair<Integer, Integer> indexToPos(int index, int angle) {
-        int x = (angleCoord.get(angle)).get(index).getFirst();
-        int y = (angleCoord.get(angle)).get(index).getSecond();
+        int x = (angleCoord.get(angle)).get(index).getKey();
+        int y = (angleCoord.get(angle)).get(index).getValue();
         return new Pair<>(x, y);
     }
 

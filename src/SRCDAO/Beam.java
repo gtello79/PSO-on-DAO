@@ -2,6 +2,8 @@ package SRCDAO;
 
 import java.security.KeyException;
 import java.util.*;
+import javafx.util.Pair;
+
 
 import source.*;
 
@@ -150,12 +152,12 @@ public class Beam {
             for (int i = 0; i < collimator.getxDim(); i++) {
                 limits = collimator.getActiveRange(i, angle);
 
-                if (limits.getFirst() == -1)
+                if (limits.getKey() == -1)
                     continue;
 
                 Pair<Integer, Integer> apertureRow = ap.getOpBeam(i);
 
-                for (int j = apertureRow.getFirst() + 1; j < apertureRow.getSecond(); j++) {
+                for (int j = apertureRow.getKey() + 1; j < apertureRow.getValue(); j++) {
                     double newIntensity = (this.I.getPos(i, j) + apIntensity);
                     I.setPos(i, j, newIntensity);
                 }
@@ -171,7 +173,7 @@ public class Beam {
             // Para cada celda
             for (int j = 0; j < collimator.getyDim(); j++) {
                 // Establece el beamlet con intensidad 0
-                if (j >= limits.getFirst() && j <= limits.getSecond()) {
+                if (j >= limits.getKey() && j <= limits.getValue()) {
                     this.I.setPos(i, j, 0);
                 } else {
                     // Deja el beamlet -1 que significa "no utilizado"
@@ -187,8 +189,8 @@ public class Beam {
         // A partir del total de beamlets, consulta la posición de cada uno de ellos
         for (int i = 0; i < totalBeamlets; i++) {
             Pair<Integer, Integer> pos = collimator.indexToPos(i, angle);
-            int x = pos.getFirst();
-            int y = pos.getSecond();
+            int x = pos.getKey();
+            int y = pos.getValue();
 
             this.fluenceMap.add(I.getPos(x, y));
         }
@@ -212,65 +214,65 @@ public class Beam {
 
             for (int indexRow = 0; indexRow < collimator.getxDim(); indexRow++) {
                 Pair<Integer, Integer> limits = collimator.getActiveRange(indexRow, angle);
-                if (limits.getFirst() == -1)
+                if (limits.getKey() == -1)
                     continue;
 
                 Pair<Integer, Integer> functionalRow = functionalApertures.get(indexRow);
 
-                if (functionalRow.getFirst() + 1 == limits.getFirst()
-                        && functionalRow.getSecond() - 1 == limits.getSecond()) {
+                if (functionalRow.getKey() + 1 == limits.getKey()
+                        && functionalRow.getValue() - 1 == limits.getValue()) {
                     // La fila es completamente irradiada -> Se ciera en las apertura inutilizadas
-                    Pair<Integer, Integer> newRow = new Pair<>(limits.getFirst(), limits.getFirst() + 1);
+                    Pair<Integer, Integer> newRow = new Pair<>(limits.getKey(), limits.getKey() + 1);
                     aperture.setRow(indexRow, newRow);
                     continue;
 
-                } else if (functionalRow.getFirst() + 1 > limits.getFirst()
-                        && functionalRow.getSecond() - 1 < limits.getSecond()) {
+                } else if (functionalRow.getKey() + 1 > limits.getKey()
+                        && functionalRow.getValue() - 1 < limits.getValue()) {
                     // Falta irradiar por la izquierda y por la derecha
                     if (Math.random() <= 0.5) {
 
                         // De forma aleatoria, la apertura irradiara por la izquierda
-                        int apertureLeft = limits.getFirst() - 1;
-                        int apertureRight = functionalRow.getFirst() + 1;
+                        int apertureLeft = limits.getKey() - 1;
+                        int apertureRight = functionalRow.getKey() + 1;
                         Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
                         aperture.setRow(indexRow, newRow);
 
-                        functionalRow = new Pair<>(apertureLeft, functionalRow.getSecond());
+                        functionalRow = new Pair<>(apertureLeft, functionalRow.getValue());
 
                     } else {
                         // De forma aleatoria, la apertura irradiara por la derecha
-                        int apertureLeft = functionalRow.getSecond() - 1;
-                        int apertureRight = limits.getSecond() + 1;
+                        int apertureLeft = functionalRow.getValue() - 1;
+                        int apertureRight = limits.getValue() + 1;
 
                         Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
                         aperture.setRow(indexRow, newRow);
 
-                        functionalRow = new Pair<>(functionalRow.getFirst(), apertureRight);
+                        functionalRow = new Pair<>(functionalRow.getKey(), apertureRight);
                     }
                 } else {
 
                     // Falta irradiar unicamente por la izquierda
-                    if (functionalRow.getFirst() + 1 > limits.getFirst()) {
+                    if (functionalRow.getKey() + 1 > limits.getKey()) {
 
-                        int apertureLeft = limits.getFirst() - 1;
-                        int apertureRight = functionalRow.getFirst() + 1;
+                        int apertureLeft = limits.getKey() - 1;
+                        int apertureRight = functionalRow.getKey() + 1;
 
                         Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
                         aperture.setRow(indexRow, newRow);
 
-                        functionalRow = new Pair<>(apertureLeft, functionalRow.getSecond());
+                        functionalRow = new Pair<>(apertureLeft, functionalRow.getValue());
 
-                    } else if (functionalRow.getSecond() - 1 < limits.getSecond()) {
+                    } else if (functionalRow.getValue() - 1 < limits.getValue()) {
                         // Falta irradiar unicamente por la derecha
 
-                        int apertureLeft = functionalRow.getSecond() - 1;
-                        int apertureRight = limits.getSecond() + 1;
+                        int apertureLeft = functionalRow.getValue() - 1;
+                        int apertureRight = limits.getValue() + 1;
                         Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
                         aperture.setRow(indexRow, newRow);
-                        functionalRow = new Pair<>(functionalRow.getFirst(), apertureRight);
+                        functionalRow = new Pair<>(functionalRow.getKey(), apertureRight);
 
                     }
                 }
@@ -298,21 +300,21 @@ public class Beam {
                         // Compare the index of each row on the current aperture with the Template
                         // Generated
                         Pair<Integer, Integer> rowLimits = collimator.getActiveRange(r, angle);
-                        if (rowLimits.getFirst() == -1)
+                        if (rowLimits.getValue() == -1)
                             continue;
 
                         Pair<Integer, Integer> rowAperture = aperture.getOpBeam(r);
                         Pair<Integer, Integer> rowTranspose = aperturesOnOperation.get(r);
 
-                        int firstLeaf = rowTranspose.getFirst();
-                        int secondLeaf = rowTranspose.getSecond();
+                        int firstLeaf = rowTranspose.getKey();
+                        int secondLeaf = rowTranspose.getValue();
 
-                        if (rowAperture.getFirst() <= firstLeaf) {
-                            firstLeaf = rowAperture.getFirst();
+                        if (rowAperture.getKey() <= firstLeaf) {
+                            firstLeaf = rowAperture.getKey();
                         }
 
-                        if (rowAperture.getSecond() >= secondLeaf) {
-                            secondLeaf = rowAperture.getSecond();
+                        if (rowAperture.getValue() >= secondLeaf) {
+                            secondLeaf = rowAperture.getValue();
                         }
 
                         aperturesOnOperation.set(r, new Pair<>(firstLeaf, secondLeaf));
@@ -327,11 +329,11 @@ public class Beam {
             Pair<Integer, Integer> row = aperturesOnOperation.get(r);
             ArrayList<Integer> beamletsOnRow = new ArrayList<>();
 
-            if (row.getFirst() == -2)
+            if (row.getValue() == -2)
                 continue;
 
             // Beamlets utilizados en la fila actual
-            for (int x = row.getFirst() + 1; x < row.getSecond(); x++) {
+            for (int x = row.getKey() + 1; x < row.getValue(); x++) {
                 beamletsOnRow.add(x);
             }
 
@@ -343,7 +345,7 @@ public class Beam {
                     Pair<Integer, Integer> apertureRow = aperture.getOpBeam(r);
                     for (int b = 0; b < beamletsOnRow.size(); b++) {
                         int beamlet = beamletsOnRow.get(b);
-                        if (beamlet >= apertureRow.getFirst() && beamlet <= apertureRow.getSecond()) {
+                        if (beamlet >= apertureRow.getKey() && beamlet <= apertureRow.getValue()) {
                             copyBeamlets.add(beamlet);
                         }
                     }
@@ -361,13 +363,13 @@ public class Beam {
                 int maxindex = beamletsOnRow.get(beamletsOnRow.size() - 1);
                 int minindex = beamletsOnRow.get(0);
 
-                int d1 = Math.abs(minindex - row.getSecond() - 1);
-                int d2 = Math.abs(maxindex - row.getFirst() + 1);
+                int d1 = Math.abs(minindex - row.getValue() - 1);
+                int d2 = Math.abs(maxindex - row.getKey() + 1);
 
                 if (d1 <= d2) {
-                    newRow = new Pair<>(row.getFirst(), minindex + 1);
+                    newRow = new Pair<>(row.getKey(), minindex + 1);
                 } else {
-                    newRow = new Pair<>(row.getSecond(), maxindex - 1);
+                    newRow = new Pair<>(row.getValue(), maxindex - 1);
                 }
                 aperturesOnOperation.set(r, newRow);
 
