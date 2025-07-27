@@ -1,6 +1,7 @@
 package com.company;
 
 import Swarms.Swarm;
+import Swarms.Particle;
 
 import source.Collimator;
 import java.io.FileNotFoundException;
@@ -76,7 +77,7 @@ public class Main {
         // MLC Configuration
         int instanceId = 85;
 
-        int max_intensity = 5; // Apertura - probar este parametro
+        int max_intensity = 5;
         int minIntensity = 0;
         int initial_intensity = 4;
         int step_intensity = 2;
@@ -96,17 +97,20 @@ public class Main {
          */
 
         // Parametros PSO
-        int size = 10; // SWARM size
-        int iter = 100; // Pso Iterations
+        int IRACESIZE = 518;
+        int size = IRACESIZE; // SWARM size
+        int iter = 40000 / IRACESIZE; // Pso Iterations
 
         double c1Aperture = 1.8751; // Coef Global
         double c2Aperture = 0.2134; // Coef Personal
-        double innerAperture = 0.5774; // Inner
+        double wMaxAperture = 0.9; 
+        double wMinAperture = 0.4; 
         double cnAperture = 1.6641; // constriction Factor
 
         double c1Intensity = 0.3158; // Coef Global
         double c2Intensity = 1.7017; // Coef Personal
-        double innerIntensity = 0.5331; // Inner
+        double wMaxIntensity = 0.9;
+        double wMinIntensity = 0.4;
         double cnIntensity = 1.2389; // constriction Factor
 
         if (params.containsKey("size"))
@@ -117,8 +121,6 @@ public class Main {
             c1Aperture = Double.parseDouble(params.get("c1Aperture"));
         if (params.containsKey("c2Aperture"))
             c2Aperture = Double.parseDouble(params.get("c2Aperture"));
-        if (params.containsKey("inerAperture"))
-            innerAperture = Double.parseDouble(params.get("inerAperture"));
         if (params.containsKey("cnAperture"))
             cnAperture = Double.parseDouble(params.get("cnAperture"));
 
@@ -126,8 +128,6 @@ public class Main {
             c1Intensity = Double.parseDouble(params.get("c1Intensity"));
         if (params.containsKey("c2Intensity"))
             c2Intensity = Double.parseDouble(params.get("c2Intensity"));
-        if (params.containsKey("inerIntensity"))
-            innerIntensity = Double.parseDouble(params.get("inerIntensity"));
         if (params.containsKey("cnIntensity"))
             cnIntensity = Double.parseDouble(params.get("cnIntensity"));
         if (params.containsKey("i"))
@@ -141,14 +141,24 @@ public class Main {
         if (params.containsKey("max_intensity")) {
             max_intensity = Integer.parseInt(params.get("max_intensity"));
         }
+        if(params.containsKey("wMaxAperture")){
+            wMaxAperture = Double.parseDouble(params.get("wMaxAperture"));
+        }
+        if(params.containsKey("wMinAperture")){
+            wMinAperture = Double.parseDouble(params.get("wMinAperture"));
+        }
+        if(params.containsKey("wMaxIntensity")){
+            wMaxIntensity = Double.parseDouble(params.get("wMaxIntensity"));
+        }
+        if(params.containsKey("wMinIntensity")){
+            wMinIntensity = Double.parseDouble(params.get("wMinIntensity"));
+        }
 
         // Print parameters configurate on experiments
         System.out.println("Instance " + instanceId);
         System.out.println("Size: " + size + "- iter: " + iter);
-        System.out.println("Aperture  - c1: " + c1Aperture + "- c2: " + c2Aperture + "- w: " + innerAperture + "- cn: "
-                + cnAperture);
-        System.out.println("Intensity - c1: " + c1Intensity + "- c2: " + c2Intensity + "- w: " + innerIntensity
-                + "- cn: " + cnIntensity);
+        System.out.println("Aperture  - c1: " + c1Aperture + "- c2: " + c2Aperture);
+        System.out.println("Intensity - c1: " + c1Intensity + "- c2: " + c2Intensity);
         System.out.println("Optimization: " + optimizedIntensity + " - nThreads: " + nThreads);
 
         // Considering the weights for each volumen
@@ -184,16 +194,13 @@ public class Main {
         // Creating the swarm
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, minIntensity, initial_intensity,
                 step_intensity, open_apertures, setup, diffSetup, collimator,
-                c1Aperture, c2Aperture, innerAperture, cnAperture,
-                c1Intensity, c2Intensity, innerIntensity, cnIntensity, size, iter, nThreads, optimizedIntensity);
+                c1Aperture, c2Aperture, cnAperture, c1Intensity, c2Intensity, cnIntensity,
+                size, iter, wMaxAperture, wMinAperture, wMaxIntensity, wMinIntensity,
+                nThreads, optimizedIntensity);
 
         swarm.MoveSwarms();
-        
-        /*
-         * Particle particle = swarm.getBestGlobalParticle();
-         * if (exportIntensityVector) {
-         * Reporter.generateReport(particle, ReportType.INTENSITY_MATRIX_CSV);
-         * }
-         */
+
+        Particle particle = swarm.getBestGlobalParticle();
+
     }
 }

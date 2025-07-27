@@ -3,7 +3,14 @@ package source;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.Vector;
+
 import javafx.util.Pair;
 
 public class Collimator {
