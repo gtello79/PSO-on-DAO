@@ -1,17 +1,17 @@
 package Swarms;
 
-import SRCDAO.*;
+import SRCDAO.Plan;
 import source.Collimator;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
 import java.text.DecimalFormat;
 
 public class Particle extends Thread {
     int idParticle;
     private double fitness;
     private double bestFitness;
+    private double bestPersonalRobust;
     private double robustFitnessValue;
 
     public static DecimalFormat df = new DecimalFormat("#.00");
@@ -57,7 +57,8 @@ public class Particle extends Thread {
         // Set Best Personal
         setBestPersonal(this.currentPlan);
         setBestFitness(currentPlan.getEval());
-
+        setBestPersonalRobust(this.robustFitnessValue);
+        
     }
 
     public Particle(Particle p) {
@@ -67,6 +68,7 @@ public class Particle extends Thread {
         this.beamOnTime = p.beamOnTime;
         this.robustFitness = new ArrayList<>(p.robustFitness);
         this.robustFitnessValue = p.robustFitnessValue;
+        this.bestPersonalRobust = p.bestPersonalRobust;
 
         this.currentPlan = new Plan(p.currentPlan);
         this.bestPersonal = new Plan(p.bestPersonal);
@@ -75,7 +77,7 @@ public class Particle extends Thread {
     public void evalParticle() {
         double lastFitness = this.fitness;
         double newFitness = this.currentPlan.evalFunction();
-        
+
         // Update Particule Stats
         setFitness(newFitness);
         setBeamOnTime(this.currentPlan.getBeamOnTime());
@@ -84,7 +86,8 @@ public class Particle extends Thread {
 
         CalculateBestPersonal();
 
-        System.out.println(idParticle + ": " + df.format(lastFitness) + "\t->\t " + df.format(this.fitness) + "\t" +  df.format(this.getRobustFitnessValue()));
+        System.out.println(idParticle + ": " + df.format(lastFitness) + "\t->\t " + df.format(this.fitness) + "\t"
+                + df.format(this.getRobustFitnessValue()));
     }
 
     public void OptimizateIntensities() {
@@ -98,7 +101,7 @@ public class Particle extends Thread {
         double lastFitness = this.fitness;
         this.currentPlan.regenerateApertures();
         this.currentPlan.OptimizateIntensities();
-        
+
         // Update Particule Stats
         setFitness(this.currentPlan.getEval());
         setBeamOnTime(this.currentPlan.getBeamOnTime());
@@ -107,7 +110,8 @@ public class Particle extends Thread {
 
         // Actualizacion del best personal
         CalculateBestPersonal();
-        System.out.println(idParticle + ": " + df.format(lastFitness) + "\t->\t " + df.format(this.fitness) + "\t" + df.format(this.getRobustFitnessValue()));
+        System.out.println(idParticle + ": " + df.format(lastFitness) + "\t->\t " + df.format(this.fitness) + "\t"
+                + df.format(this.getRobustFitnessValue()));
 
     }
 
@@ -125,9 +129,10 @@ public class Particle extends Thread {
     }
 
     public void CalculateBestPersonal() {
-        if (this.fitness < this.bestFitness) {
+        if (this.robustFitnessValue < this.bestPersonalRobust) {
             setBestPersonal(this.currentPlan);
             setBestFitness(this.fitness);
+            setBestPersonalRobust(this.robustFitnessValue);
         }
     }
 
@@ -208,6 +213,7 @@ public class Particle extends Thread {
         return this.beamOnTime;
     }
 
+    // Optimization Robusts Methods
     public void setRobustFitness(ArrayList<Double> robustFitness) {
         this.robustFitness = new ArrayList<>(robustFitness);
     }
@@ -220,11 +226,22 @@ public class Particle extends Thread {
         return this.robustFitnessValue;
     }
 
-    public void updateRobustFitnessValue() {
-        this.robustFitnessValue = Collections.max(this.robustFitness);
+    public double getBestPersonalRobust() {
+        return bestPersonalRobust;
     }
 
-    // --------------------------------------- THREADS METHODS (NO TOCAR)
+    public void setBestPersonalRobust(double bestPersonalRobust) {
+        this.bestPersonalRobust = bestPersonalRobust;
+    }
+    public void updateRobustFitnessValue() {
+        this.robustFitnessValue = getRobustFitnessValueFromList(this.robustFitness);
+    }
+
+    public double getRobustFitnessValueFromList(ArrayList<Double> robustFitnessList){
+        return Collections.max(robustFitnessList);
+    }
+
+    //---------- THREADS METHODS (NO TOCAR)
     // ----------------------------------
     @Override
     public void run() {
