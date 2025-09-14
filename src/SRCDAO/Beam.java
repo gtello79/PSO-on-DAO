@@ -64,7 +64,7 @@ public class Beam {
             setOpenApertures(maxApertures);
 
         // Declaracion de la matriz de intensidad I y se inicializa
-        this.I = new Matrix(collimator.getxDim(), collimator.getyDim());
+        this.I = new Matrix(this.collimatorDim, collimator.getyDim());
 
         // Limpiado de beamlets con valor 0
         clearIntensity();
@@ -100,7 +100,7 @@ public class Beam {
             setOpenApertures(maxApertures);
 
         // Declaracion de la matriz de intensidad I y se inicializa
-        I = new Matrix(collimator.getxDim(), collimator.getyDim());
+        I = new Matrix(b.getCollimatorDim(), b.getCollimatorDim());
 
         // Rellenado de la matriz de intensidad
         clearIntensity();
@@ -151,7 +151,7 @@ public class Beam {
                 this.aperturesUnused++;
             }
 
-            for (int i = 0; i < collimator.getxDim(); i++) {
+            for (int i = 0; i < this.collimatorDim; i++) {
                 limits = collimator.getActiveRange(i, angle);
 
                 if (limits.getKey() == -1)
@@ -170,10 +170,10 @@ public class Beam {
 
     public void clearIntensity() {
         // Para cada fila
-        for (int i = 0; i < collimator.getxDim(); i++) {
+        for (int i = 0; i < this.collimatorDim; i++) {
             Pair<Integer, Integer> limits = collimator.getActiveRange(i, angle);
             // Para cada celda
-            for (int j = 0; j < collimator.getyDim(); j++) {
+            for (int j = 0; j < this.collimatorDim; j++) {
                 // Establece el beamlet con intensidad 0
                 if (j >= limits.getKey() && j <= limits.getValue()) {
                     this.I.setPos(i, j, 0);
@@ -214,7 +214,7 @@ public class Beam {
             int indexAperture = aperturesUnUsedList.get(a);
             Aperture aperture = A.get(indexAperture);
 
-            for (int indexRow = 0; indexRow < collimator.getxDim(); indexRow++) {
+            for (int indexRow = 0; indexRow < this.collimatorDim; indexRow++) {
                 Pair<Integer, Integer> limits = collimator.getActiveRange(indexRow, angle);
                 if (limits.getKey() == -1)
                     continue;

@@ -18,7 +18,6 @@ public class Plan {
     private int totalAperturesUnsed; // Cantidad de aperturas inutilizadas
     private double beamOnTime;
 
-    private final Collimator collimator; // Informacion del Collimator
     private ArrayList<Double> w;
     private ArrayList<Double> zMin;
     private ArrayList<Double> zMax;
@@ -42,7 +41,6 @@ public class Plan {
 
         this.Angle_beam = new ArrayList<>();
         this.totalBeamLet = collimator.getNbBeamlets();
-        this.collimator = collimator;
 
         this.maxApertures = new ArrayList<>(maxApertures);
         this.maxIntensityByAperture = max_intensity;
@@ -84,7 +82,6 @@ public class Plan {
 
         this.Angle_beam = new ArrayList<>();
         this.maxApertures = new ArrayList<>(p.maxApertures);
-        this.collimator = new Collimator(p.collimator);
 
         this.totalBeamLet = p.totalBeamLet;
         this.maxIntensityByAperture = p.maxIntensityByAperture;
