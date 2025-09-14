@@ -1,19 +1,12 @@
 package com.company;
 
 import Swarms.Swarm;
-import Swarms.Particle;
 
 import source.Collimator;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Vector;
 
-import java.util.Scanner;
 import java.util.HashMap;
-
-import javafx.util.Pair;
 
 import robust.EscenarioController;
 
@@ -31,42 +24,6 @@ public class Main {
             params.put(param, value);
         }
         return params;
-    }
-
-    public static boolean isNumeric(String cadena) {
-
-        boolean resultado;
-
-        try {
-            Integer.parseInt(cadena);
-            resultado = true;
-        } catch (NumberFormatException excepcion) {
-            resultado = false;
-        }
-
-        return resultado;
-    }
-
-    public static Pair<String, String> getInstanceById(Integer index) throws FileNotFoundException {
-
-        String folder_coord = "1_1";
-        File of = new File(INSTANCE_FILE);
-        Scanner reading = new Scanner(of);
-
-        int nLine = 1;
-        while (reading.hasNextLine()) {
-            String linea = reading.nextLine();
-            if (nLine == index) {
-                folder_coord = DATA_FILE.concat(linea).concat("/");
-                break;
-            }
-            nLine++;
-        }
-        reading.close();
-
-        String instance_file = folder_coord.concat("Instance.txt");
-        String coordinate_file = folder_coord.concat("coordinates_instance.txt");
-        return new Pair<>(instance_file, coordinate_file);
     }
 
     public static void main(String[] args) throws IOException {
@@ -103,8 +60,8 @@ public class Main {
 
         double c1Aperture = 1.8751; // Coef Global
         double c2Aperture = 0.2134; // Coef Personal
-        double wMaxAperture = 0.9; 
-        double wMinAperture = 0.4; 
+        double wMaxAperture = 0.9;
+        double wMinAperture = 0.4;
         double cnAperture = 1.6641; // constriction Factor
 
         double c1Intensity = 0.3158; // Coef Global
@@ -141,16 +98,16 @@ public class Main {
         if (params.containsKey("max_intensity")) {
             max_intensity = Integer.parseInt(params.get("max_intensity"));
         }
-        if(params.containsKey("wMaxAperture")){
+        if (params.containsKey("wMaxAperture")) {
             wMaxAperture = Double.parseDouble(params.get("wMaxAperture"));
         }
-        if(params.containsKey("wMinAperture")){
+        if (params.containsKey("wMinAperture")) {
             wMinAperture = Double.parseDouble(params.get("wMinAperture"));
         }
-        if(params.containsKey("wMaxIntensity")){
+        if (params.containsKey("wMaxIntensity")) {
             wMaxIntensity = Double.parseDouble(params.get("wMaxIntensity"));
         }
-        if(params.containsKey("wMinIntensity")){
+        if (params.containsKey("wMinIntensity")) {
             wMinIntensity = Double.parseDouble(params.get("wMinIntensity"));
         }
 
@@ -180,17 +137,13 @@ public class Main {
         // Instantiate the scenario controller
         EscenarioController.startScenario(instanceId);
 
-        String collimatorFile = getInstanceById(instanceId).getValue();
-        Vector<Integer> angles = EscenarioController.getAngles();
-
         // Informacion del Collimator
-        Collimator collimator = new Collimator(collimatorFile, angles);
+        Collimator collimator = EscenarioController.getCollimatorFromNominalScenario();
 
         // Build the maxApertures by Beam Angle
-        for (int a = 0; a < angles.size(); a++) {
+        for (int a = 0; a < EscenarioController.getAngles().size(); a++) {
             maxApertures.add(max_apertures);
         }
-
         // Creating the swarm
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, minIntensity, initial_intensity,
                 step_intensity, open_apertures, setup, diffSetup, collimator,
@@ -199,8 +152,6 @@ public class Main {
                 nThreads, optimizedIntensity);
 
         swarm.MoveSwarms();
-
-        Particle particle = swarm.getBestGlobalParticle();
 
     }
 }
