@@ -15,11 +15,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import source.Volumen;
+import source.Collimator;
 
 public class EscenarioController {
 
     public static String INSTANCE_FILE = "./data/index_instances.txt";
-    public static String DATA_FILE = "./data/";
+    public static String DATA_FILE = "./data/<instanceID>/Instance.txt";
+    private static String COORDINATE_INSTANCE_PATH = "./data/<instanceID>/<ScenarioName>/coordinates_instance.txt";
 
     private static ArrayList<Escenario> escenarios = new ArrayList<>();;
     private static Vector<Integer> angles = new Vector<>();
@@ -35,10 +37,10 @@ public class EscenarioController {
     public static void startScenario(int indexData) throws IOException {
 
         // Gets the instance file path based on the index provided
-        String instanceFile = EscenarioController.getInstanceById(indexData);
+        getInstanceById(indexData);
 
         // List the involved scenarios in the instance file
-        Map<String, List<String>> uniqueScenarios = EscenarioController.mapScenariosToPaths(instanceFile);
+        Map<String, List<String>> uniqueScenarios = EscenarioController.mapScenariosToPaths(DATA_FILE);
 
 
         int id_scenario = 0;
@@ -49,7 +51,8 @@ public class EscenarioController {
 
             // Create Scenario from filepaths org
             boolean isNominal = 0 == id_scenario;
-            Escenario escenario = new Escenario(scenarioName, filePaths, isNominal);
+            String scenarioCoordinatePath = COORDINATE_INSTANCE_PATH.replace("<ScenarioName>", scenarioName);
+            Escenario escenario = new Escenario(scenarioName, filePaths, isNominal, scenarioCoordinatePath);
 
             // Add the scenario to the list of scenarios
             EscenarioController.escenarios.add(escenario);
@@ -60,7 +63,6 @@ public class EscenarioController {
     }
 
 
-    // Evaluates the fluence map for each scenario and returns a list of evaluations.
     /**
      * Evaluates the fluence map for each scenario and returns a list of evaluations.
      *
@@ -84,8 +86,6 @@ public class EscenarioController {
         return evals;
     }
 
-
-    // Evaluates the fluence map over all scenarios and returns the average evaluation.
     /**
      * Evaluates the fluence map over all scenarios and returns the average evaluation.
      *
@@ -116,9 +116,8 @@ public class EscenarioController {
      *
      * @return A vector containing the angles used in the scenarios.
      */
-    public static String getInstanceById(Integer index) {
+    public static void getInstanceById(Integer index) {
 
-        String folder_coord = "1_1";
         File of = new File(INSTANCE_FILE);
         Scanner reading = null;
         try {
@@ -131,15 +130,13 @@ public class EscenarioController {
         while (reading.hasNextLine()) {
             String linea = reading.nextLine();
             if (nLine == index) {
-                folder_coord = DATA_FILE.concat(linea).concat("/");
+                EscenarioController.DATA_FILE = EscenarioController.DATA_FILE.replace("<instanceID>", linea);
+                EscenarioController.COORDINATE_INSTANCE_PATH = EscenarioController.COORDINATE_INSTANCE_PATH.replace("<instanceID>", linea);
                 break;
             }
             nLine++;
         }
         reading.close();
-
-        String instance_file = folder_coord.concat("Instance.txt");
-        return instance_file;
     }
 
     /**
@@ -199,6 +196,16 @@ public class EscenarioController {
             }
         }
         return ddmScenarios != null ? ddmScenarios.getVolumes() : new ArrayList<>();
+    }
+
+    public static Collimator getCollimatorFromNominalScenario() {
+        Collimator collimator = null;
+        for (Escenario escenario : escenarios) {
+            if (escenario.isNominal()) {
+                collimator = escenario.getCollimators();
+            }
+        }
+        return collimator;
     }
 
 }
