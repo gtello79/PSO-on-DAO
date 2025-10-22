@@ -1,20 +1,23 @@
 package com.company;
 
 import Swarms.Swarm;
-
+import Test.EvaluationAlg;
 import source.Collimator;
+import source.EvaluationFunction;
+import Utils.Gurobi_Solver;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
 import java.util.HashMap;
 
 import robust.EscenarioController;
+import Test.EvaluationAlg;
 
 public class Main {
 
     public static String INSTANCE_FILE = "./data/index_instances.txt";
     public static String DATA_FILE = "./data/";
-
     public static HashMap<String, String> mappingArg(String[] args) {
 
         HashMap<String, String> params = new HashMap<>();
@@ -32,7 +35,7 @@ public class Main {
         ArrayList<Integer> maxApertures = new ArrayList<>();
 
         // MLC Configuration
-        int instanceId = 85;
+        int instanceId = 86;
 
         int max_intensity = 5;
         int minIntensity = 0;
@@ -55,8 +58,8 @@ public class Main {
 
         // Parametros PSO
         int IRACESIZE = 518;
-        int size = IRACESIZE; // SWARM size
-        int iter = 40000 / IRACESIZE; // Pso Iterations
+        int size = 100;//IRACESIZE; // SWARM size
+        int iter = 100; //40000 / IRACESIZE; // Pso Iterations
 
         double c1Aperture = 1.8751; // Coef Global
         double c2Aperture = 0.2134; // Coef Personal
@@ -137,21 +140,35 @@ public class Main {
         // Instantiate the scenario controller
         EscenarioController.startScenario(instanceId);
 
+        // Convert Zmax from an ArrayList to an array
+        double[] dd = new double[Zmax.size()];
+        for (int i = 0; i < Zmax.size(); i++) {
+            dd[i] = Zmax.get(i);
+        }
+        Gurobi_Solver.activateModel(dd, w);
+
         // Informacion del Collimator
         Collimator collimator = EscenarioController.getCollimatorFromNominalScenario();
 
+        EvaluationFunction.ActivateEvaluationFunction(w, Zmin, Zmax);
+
         // Build the maxApertures by Beam Angle
-        for (int a = 0; a < EscenarioController.getAngles().size(); a++) {
+        for (int a = 0; a < collimator.getNbAngles(); a++) {
             maxApertures.add(max_apertures);
         }
         // Creating the swarm
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, minIntensity, initial_intensity,
-                step_intensity, open_apertures, setup, diffSetup, collimator,
+                step_intensity, open_apertures, setup, diffSetup,
                 c1Aperture, c2Aperture, cnAperture, c1Intensity, c2Intensity, cnIntensity,
                 size, iter, wMaxAperture, wMinAperture, wMaxIntensity, wMinIntensity,
                 nThreads, optimizedIntensity);
 
         swarm.MoveSwarms();
+
+
+
+        EvaluationAlg evaluationAlgorithm = new EvaluationAlg(
+            EscenarioController.getDDMFromNominalScenario() ,swarm.getBestGlobalParticle(), w, Zmin, Zmax);
 
     }
 }
