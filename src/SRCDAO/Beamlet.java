@@ -7,25 +7,16 @@ public class Beamlet {
     private int localId;
     private int angle;
     private Pair<Integer, Integer> position;
+    private Pair<Double, Double> realPosition;
 
-    public Beamlet(int id, int localId, int angle, Pair<Integer, Integer> position) {
+    private boolean usedInIdeal;
+
+    public Beamlet(int id, int localId, int angle, Pair<Integer, Integer> position, Pair<Double, Double> realPosition) {
         this.id = id;
         this.localId = localId;
         this.angle = angle;
         this.position = position;
-
-    }
-
-    public int getLocalId() {
-        return localId;
-    }
-
-    public void setLocalId(int localId) {
-        this.localId = localId;
-    }
-
-    public double getAngle() {
-        return angle;
+        this.realPosition = realPosition;
     }
 
     public void setAngle(int angle) {
@@ -43,4 +34,31 @@ public class Beamlet {
     public void setId(int id) {
         this.id = id;
     }
+
+    public boolean isUsedInIdeal() {
+        return usedInIdeal;
+    }
+
+    public void setUsedInIdeal(boolean usedInIdeal) {
+        this.usedInIdeal = usedInIdeal;
+    }
+
+    // Genera un metodo que permita reconocer cuando dos beamlets son iguales a
+    // partir de su posicion
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+
+        if (!(obj instanceof Beamlet))
+            return false;
+
+        Beamlet other = (Beamlet) obj;
+
+        boolean positionVal = this.realPosition.getKey().compareTo(other.realPosition.getKey()) == 0 &&
+                this.realPosition.getValue().compareTo(other.realPosition.getValue()) == 0;
+
+        return positionVal;
+    }
+
 }

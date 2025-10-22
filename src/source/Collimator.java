@@ -58,10 +58,10 @@ public class Collimator {
         // Lectura del archivo test_instance_coords
         if (!archivo.exists()) {
             throw new FileNotFoundException("ERROR: NO SE ENCUENTRA EL ARCHIVO " + coord_filename);
+        }else{
+            System.out.println("## READING COLLIMATOR COORDINATES INFO ");
         }
-        ;
 
-        System.out.println("## READING COLLIMATOR COORDINATES INFO ");
         Scanner reading = new Scanner(archivo);
 
         while (reading.hasNextLine()) {
@@ -85,27 +85,6 @@ public class Collimator {
 
         System.out.println("##  READ " + coord_file.size() + " FILES");
 
-    }
-
-    public Collimator(Collimator c) {
-
-        this.coord_file = new ArrayList<>();
-        this.angles = new ArrayList<>();
-        this.angleCoord = new Hashtable<>();
-
-        this.nbBeamlets = c.nbBeamlets;
-        this.nAngles = c.nAngles;
-        this.xDim = c.xDim;
-        this.yDim = c.yDim;
-        this.gDim = c.gDim;
-
-        this.angles = new ArrayList<>(c.angles);
-        this.coord_file = new ArrayList<>(c.coord_file);
-        this.angleCoord.putAll(c.angleCoord);
-        this.nbAngleBeamlets.putAll(c.nbAngleBeamlets);
-        this.beamletsList = c.beamletsList;
-
-        setActiveRows();
     }
 
     // Se inicializan las coordenadas de cada beam del collimator
@@ -152,7 +131,7 @@ public class Collimator {
 
             // Se busca actualizar el mayor elemento de los beamlets para tener referencia
             // de la dimension
-            for (Double indexRow : filter) {
+            for (double indexRow : filter) {
                 if (indexRow > max) {
                     max = indexRow;
                 }
@@ -185,7 +164,7 @@ public class Collimator {
                 Pair<Integer, Integer> newCoord = new Pair<>(newX, newY);
                 newCoords.add(newCoord);
 
-                Beamlet b = new Beamlet(globalBeamletCount, localBeamletCount, idBeam, newCoord);
+                Beamlet b = new Beamlet(globalBeamletCount, localBeamletCount, idBeam, newCoord, row);
                 beamletsListBeam.add(b);
 
                 localBeamletCount++;
@@ -195,7 +174,6 @@ public class Collimator {
             this.beamletsList.put(idBeam, beamletsListBeam);
             this.nbAngleBeamlets.put(idBeam, localBeamletCount);
             this.angleCoord.put(idBeam, newCoords);
-
         }
         setActiveRows();
     }
@@ -204,7 +182,7 @@ public class Collimator {
     // <a,b>
     // Significa que el rango esta abierto desde a hasta b (resalto que lo incluye)
     void setActiveRows() {
-        for (Integer idBeam : beamletsList.keySet()) {
+        for (int idBeam : this.angles) {
             ArrayList<Pair<Integer, Integer>> activeRange = new ArrayList<>();
             ArrayList<Beamlet> beamletsBeam = beamletsList.get(idBeam);
 
@@ -242,6 +220,25 @@ public class Collimator {
         }
     }
 
+    public void activateBeamletsWithIdeal(Hashtable<Integer, ArrayList<Beamlet>> idealBeamlets, boolean isNominal) {
+        // Tomar angulos
+        for (int angle : this.angles) {
+
+            ArrayList<Beamlet> beamletsAngle = this.beamletsList.get(angle);
+            ArrayList<Beamlet> idealBeamletsAngle = idealBeamlets.get(angle);
+
+            for (Beamlet b : beamletsAngle) {
+                for (Beamlet ib : idealBeamletsAngle) {
+                    if (b.equals(ib)) {
+                        b.setUsedInIdeal(true);
+                        break;
+                    }
+                }
+            }
+
+        }
+    }
+
     // Transformar la identificacion local (del beam), a una identificador global
     public Pair<Integer, Integer> indexToPos(int index, int angle) {
         Beamlet b = this.beamletsList.get(angle).get(index);
@@ -252,6 +249,11 @@ public class Collimator {
     public Pair<Integer, Integer> getActiveRange(int x, int angle) {
         // x es la fila del collimator
         return (angleRowActive.get(angle).get(x));
+    }
+
+    public ArrayList<Pair<Integer, Integer>> getActiveRangeBeam(int angle) {
+
+        return angleRowActive.get(angle);
     }
 
     public int getxDim() {
@@ -296,5 +298,9 @@ public class Collimator {
 
     public void setBeamletsList(Hashtable<Integer, ArrayList<Beamlet>> beamletsList) {
         this.beamletsList = beamletsList;
+    }
+
+    public ArrayList<Beamlet> getBeamletsOfAngle(int angle) {
+        return beamletsList.get(angle);
     }
 }
