@@ -1,6 +1,8 @@
 package Swarms;
 
+import java.util.logging.Logger;
 import SRCDAO.Plan;
+import robust.EscenarioController;
 import source.Collimator;
 
 import java.util.ArrayList;
@@ -8,15 +10,10 @@ import java.util.Collections;
 import java.text.DecimalFormat;
 
 public class Particle extends Thread {
-    int idParticle;
-    private double fitness;
-    private double bestFitness;
-    private double bestPersonalRobust;
-    private double robustFitnessValue;
+    int particleId;
 
-    public static DecimalFormat df = new DecimalFormat("#.00");
+    private static DecimalFormat df = new DecimalFormat("#.00");
 
-    private ArrayList<Double> robustFitness;
     private int setupRunnerThread;
     private double c1Aperture;
     private double c2Aperture;
@@ -28,90 +25,125 @@ public class Particle extends Thread {
     private double innerIntensity;
     private double cnIntensity;
 
-    private Particle bestGlobal;
-    private Plan bestPersonal;
-    private Plan currentPlan;
-    private double beamOnTime;
+    private double fitness;
+    private double bestFitness;
 
+    private Particle bestGlobal;
+    private Particle bestPersonal;
+    private int indexToScenario = 0;
+    private ArrayList<Plan> plansScenarios;
+    private ArrayList<Double> fitnessScenarios;
+    private ArrayList<Double> beamOnTimeScenarios;
+    private ArrayList<Integer> nApertureByScenario;
+
+    // MOVEMENT_THREAD: Used for updating particle velocity and position in PSO.
     static final int MOVEMENT_THREAD = 0;
+    // EVAL_THREAD: Used for evaluating the fitness of the particle.
     static final int EVAL_THREAD = 1;
+    // OPTIMIZE_THREAD: Used for optimizing the intensities of the particle's plan.
     static final int OPTIMIZE_THREAD = 2;
+    // REPAIR_SOLUTION: Used for regenerating apertures and repairing the solution.
     static final int REPAIR_SOLUTION = 3;
 
+    static Logger logger = Logger.getLogger(Particle.class.getName());
+
     /*-------------------------------------------------------------METHODS -------------------------------------------*/
-    public Particle(int idParticle, ArrayList<Double> w, ArrayList<Double> Zmin, ArrayList<Double> Zmax,
+    public Particle(int particleId,
             ArrayList<Integer> max_apertures,
             int max_intensity, int minIntensity, int initial_intensity, int step_intensity, int open_apertures,
-            int setup, Collimator collimator) {
+            int setup) {
 
-        this.idParticle = idParticle;
-        this.currentPlan = new Plan(w, Zmin, Zmax, max_apertures, max_intensity, minIntensity, initial_intensity,
-                step_intensity, open_apertures, setup, collimator);
+        this.particleId = particleId;
+        this.plansScenarios = new ArrayList<>();
+        this.fitnessScenarios = new ArrayList<>();
+        this.beamOnTimeScenarios = new ArrayList<>();
+        this.nApertureByScenario = new ArrayList<>();
+
+        // Create a plan for each scenario
+        for (int s = 0; s < EscenarioController.getnScenarios(); s++) {
+            Collimator collimator = EscenarioController.getCollimatorFromIndexScenario(s);
+
+            // Plan creation for the scenario
+            Plan planScenario = new Plan(max_apertures, max_intensity, minIntensity,
+                    initial_intensity, step_intensity, open_apertures, setup, collimator, s);
+            plansScenarios.add(planScenario);
+            fitnessScenarios.add(planScenario.getEval());
+            beamOnTimeScenarios.add(planScenario.getBeamOnTime());
+            nApertureByScenario.add(planScenario.getTotalAperturesUnsed());
+        }
 
         // Update Plan Stats
-        setFitness(currentPlan.getEval());
-        setBeamOnTime(this.currentPlan.getBeamOnTime());
-        setRobustFitness(this.currentPlan.getRobustEval());
-        updateRobustFitnessValue();
-
-        // Set Best Personal
-        setBestPersonal(this.currentPlan);
-        setBestFitness(currentPlan.getEval());
-        setBestPersonalRobust(this.robustFitnessValue);
-        
+        this.evalParticle();
+        System.out.println("Particle-" + particleId + " created with fitness: " + this.fitnessScenarios);
     }
 
     public Particle(Particle p) {
-        this.idParticle = p.idParticle;
-        this.fitness = p.fitness;
+        // Copy constructor
+        this.particleId = p.particleId;
         this.bestFitness = p.bestFitness;
-        this.beamOnTime = p.beamOnTime;
-        this.robustFitness = new ArrayList<>(p.robustFitness);
-        this.robustFitnessValue = p.robustFitnessValue;
-        this.bestPersonalRobust = p.bestPersonalRobust;
+        this.fitness = p.fitness;
+        this.plansScenarios = new ArrayList<>();
 
-        this.currentPlan = new Plan(p.currentPlan);
-        this.bestPersonal = new Plan(p.bestPersonal);
+        for (Plan plan : p.plansScenarios) {
+            this.plansScenarios.add(new Plan(plan));
+        }
+        this.fitnessScenarios = new ArrayList<>(p.fitnessScenarios);
+        this.beamOnTimeScenarios = new ArrayList<>(p.beamOnTimeScenarios);
+        this.nApertureByScenario = new ArrayList<>(p.nApertureByScenario);
+        this.indexToScenario = p.indexToScenario;
+
+        this.bestPersonal = p.bestPersonal == null ? null : new Particle(p.bestPersonal);
+        this.setupRunnerThread = p.setupRunnerThread;
     }
 
     public void evalParticle() {
         double lastFitness = this.fitness;
-        double newFitness = this.currentPlan.evalFunction();
+        for (int s = 0; s < EscenarioController.getnScenarios(); s++) {
+            if(s == this.indexToScenario) {
+                Plan planScenario = this.plansScenarios.get(s);
+                double eval = planScenario.getEval();
+                this.fitnessScenarios.set(s, eval);
+                this.beamOnTimeScenarios.set(s, planScenario.getBeamOnTime());
+                this.nApertureByScenario.set(s, planScenario.getTotalAperturesUnsed());
+            }
+        }
 
-        // Update Particule Stats
-        setFitness(newFitness);
-        setBeamOnTime(this.currentPlan.getBeamOnTime());
-        setRobustFitness(this.currentPlan.getRobustEval());
-        updateRobustFitnessValue();
+        // Update Plan Stats
+        this.fitness = Collections.max(fitnessScenarios);
+        this.indexToScenario = fitnessScenarios.indexOf(this.fitness);
 
+        // Set Best Personal
         CalculateBestPersonal();
 
-        System.out.println(idParticle + ": " + df.format(lastFitness) + "\t->\t " + df.format(this.fitness) + "\t"
-                + df.format(this.getRobustFitnessValue()));
+        System.out.println(particleId + ": " + lastFitness + "\t->\t "  + this.fitnessScenarios + "\t->\t " + df.format(this.getFitness()));
     }
 
-    public void OptimizateIntensities() {
-
+    public void OptimizeIntensities() {
         // Se realiza la optimizacion de intensidades
-        this.currentPlan.OptimizateIntensities();
+        for (int s = 0; s < EscenarioController.getnScenarios(); s++) {
+            if(s == this.indexToScenario) {
+                this.plansScenarios.get(s).OptimizeIntensities();
+                break;
+            }
+        }
         this.evalParticle();
+        CalculateBestPersonal();
     }
 
     public void regenerateApertures() {
         double lastFitness = this.fitness;
-        this.currentPlan.regenerateApertures();
-        this.currentPlan.OptimizateIntensities();
 
-        // Update Particule Stats
-        setFitness(this.currentPlan.getEval());
-        setBeamOnTime(this.currentPlan.getBeamOnTime());
-        setRobustFitness(this.currentPlan.getRobustEval());
-        updateRobustFitnessValue();
+        for (int s = 0; s < EscenarioController.getnScenarios(); s++) {
+            if(s == this.indexToScenario) {
+                this.plansScenarios.get(s).regenerateApertures();
+                this.plansScenarios.get(s).OptimizeIntensities();
+            }
+        }
+        this.evalParticle();
 
         // Actualizacion del best personal
         CalculateBestPersonal();
-        System.out.println(idParticle + ": " + df.format(lastFitness) + "\t->\t " + df.format(this.fitness) + "\t"
-                + df.format(this.getRobustFitnessValue()));
+        System.out.println(particleId + ": " + lastFitness + "\t->\t "  + this.fitnessScenarios + "\t->\t " + df.format(this.getFitness()));
 
     }
 
@@ -120,49 +152,63 @@ public class Particle extends Thread {
     public void CalculateVelocity(double c1Aperture, double c2Aperture, double wAperture, double cnAperture,
             double c1Intensity, double c2Intensity, double wIntensity, double cnIntensity, Particle bGlobal) {
 
-        this.currentPlan.CalculateVelocity(c1Aperture, c2Aperture, wAperture, cnAperture, c1Intensity, c2Intensity,
-                wIntensity, cnIntensity, bGlobal.getCurrentPlan(), bestPersonal);
+        for (int s = 0; s < this.plansScenarios.size(); s++) {
+            if(s == this.indexToScenario){
+                Plan bestPersonal = this.bestPersonal.plansScenarios.get(s);
+                Plan bestGlobal = bGlobal.plansScenarios.get(s);
+                this.plansScenarios.get(s).CalculateVelocity(c1Aperture, c2Aperture, wAperture, cnAperture,
+                        c1Intensity, c2Intensity, wIntensity, cnIntensity, bestGlobal, bestPersonal);
+            }
+        }
     }
 
     public void CalculatePosition() {
-        this.currentPlan.CalculatePosition();
+
+        for (int s = 0; s < this.plansScenarios.size(); s++) {
+            if(s == this.indexToScenario){
+                this.plansScenarios.get(s).CalculatePosition();
+            }
+        }
     }
 
     public void CalculateBestPersonal() {
-        if (this.robustFitnessValue < this.bestPersonalRobust) {
-            setBestPersonal(this.currentPlan);
-            setBestFitness(this.fitness);
-            setBestPersonalRobust(this.robustFitnessValue);
+        if (this.fitness < this.bestFitness) {
+            setBestPersonal();
+            setBestFitness();
         }
     }
 
     /*---------------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public ArrayList<Integer> getTotalUnUsedApertures() {
-        return this.currentPlan.getAperturesUnUsed();
+        Plan currentPlan = this.plansScenarios.get(this.indexToScenario);
+        return currentPlan.getAperturesUnUsed();
+    }
+
+    public Plan getPlanFromScenario(int indexScenario) {
+        return this.plansScenarios.get(indexScenario);
     }
 
     public int getAperturesUnUsed() {
-        return this.currentPlan.getTotalAperturesUnsed();
+        Plan currentPlan = this.plansScenarios.get(this.indexToScenario);
+        return currentPlan.getTotalAperturesUnsed();
     }
 
-    public double getFitness() {
-        return this.fitness;
+    public double getBeamOnTime() {
+        Plan currentPlan = this.plansScenarios.get(this.indexToScenario);
+        return currentPlan.getBeamOnTime();
     }
 
-    public void setFitness(double fitness) {
-        this.fitness = fitness;
+    public void setBestFitness() {
+        this.bestFitness = this.fitness;
     }
 
-    public void setBestFitness(double bestFitness) {
-        this.bestFitness = bestFitness;
-    }
-
-    public void setBestPersonal(Plan bPersonal) {
-        bestPersonal = new Plan(bPersonal);
+    public void setBestPersonal() {
+        this.bestPersonal = new Particle(this);
     }
 
     public Plan getCurrentPlan() {
-        return this.currentPlan;
+        Plan currentPlan = this.plansScenarios.get(this.indexToScenario);
+        return currentPlan;
     }
 
     public void setC1Aperture(double c1Aperture) {
@@ -173,7 +219,7 @@ public class Particle extends Thread {
         this.c2Aperture = c2Aperture;
     }
 
-    public void setInnerAperture(double innerAperture) {
+    public void setInertiaAperture(double innerAperture) {
         this.innerAperture = innerAperture;
     }
 
@@ -189,7 +235,7 @@ public class Particle extends Thread {
         this.c2Intensity = c2Intensity;
     }
 
-    public void setInnerIntensity(double innerIntensity) {
+    public void setInertiaIntensity(double innerIntensity) {
         this.innerIntensity = innerIntensity;
     }
 
@@ -198,6 +244,7 @@ public class Particle extends Thread {
     }
 
     public void setBestGlobal(Particle p) {
+        this.bestGlobal = null;
         this.bestGlobal = new Particle(p);
     }
 
@@ -205,56 +252,31 @@ public class Particle extends Thread {
         this.setupRunnerThread = idSetup;
     }
 
-    public double setBeamOnTime(double beamOnTime) {
-        return this.beamOnTime = this.currentPlan.getBeamOnTime();
+    public double getFitness() {
+        return this.fitness;
     }
 
-    public double getBeamOnTime() {
-        return this.beamOnTime;
-    }
-
-    // Optimization Robusts Methods
-    public void setRobustFitness(ArrayList<Double> robustFitness) {
-        this.robustFitness = new ArrayList<>(robustFitness);
-    }
-
-    public ArrayList<Double> getRobustFitness() {
-        return this.robustFitness;
-    }
-
-    public double getRobustFitnessValue() {
-        return this.robustFitnessValue;
-    }
-
-    public double getBestPersonalRobust() {
-        return bestPersonalRobust;
-    }
-
-    public void setBestPersonalRobust(double bestPersonalRobust) {
-        this.bestPersonalRobust = bestPersonalRobust;
-    }
-    public void updateRobustFitnessValue() {
-        this.robustFitnessValue = getRobustFitnessValueFromList(this.robustFitness);
-    }
-
-    public double getRobustFitnessValueFromList(ArrayList<Double> robustFitnessList){
-        return Collections.max(robustFitnessList);
-    }
-
-    //---------- THREADS METHODS (NO TOCAR)
+    // ---------- THREADS METHODS (NO TOCAR)
     // ----------------------------------
     @Override
     public void run() {
         switch (setupRunnerThread) {
 
             case MOVEMENT_THREAD:
+                // Prevent NullPointerException by checking bestGlobal and bestPersonal
+                if (bestGlobal == null || bestPersonal == null) {
+                    System.err.println("Error: bestGlobal or bestPersonal is not set for Particle " + particleId);
+                    break;
+                }
                 // Calcular velocidad
                 this.CalculateVelocity(c1Aperture, c2Aperture, innerAperture, cnAperture,
                         c1Intensity, c2Intensity, innerIntensity, cnIntensity, bestGlobal);
                 // Calcular posicion
                 this.CalculatePosition();
 
+                this.bestGlobal = null;
                 break;
+
 
             case EVAL_THREAD:
                 // Evaluar particula
@@ -263,7 +285,7 @@ public class Particle extends Thread {
 
             case OPTIMIZE_THREAD:
 
-                this.OptimizateIntensities();
+                this.OptimizeIntensities();
 
                 break;
 
