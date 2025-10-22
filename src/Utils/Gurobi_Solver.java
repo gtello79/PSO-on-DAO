@@ -3,8 +3,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import com.gurobi.gurobi.*;
-import com.gurobi.gurobi.GRBException;
-
 
 import SRCDAO.Plan;
 import robust.EscenarioController;
@@ -17,23 +15,20 @@ import source.Volumen;
 
 public class Gurobi_Solver {
 
-    public int max_intensity;
     public int organs; // number of organ
     public int beams; // number of organ
     public int[] R; // number of voxels by region
     public int aperture; // number of aperture
 
     public int[] bmlts; // number of beamlets by angles
-    public ArrayList<Double> weight; // weights of objective
+    public static ArrayList<Double> weight; // weights of objective
 
     public int totalBmlts; // total beamlets
-    public int[] angles;
-
     public double[][] newIntensity;
 
     public double[] LB;
     public double[] UB;
-    public Boolean[] isTarget;
+    public boolean[] isTarget;
     public double epsilon;
     public double[] x;
     public String jobThreadID;
@@ -42,7 +37,7 @@ public class Gurobi_Solver {
     public double minIntensity;
     public double objVal;
 
-    public int[] eud;
+    public static int[] eud;
     GRBEnv env;
     GRBModel model;
 
@@ -50,18 +45,21 @@ public class Gurobi_Solver {
     // DDM M;
     Plan sol;
 
-    public Gurobi_Solver(Plan sol, int[] selAngles, double[] dd, ArrayList<Double> weight)
+    public static void activateModel(double[] dd, ArrayList<Double> w){
+        System.out.println("Gurobi Model Activated");
+        Gurobi_Solver.eud = doubletoint(dd);
+        Gurobi_Solver.weight = w;
+    }
+
+    public Gurobi_Solver(Plan sol)
             throws GRBException {
 
         this.sol = sol;
         this.beams = sol.getNBeam();
-        this.eud = doubletoint(dd);
-        this.M = EscenarioController.getDDMFromNominalScenario();
+        this.M = EscenarioController.getScenarioByIndex(sol.getScenarioIndex()).getVolumes();
         
         this.organs = this.M.size();
         this.R = new int[organs];
-        this.bmlts = sol.getBeamletsByBeam();
-        this.weight = weight;
         this.bmlts = sol.getBeamletsByBeam();
         this.aperture = sol.getTotalApertureByBeam(0);
 
@@ -77,7 +75,7 @@ public class Gurobi_Solver {
         env.dispose();
     }
 
-    public int[] doubletoint(double[] doubleArray) {
+    public static int[] doubletoint(double[] doubleArray) {
         int[] intArray = new int[doubleArray.length];
         for (int i = 0; i < intArray.length; ++i)
             intArray[i] = (int) doubleArray[i];
@@ -121,7 +119,7 @@ public class Gurobi_Solver {
                 indexI = i + 1;
                 indexJ = j + 1;
                 intensity[i][j] = model.addVar(
-                        minIntensity, 20, 0.0, GRB.CONTINUOUS,
+                        minIntensity, this.maxIntensity, 0.0, GRB.CONTINUOUS,
                         "Intensity" + "[" + indexI + "." + indexJ + "]");
                 intensity[i][j].set(GRB.DoubleAttr.Start, sol.getIntensityByAperture(i, j));
             }
@@ -213,25 +211,18 @@ public class Gurobi_Solver {
                     }
                 }
 
+                int factor = o != 2 ? -1 : 1;
+                int constEud = eud[o] * factor;
 
-                int constEud = eud[o];
-                if (o != 2) {
-                    // Si el organo es OAR
-                    constEud = eud[o] * -1;
-                } 
                 voxelRadiation.addConstant(constEud);
 
 
                 GRBLinExpr V = new GRBLinExpr();
                 V.addTerm(1, voxel[o][count_voxel]);
 
-                if (o == 2) {
-                    // Si el organo es el tumor
-                    model.addConstr(V, GRB.EQUAL, voxelRadiation, "voxelRadiation" + o + "[" + (count_voxel + 1) + "]");
-                } else {
-                    // Si el organo es OAR
-                    model.addConstr(V, GRB.GREATER_EQUAL, voxelRadiation,"voxelRadiation" + o + "[" + (count_voxel + 1) + "]");
-                }
+                char orgConstraint = (o == 2) ? GRB.EQUAL : GRB.GREATER_EQUAL;
+                model.addConstr(V, orgConstraint, voxelRadiation, "voxelRadiation" + o + "[" + (count_voxel + 1) + "]");
+
                 count_voxel++;
             }
         }
@@ -253,15 +244,12 @@ public class Gurobi_Solver {
         model.optimize();
         model.update();
 
-        // model.computeIIS();
-        // model.write("mod.ilp");
         double[][] getIntensity = new double[this.beams][this.aperture];
         for (int i = 0; i < this.beams; ++i) {
             for (int j = 0; j < this.aperture; ++j) {
                 getIntensity[i][j] = intensity[i][j].get(GRB.DoubleAttr.X);
             }
         }
-
         newIntensity = getIntensity;
         objVal = model.get(GRB.DoubleAttr.ObjVal);
 
