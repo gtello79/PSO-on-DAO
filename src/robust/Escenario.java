@@ -21,8 +21,15 @@ public class Escenario {
     private Vector<Integer> angles;
     private Collimator collimators;
 
-
+    /*  
+     * Constructor for the Escenario class.
+     * @param scenarioName The name of the scenario.
+     * @param orgFiles A list of file paths for the original volume data. -> DDM files path
+     * @param isNominal A boolean indicating if the scenario is nominal. 
+     * @param scenarioCoordinatePath The file path for the scenario coordinates instance path.
+    */
     public Escenario(String scenarioName, List<String> orgFiles, boolean isNominal, String scenarioCoordinatePath) {
+
         // Initialize the scenario with a name and a list of original files
         this.scenarioName = scenarioName;
         this.isNominal = isNominal;
@@ -50,16 +57,15 @@ public class Escenario {
         this.evaluationFunction = new EvaluationFunction(this.volumes);
     }
 
-    public double evaluateFluenceMap(ArrayList<Double> fluenceMap, ArrayList<Double> w, ArrayList<Double> zMin,
-            ArrayList<Double> zMax) {
-        this.evaluationFunction = new EvaluationFunction(this.volumes);
-
+    public double evaluateFluenceMap(ArrayList<Double> fluenceMap) {
         // Evaluate the fluence map on the scenario using the evaluation function
-        double evalScenario = this.evaluationFunction.evalIntensityVector(fluenceMap, w, zMin, zMax);
+        double evalScenario = this.evaluationFunction.evalIntensityVector(fluenceMap, this.collimators);
         return evalScenario;
     }
 
-
+    public void activateBeamletsWithIdeal(Collimator collimator) {
+        this.collimators.activateBeamletsWithIdeal(collimator.getBeamletsList(), this.isNominal);
+    }
 
     public static Vector<Integer> getAngles(String nameFile) throws FileNotFoundException {
         File testInstance = new File(nameFile);

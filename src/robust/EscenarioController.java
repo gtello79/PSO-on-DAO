@@ -26,6 +26,7 @@ public class EscenarioController {
     private static ArrayList<Escenario> escenarios = new ArrayList<>();;
     private static Vector<Integer> angles = new Vector<>();
 
+    private static int nScenarios = 0;
     /**
      * Starts a scenario based on the index provided.
      * It reads the instance file, maps scenarios to their paths, and creates
@@ -59,6 +60,14 @@ public class EscenarioController {
 
             id_scenario++;
         }
+        
+        EscenarioController.nScenarios = id_scenario;
+        
+        // Activate beamlets with ideal values from the nominal scenario
+        Collimator collimator = getCollimatorFromNominalScenario();
+        for (Escenario escenario : escenarios) {
+            escenario.activateBeamletsWithIdeal(collimator);
+        }
 
     }
 
@@ -72,15 +81,13 @@ public class EscenarioController {
      * @param zMax       The maximum z-values for the evaluation.
      * @return A list of evaluations for each scenario.
      */
-    public static ArrayList<Double> evaluateFluenceMap(ArrayList<Double> fluenceMap, ArrayList<Double> w,
-            ArrayList<Double> zMin, ArrayList<Double> zMax) {
+    public static ArrayList<Double> evaluateFluenceMap(ArrayList<Double> fluenceMap) {
         
         // Evaluate the fluence map on each scenario and store the results
         ArrayList<Double> evals = new ArrayList<>();
 
         for (Escenario escenario : EscenarioController.escenarios) {
-            double evalScenario = escenario.evaluateFluenceMap(fluenceMap, w, zMin, zMax);
-            
+            double evalScenario = escenario.evaluateFluenceMap(fluenceMap);
             evals.add(evalScenario);
         }
         return evals;
@@ -95,19 +102,10 @@ public class EscenarioController {
      * @param zMax       The maximum z-values for the evaluation.
      * @return The average evaluation of the fluence map across all scenarios.
      */
-    public static double evaluateOverFeatureEscenario(ArrayList<Double> fluenceMap, ArrayList<Double> w,
-            ArrayList<Double> zMin, ArrayList<Double> zMax) {
+    public static double evaluateOverFeatureEscenario(ArrayList<Double> fluenceMap, int indexScenario) {
 
         // Evaluate the fluence map over all scenarios and return the average
-        double totalEval = 0.0;
-        for (Escenario escenario : EscenarioController.escenarios) {
-            if (escenario.isNominal()) {
-                // Skip the nominal scenario for average evaluation
-                totalEval = escenario.evaluateFluenceMap(fluenceMap, w, zMin, zMax);
-                break;
-            }
-        }
-
+        double totalEval = EscenarioController.escenarios.get(indexScenario).evaluateFluenceMap(fluenceMap);
         return totalEval;
     }
 
@@ -180,6 +178,7 @@ public class EscenarioController {
                     scenarioMap.computeIfAbsent(scenarioName, k -> new ArrayList<>()).add(line);
                 }
             }
+            reader.close();
         }
         return scenarioMap;
     }
@@ -206,6 +205,18 @@ public class EscenarioController {
             }
         }
         return collimator;
+    }
+
+    public static Collimator getCollimatorFromIndexScenario(int index) {
+        return escenarios.get(index).getCollimators();
+    }
+
+    public static int getnScenarios() {
+        return nScenarios;
+    }
+
+    public static Escenario getScenarioByIndex(int index) {
+        return escenarios.get(index);
     }
 
 }
