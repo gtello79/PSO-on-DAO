@@ -1,13 +1,13 @@
 package SRCDAO;
 
-import java.security.KeyException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Vector;
 import javafx.util.Pair;
 
 
-import source.*;
+import source.Collimator;
+import source.Matrix;
 
 public class Beam {
     private int angle; // ID BEAM
@@ -24,9 +24,9 @@ public class Beam {
     private int totalBeamlets;
     private int aperturesUnused;
     private double beamOnTime;
-
-    private final Collimator collimator; // Representacion del collimator
     private Matrix I; // Representacion de la matriz de intensidad
+    private ArrayList<Pair<Integer, Integer>> activeRangeBeam;
+    private ArrayList<Beamlet> beamletsList;
 
     /*
      * Apertures (representation 1):
@@ -44,8 +44,8 @@ public class Beam {
     public Beam(int angle, int maxApertures, int maxIntensity, int minIntensity, int initialIntensity,
             int stepIntensity, int openApertures, int setup, Collimator collimator) {
         setAngle(angle);
-        setMax_apertures(maxApertures);
-        setMax_intensity(maxIntensity);
+        setMaxApertures(maxApertures);
+        setMaxIntensity(maxIntensity);
         setMinIntensity(minIntensity);
         setInitialIntensity(initialIntensity);
         setStep_intensity(stepIntensity);
@@ -54,7 +54,10 @@ public class Beam {
         setCollimatorDim(collimator.getyDim());
         setTotalBeamlets(collimator.getNangleBeamlets(angle));
 
-        this.collimator = collimator;
+        // Get Active Range from collimator
+        this.activeRangeBeam = collimator.getActiveRangeBeam(angle);
+        this.beamletsList = collimator.getBeamletsOfAngle(angle);
+
         this.A = new ArrayList<>();
         this.fluenceMap = new ArrayList<>();
         this.aperturesUnused = 0;
@@ -64,13 +67,13 @@ public class Beam {
             setOpenApertures(maxApertures);
 
         // Declaracion de la matriz de intensidad I y se inicializa
-        this.I = new Matrix(this.collimatorDim, collimator.getyDim());
+        this.I = new Matrix(this.collimatorDim, this.collimatorDim);
 
         // Limpiado de beamlets con valor 0
         clearIntensity();
 
         // Initialize apertures
-        initiliazeBeam(setup, openApertures);
+        initializeBeam(setup, openApertures, collimator);
 
         // Se construye la Matriz de Intensidad
         generateIntensities();
@@ -79,22 +82,22 @@ public class Beam {
 
     public Beam(Beam b) {
         setAngle(b.angle); // Setea el ID del Beam
-        setMax_apertures(b.maxApertures);
-        setMax_intensity(b.maxIntensity);
+        setMaxApertures(b.maxApertures);
+        setMaxIntensity(b.maxIntensity);
         setMinIntensity(b.minIntensity);
         setInitialIntensity(b.initialIntensity);
         setStep_intensity(b.stepIntensity);
         setOpenApertures(b.openApertures);
         setSetup(b.setup);
-        setMinIntensity(b.minIntensity);
         setCollimatorDim(b.getCollimatorDim());
         setTotalBeamlets(b.getTotalBeamlets());
 
-        this.collimator = new Collimator(b.collimator);
         this.A = new ArrayList<>();
         this.fluenceMap = new ArrayList<>();
         this.aperturesUnused = b.aperturesUnused;
         this.beamOnTime = b.beamOnTime;
+        this.activeRangeBeam = b.activeRangeBeam;
+        this.beamletsList = b.beamletsList;
 
         if (openApertures == -1)
             setOpenApertures(maxApertures);
@@ -115,7 +118,7 @@ public class Beam {
 
     }
 
-    public void initiliazeBeam(int type, int openApertures) {
+    public void initializeBeam(int type, int openApertures, Collimator collimator) {
         Vector<Double> levels = new Vector<>();
 
         // Calculate levels for random Intensity
@@ -128,7 +131,7 @@ public class Beam {
         // Inicializacion de cada apertura
         for (int index_aperture = 0; index_aperture < maxApertures; index_aperture++) {
             Aperture aux = new Aperture(collimator, angle);
-            aux.initializeAperture(type, openApertures, index_aperture);
+            aux.initializeAperture(type, openApertures, index_aperture, this.activeRangeBeam);
             aux.initializeIntensity(type, minIntensity, maxIntensity, initialIntensity, levels.get(index_aperture));
             openApertures--;
             A.add(aux);
@@ -152,7 +155,7 @@ public class Beam {
             }
 
             for (int i = 0; i < this.collimatorDim; i++) {
-                limits = collimator.getActiveRange(i, angle);
+                limits = this.activeRangeBeam.get(i);
 
                 if (limits.getKey() == -1)
                     continue;
@@ -171,7 +174,7 @@ public class Beam {
     public void clearIntensity() {
         // Para cada fila
         for (int i = 0; i < this.collimatorDim; i++) {
-            Pair<Integer, Integer> limits = collimator.getActiveRange(i, angle);
+            Pair<Integer, Integer> limits = this.activeRangeBeam.get(i);
             // Para cada celda
             for (int j = 0; j < this.collimatorDim; j++) {
                 // Establece el beamlet con intensidad 0
@@ -189,8 +192,8 @@ public class Beam {
     public void buildIntensityVector() {
         this.fluenceMap = new ArrayList<>();
         // A partir del total de beamlets, consulta la posición de cada uno de ellos
-        for (int i = 0; i < totalBeamlets; i++) {
-            Pair<Integer, Integer> pos = collimator.indexToPos(i, angle);
+        for (Beamlet b : beamletsList) {
+            Pair<Integer, Integer> pos = b.getPosition();
             int x = pos.getKey();
             int y = pos.getValue();
 
@@ -215,7 +218,7 @@ public class Beam {
             Aperture aperture = A.get(indexAperture);
 
             for (int indexRow = 0; indexRow < this.collimatorDim; indexRow++) {
-                Pair<Integer, Integer> limits = collimator.getActiveRange(indexRow, angle);
+                Pair<Integer, Integer> limits = this.activeRangeBeam.get(indexRow);
                 if (limits.getKey() == -1)
                     continue;
 
@@ -225,7 +228,7 @@ public class Beam {
                         && functionalRow.getValue() - 1 == limits.getValue()) {
                     // La fila es completamente irradiada -> Se ciera en las apertura inutilizadas
                     Pair<Integer, Integer> newRow = new Pair<>(limits.getKey(), limits.getKey() + 1);
-                    aperture.setRow(indexRow, newRow);
+                    aperture.setRow(indexRow, newRow, this.activeRangeBeam);
                     continue;
 
                 } else if (functionalRow.getKey() + 1 > limits.getKey()
@@ -238,7 +241,7 @@ public class Beam {
                         int apertureRight = functionalRow.getKey() + 1;
                         Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
-                        aperture.setRow(indexRow, newRow);
+                        aperture.setRow(indexRow, newRow, this.activeRangeBeam);
 
                         functionalRow = new Pair<>(apertureLeft, functionalRow.getValue());
 
@@ -249,7 +252,7 @@ public class Beam {
 
                         Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
-                        aperture.setRow(indexRow, newRow);
+                        aperture.setRow(indexRow, newRow, this.activeRangeBeam);
 
                         functionalRow = new Pair<>(functionalRow.getKey(), apertureRight);
                     }
@@ -262,7 +265,7 @@ public class Beam {
                         int apertureRight = functionalRow.getKey() + 1;
 
                         Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
-                        aperture.setRow(indexRow, newRow);
+                        aperture.setRow(indexRow, newRow, this.activeRangeBeam);
 
                         functionalRow = new Pair<>(apertureLeft, functionalRow.getValue());
 
@@ -273,7 +276,7 @@ public class Beam {
                         int apertureRight = limits.getValue() + 1;
                         Pair<Integer, Integer> newRow = new Pair<>(apertureLeft, apertureRight);
 
-                        aperture.setRow(indexRow, newRow);
+                        aperture.setRow(indexRow, newRow, this.activeRangeBeam);
                         functionalRow = new Pair<>(functionalRow.getKey(), apertureRight);
 
                     }
@@ -301,7 +304,7 @@ public class Beam {
 
                         // Compare the index of each row on the current aperture with the Template
                         // Generated
-                        Pair<Integer, Integer> rowLimits = collimator.getActiveRange(r, angle);
+                        Pair<Integer, Integer> rowLimits = this.activeRangeBeam.get(r);
                         if (rowLimits.getValue() == -1)
                             continue;
 
@@ -354,7 +357,7 @@ public class Beam {
                 }
             }
             // Delete the proyected beamlets and only stay the beamlets hide between leaf
-            for (Integer b : copyBeamlets)
+            for (int b : copyBeamlets)
                 beamletsOnRow.remove(b);
 
             // Translate the Leaf's to irradiate the beamLets abandoned
@@ -395,18 +398,15 @@ public class Beam {
 
     public boolean getProyectedBeamLetByAperture(int idAperture, int indexBeamlet) {
         Aperture ap = A.get(idAperture);
-        return ap.getProyectedBeamLet(indexBeamlet);
+        Beamlet beamlet = beamletsList.get(indexBeamlet);
+        return ap.getProyectedBeamLet(beamlet);
     }
 
-    public Double getIntensityByAperture(int apertureIndex) throws KeyException {
-        double intensity;
-        try {
-            intensity = A.get(apertureIndex).getIntensity();
-        } catch (IndexOutOfBoundsException e) {
-            e.printStackTrace();
-            throw new IndexOutOfBoundsException("La intensidad no ha sido encontrada ");
+    public double getIntensityByAperture(int apertureIndex) throws IndexOutOfBoundsException {
+        if (apertureIndex < 0 || apertureIndex >= A.size()) {
+            throw new IndexOutOfBoundsException("Aperture index out of bounds: " + apertureIndex);
         }
-        return intensity;
+        return A.get(apertureIndex).getIntensity();
     }
 
     public int getAperturesUnused() {
@@ -425,12 +425,12 @@ public class Beam {
         this.angle = angle;
     }
 
-    public void setMax_apertures(int maxApertures) {
+    public void setMaxApertures(int maxApertures) {
         this.maxApertures = maxApertures;
     }
 
-    public void setMax_intensity(int max_intensity) {
-        this.maxIntensity = max_intensity;
+    public void setMaxIntensity(int maxIntensity) {
+        this.maxIntensity = maxIntensity;
     }
 
     public void setMinIntensity(int minIntensity) {
@@ -453,7 +453,7 @@ public class Beam {
         this.setup = setup;
     }
 
-    public Matrix getIntensitisMatrix() {
+    public Matrix getIntensityMatrix() {
         return I;
     }
 
@@ -509,7 +509,7 @@ public class Beam {
     public void CalculatePosition() {
         this.beamOnTime = 0.0;
         for (Aperture x : A) {
-            x.movAperture();
+            x.moveAperture(this.activeRangeBeam);
             x.moveIntensity(maxIntensity);
             this.beamOnTime += x.getIntensity();
         }
