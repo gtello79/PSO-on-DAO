@@ -79,7 +79,7 @@ public class Plan {
         this.setAngle_beam(p.getAngle_beam());
 
         // Evaluate the robust fluence map
-        this.setEval(p.eval);
+        this.eval = (p.getEval());
     }
 
     public void buildTreatmentPlan() {
@@ -104,9 +104,10 @@ public class Plan {
     public void OptimizeIntensities() {
         // Optimizate Intensities
         Gurobi_Solver newModel;
+        double objFunction = 0.0;
         try {
             newModel = new Gurobi_Solver(this);
-            double objFunction = newModel.objVal;
+            objFunction = newModel.objVal;
             this.setEval(objFunction); // Recuperar valor de la funcion objetivo
             setIntensity(newModel.newIntensity); // Cambia intensidades obtenidas en cada apertura
         } catch (GRBException e) {

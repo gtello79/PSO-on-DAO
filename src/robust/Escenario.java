@@ -17,7 +17,6 @@ public class Escenario {
 
     private ArrayList<Volumen> volumes;
     private String scenarioName;
-    private EvaluationFunction evaluationFunction;
     private Vector<Integer> angles;
     private Collimator collimators;
 
@@ -53,18 +52,19 @@ public class Escenario {
             e.printStackTrace();
         }
 
-        // Initialize the evaluation function with the created volumes
-        this.evaluationFunction = new EvaluationFunction(this.volumes);
     }
 
     public double evaluateFluenceMap(ArrayList<Double> fluenceMap) {
+        // Initialize the evaluation function with the created volumes
+        EvaluationFunction  evaluationFunction = new EvaluationFunction(this.volumes);
         // Evaluate the fluence map on the scenario using the evaluation function
-        double evalScenario = this.evaluationFunction.evalIntensityVector(fluenceMap, this.collimators);
+        double evalScenario = evaluationFunction.evalIntensityVector(fluenceMap, this.collimators);
+
         return evalScenario;
     }
 
     public void activateBeamletsWithIdeal(Collimator collimator) {
-        this.collimators.activateBeamletsWithIdeal(collimator.getBeamletsList(), this.isNominal);
+        this.collimators.activateBeamletsWithIdeal(collimator.getBeamletsList());
     }
 
     public static Vector<Integer> getAngles(String nameFile) throws FileNotFoundException {

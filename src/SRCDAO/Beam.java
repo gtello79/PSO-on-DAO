@@ -202,17 +202,16 @@ public class Beam {
 
     }
 
-    public void regenerateApertures() {
+    public synchronized void regenerateApertures() {
+
         ArrayList<Pair<Integer, Integer>> functionalApertures = this.getTransposeMatrix();
         ArrayList<Integer> aperturesUnUsedList = new ArrayList<>();
-
         // Reconocimiento de aperturas con baja intensidad
         for (int a = 0; a < A.size(); a++) {
             Aperture aperture = A.get(a);
             if (aperture.getIntensity() < 1.0)
                 aperturesUnUsedList.add(a);
         }
-
         for (int a = 0; a < aperturesUnUsedList.size(); a++) {
             int indexAperture = aperturesUnUsedList.get(a);
             Aperture aperture = A.get(indexAperture);
@@ -289,7 +288,7 @@ public class Beam {
     }
 
     // Get a general aperture with the shapes adjusted using intensity > 1
-    public ArrayList<Pair<Integer, Integer>> BuildTransposeAperture() {
+    public synchronized ArrayList<Pair<Integer, Integer>> BuildTransposeAperture() {
         ArrayList<Pair<Integer, Integer>> aperturesOnOperation = new ArrayList<>();
 
         for (int a = 0; a < A.size(); a++) {

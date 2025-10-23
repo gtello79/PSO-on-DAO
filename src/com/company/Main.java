@@ -18,6 +18,7 @@ public class Main {
 
     public static String INSTANCE_FILE = "./data/index_instances.txt";
     public static String DATA_FILE = "./data/";
+
     public static HashMap<String, String> mappingArg(String[] args) {
 
         HashMap<String, String> params = new HashMap<>();
@@ -49,6 +50,7 @@ public class Main {
         int diffSetup = 4;
         int nThreads = 3;
         boolean optimizedIntensity = true;
+        boolean postCheck = true;
 
         /*
          * OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1;
@@ -58,8 +60,8 @@ public class Main {
 
         // Parametros PSO
         int IRACESIZE = 518;
-        int size = 100;//IRACESIZE; // SWARM size
-        int iter = 100; //40000 / IRACESIZE; // Pso Iterations
+        int size = 100;// IRACESIZE; // SWARM size
+        int iter = 100; // 40000 / IRACESIZE; // Pso Iterations
 
         double c1Aperture = 1.8751; // Coef Global
         double c2Aperture = 0.2134; // Coef Personal
@@ -165,10 +167,10 @@ public class Main {
 
         swarm.MoveSwarms();
 
+        if (postCheck) {
 
-
-        EvaluationAlg evaluationAlgorithm = new EvaluationAlg(
-            EscenarioController.getDDMFromNominalScenario() ,swarm.getBestGlobalParticle(), w, Zmin, Zmax);
-
+            EvaluationAlg evaluationAlgorithm = new EvaluationAlg(
+                    EscenarioController.getDDMFromNominalScenario(), swarm.getBestGlobalParticle(), w, Zmin, Zmax);
+        }
     }
 }

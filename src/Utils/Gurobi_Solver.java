@@ -28,10 +28,7 @@ public class Gurobi_Solver {
 
     public double[] LB;
     public double[] UB;
-    public boolean[] isTarget;
-    public double epsilon;
     public double[] x;
-    public String jobThreadID;
     public String solver;
     public double maxIntensity;
     public double minIntensity;
@@ -56,8 +53,10 @@ public class Gurobi_Solver {
 
         this.sol = sol;
         this.beams = sol.getNBeam();
-        this.M = EscenarioController.getScenarioByIndex(sol.getScenarioIndex()).getVolumes();
-        
+        int scenarioIndex = sol.getScenarioIndex();
+
+        this.M = EscenarioController.getScenarioByIndex(scenarioIndex).getVolumes();
+
         this.organs = this.M.size();
         this.R = new int[organs];
         this.bmlts = sol.getBeamletsByBeam();

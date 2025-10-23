@@ -2,16 +2,19 @@ package Swarms;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Vector;
 import java.util.List;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
 public class Swarm {
+    private static final Logger logger = Logger.getLogger(Swarm.class.getName());
     private Particle bestGlobalParticle;
-    public static DecimalFormat df = new DecimalFormat("#.00");
+    private static DecimalFormat df = new DecimalFormat("#.00");
 
     private double bestGlobalEval;
 
@@ -29,7 +32,7 @@ public class Swarm {
     private double swarmMovementTime = 0.0;
 
     private ArrayList<Particle> swarm;
-    private Vector<double[]> evalTrack;
+    private ArrayList<double[]> evalTrack;
 
     static final int MOVEMENT_THREAD = 0;
     static final int EVAL_THREAD = 1;
@@ -49,7 +52,7 @@ public class Swarm {
         setIter(iter);
 
         this.swarm = new ArrayList<>();
-        this.evalTrack = new Vector<>();
+        this.evalTrack = new ArrayList<>();
         this.optimizedIntensity = optimizedIntensity;
         this.wMaxAperture = wMaxAperture;
         this.wMinAperture = wMinAperture;
@@ -60,7 +63,7 @@ public class Swarm {
         /* A Particles set will be created */
         this.globalUpdateCount = 0;
         for (int i = 0; i < this.size; i++) {
-            System.out.println("Creating Particle: " + i);
+            logger.log(Level.FINE, "Creating Particle: " + i);
             Particle newParticle = new Particle(i, max_apertures, max_intensity, minIntensity,
                 initial_intensity, step_intensity, open_apertures, setup);
             
@@ -80,7 +83,7 @@ public class Swarm {
                 setBestGlobalParticle(newParticle);
                 setBestGlobalEval(newParticle.getFitness());
             }
-            
+
             // Intensity optimization
             newParticle.OptimizeIntensities();
 
@@ -116,7 +119,7 @@ public class Swarm {
 
     // Move the particles with concurrent process
     public void MoveSwarmsOnConcurrent() {
-        double initialAlgorithmTime = (double) System.currentTimeMillis();
+        long initialAlgorithmTime = System.currentTimeMillis();
 
         for (int iter = 0; iter < this.getIter(); iter++) {
             boolean change_1 = false, change_2 = false;
@@ -132,10 +135,10 @@ public class Swarm {
             if (iter % 10 == 0 && iter > 1 && optimizedIntensity) {
                 System.out.println(" ------- Optimizacion de intensidades ---------");
                 this.caseParticlesThread(OPTIMIZE_THREAD, iter);
+
                 System.out.println(" ------- Reparación de solución ---------");
                 this.caseParticlesThread(REPAIR_SOLUTION, iter);
                 change_2 = CalculateNewBestGlobal();
-
             }
 
             if (change_1 || change_2) {
@@ -152,28 +155,9 @@ public class Swarm {
         }
 
         // Calculate the resolution time
-        this.swarmMovementTime = ((double) System.currentTimeMillis() - initialAlgorithmTime) / 1000.0;
+        this.swarmMovementTime = (System.currentTimeMillis() - initialAlgorithmTime) / 1000.0;
     }
 
-    public void repairSolutions() {
-        System.out.println(" ------- Reparación de solución ---------");
-        for (Particle particle : swarm) {
-            particle.regenerateApertures();
-        }
-    }
-
-    public void OptimizeIntensities() {
-        System.out.println(" ------- Optimizacion de intensidades ---------");
-        for (Particle particle : swarm) {
-            particle.OptimizeIntensities();
-        }
-    }
-
-    public void evalParticles() {
-        for (Particle particle : swarm) {
-            particle.evalParticle();
-        }
-    }
 
     /*---------------------------------------------------- PSO METHODS--------------------------------------------------------------------------------*/
 
@@ -234,7 +218,7 @@ public class Swarm {
     // ----------------------------------
     public void caseParticlesThread(int idSetup, int iter) {
         // Guardar objetos ejecutados en hilos (particulas)
-        List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
+        List<Callable<Object>> tasks = new ArrayList<Callable<Object>>();
 
         // Pool ejecutora de las funciones
         ExecutorService pool2 = Executors.newFixedThreadPool(threadsToUse);
@@ -253,17 +237,28 @@ public class Swarm {
             }
 
             p.setSetupRunnerThread(idSetup);
-            calls.add(Executors.callable(p));
+            tasks.add(Executors.callable(p));
         }
 
         // Da inicio a la ejecucion de los hilos
         try {
-            pool2.invokeAll(calls);
+            pool2.invokeAll(tasks);
         } catch (InterruptedException e1) {
             e1.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Error during thread pool execution: " + e.getMessage());
+            e.printStackTrace();
         }
         // Permite manejar el termino de los metodos llamados por los threads
         pool2.shutdown();
-    }
 
+        // implement a wait until all threads are finished
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
+        }
+        
+    }
 }

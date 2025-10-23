@@ -89,7 +89,7 @@ public class EvaluationFunction {
 
                 // Dosis para el voxel v
                 for (int a : collimator.getAngles()) {
-                    ArrayList<Beamlet> beamletsAngle = collimator.getBeamletsList().get(a);
+                    ArrayList<Beamlet> beamletsAngle = collimator.getBeamletListByAngle(a);
                     for (Beamlet b : beamletsAngle) {
                         int beamIndex = b.getId();
                         //double ration = b.isUsedInIdeal() ? p.get(beamIndex) : 0.0;

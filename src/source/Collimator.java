@@ -220,7 +220,7 @@ public class Collimator {
         }
     }
 
-    public void activateBeamletsWithIdeal(Hashtable<Integer, ArrayList<Beamlet>> idealBeamlets, boolean isNominal) {
+    public void activateBeamletsWithIdeal(Hashtable<Integer, ArrayList<Beamlet>> idealBeamlets) {
         // Tomar angulos
         for (int angle : this.angles) {
 
@@ -302,5 +302,9 @@ public class Collimator {
 
     public ArrayList<Beamlet> getBeamletsOfAngle(int angle) {
         return beamletsList.get(angle);
+    }
+
+    public ArrayList<Beamlet> getBeamletListByAngle(int angle) {
+        return this.beamletsList.get(angle);
     }
 }

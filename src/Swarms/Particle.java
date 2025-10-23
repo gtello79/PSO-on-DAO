@@ -256,6 +256,14 @@ public class Particle extends Thread {
         return this.fitness;
     }
 
+    public double getBestFitness() {
+        return this.bestFitness;
+    }
+
+    public ArrayList<Double> getFitnessScenarios() {
+        return this.fitnessScenarios;
+    }
+
     // ---------- THREADS METHODS (NO TOCAR)
     // ----------------------------------
     @Override
