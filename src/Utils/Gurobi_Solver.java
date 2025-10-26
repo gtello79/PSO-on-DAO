@@ -23,13 +23,8 @@ public class Gurobi_Solver {
     public int[] bmlts; // number of beamlets by angles
     public static ArrayList<Double> weight; // weights of objective
 
-    public int totalBmlts; // total beamlets
     public double[][] newIntensity;
 
-    public double[] LB;
-    public double[] UB;
-    public double[] x;
-    public String solver;
     public double maxIntensity;
     public double minIntensity;
     public double objVal;
@@ -46,6 +41,7 @@ public class Gurobi_Solver {
         System.out.println("Gurobi Model Activated");
         Gurobi_Solver.eud = doubletoint(dd);
         Gurobi_Solver.weight = w;
+
     }
 
     public Gurobi_Solver(Plan sol)
@@ -118,7 +114,7 @@ public class Gurobi_Solver {
                 indexI = i + 1;
                 indexJ = j + 1;
                 intensity[i][j] = model.addVar(
-                        minIntensity, this.maxIntensity, 0.0, GRB.CONTINUOUS,
+                        this.minIntensity, this.maxIntensity, 0.0, GRB.CONTINUOUS,
                         "Intensity" + "[" + indexI + "." + indexJ + "]");
                 intensity[i][j].set(GRB.DoubleAttr.Start, sol.getIntensityByAperture(i, j));
             }
@@ -148,6 +144,8 @@ public class Gurobi_Solver {
         Hashtable<Integer, ArrayList<Integer>> aux_index;
         Hashtable<String, Double> aux_values;
         Enumeration<Integer> keys;
+
+        // Beams with effective radiation over voxel
         ArrayList<Integer> beams;
         String valueIndexKey;
         int key;
@@ -159,8 +157,8 @@ public class Gurobi_Solver {
         int diffBeamblets = 0;
 
         for (int o = 0; o < organs; o++) {
-            // Recuperacion de index de voxels del organo o. Por organo (elemento del
-            // arrayList) -> id_voxel -> {id_beamlet}
+            // Recuperacion de index de voxels del organo o. 
+            // Por organo (elemento del arrayList) -> id_voxel -> {id_beamlet}
             // Beamlets que impactan al voxel
             aux_index = M.get(o).getIndexDAODDM();
 
@@ -178,6 +176,7 @@ public class Gurobi_Solver {
                 GRBLinExpr voxelRadiation = new GRBLinExpr();
                 key = keys.nextElement();
                 beams = aux_index.get(key);
+
                 // Vamos a sacar el beam (indice del angulo)
                 for (int b = 0; b < beams.size(); b++) {
                     valueIndexKey = key + "-" + beams.get(b);

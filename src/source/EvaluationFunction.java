@@ -92,8 +92,8 @@ public class EvaluationFunction {
                     ArrayList<Beamlet> beamletsAngle = collimator.getBeamletListByAngle(a);
                     for (Beamlet b : beamletsAngle) {
                         int beamIndex = b.getId();
-                        //double ration = b.isUsedInIdeal() ? p.get(beamIndex) : 0.0;
-                        double ration = p.get(beamIndex);
+                        double ration = b.isUsedInIdeal() ? p.get(beamIndex) : 0.0;
+                        //double ration = p.get(beamIndex);
                         dosis_v += doseDeposition.getPos(v, beamIndex) * ration;
                         
                     }

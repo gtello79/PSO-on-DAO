@@ -162,7 +162,7 @@ public class Reporter {
 
     private static void intensityMatrixToCSV(Plan plan, String uid) throws IOException {
         for (Beam beam : plan.getAngle_beam()) {
-            Matrix matrix = beam.getIntensitisMatrix();
+            Matrix matrix = beam.getIntensityMatrix();
             String fileName = uid + "-intensityMatrix" + beam.getIdBeam() + ".csv";
             String filePath = INTENSITY_FOLDER_PATH + fileName;
 
@@ -234,7 +234,7 @@ public class Reporter {
             String fileName = uid + "-Desc_Beam" + beam.getIdBeam() + ".txt";
             String filePath = BASE_OUTPUT_DIR + fileName; // En la carpeta general
 
-            Matrix intensityMatrix = beam.getIntensitisMatrix();
+            Matrix intensityMatrix = beam.getIntensityMatrix();
             List<Aperture> aperturesSet = beam.getApertures(); // Usar List
 
             writeToFile(filePath, writer -> {
@@ -308,7 +308,7 @@ public class Reporter {
         String fileName = "TransposedMatrixBeam" + beam.getIdBeam() + ".txt";
         String filePath = BASE_OUTPUT_DIR + fileName; // En la carpeta general
 
-        Matrix intensityMatrix = beam.getIntensitisMatrix(); // Parece que esta matriz se usa para dimensiones/valores especiales
+        Matrix intensityMatrix = beam.getIntensityMatrix(); // Parece que esta matriz se usa para dimensiones/valores especiales
 
         writeToFile(filePath, writer -> {
             writer.append("Beam,").append(String.valueOf(beam.getIdBeam())).append(NEW_LINE);
