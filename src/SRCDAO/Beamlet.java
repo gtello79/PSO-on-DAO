@@ -43,6 +43,10 @@ public class Beamlet {
         this.usedInIdeal = usedInIdeal;
     }
 
+    public int getLocalId() {
+        return localId;
+    }
+
     // Genera un metodo que permita reconocer cuando dos beamlets son iguales a
     // partir de su posicion
     @Override

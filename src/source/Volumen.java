@@ -13,17 +13,13 @@ public class Volumen {
     // Tiene el numero de beamlets que influyen en el organo
     private int nb_beamlets;
 
-    //
     private Hashtable<Integer, ArrayList<Integer>> indexDAODDM;
 
-    //
-    private Hashtable<String, Double> valueDAODDM;
 
     //Constructor del volumen asociado
     public Volumen(String data_path) throws FileNotFoundException {
         System.out.println("DATA: " + data_path);
         this.indexDAODDM = new Hashtable<>();
-        this.valueDAODDM = new Hashtable<>();
         this.data = data_path;
         this.nb_beamlets = 0;
         this.nbVoxels = 0;
@@ -40,7 +36,6 @@ public class Volumen {
         this.nb_beamlets = v.getNb_beamlets();
 
         this.indexDAODDM = v.getIndexDAODDM();
-        this.valueDAODDM = v.getValueDAODDM();
     }
 
     private void setData(String data) throws FileNotFoundException {
@@ -93,8 +88,6 @@ public class Volumen {
                 if(dosesDelivered > 0.0){
                     affectionBeamLets.add(j);
                 }
-                String indexKey = i + "-" + j;
-                this.valueDAODDM.put(indexKey, dosesDelivered);
             }
             this.indexDAODDM.put(i, affectionBeamLets);
         }
@@ -117,8 +110,5 @@ public class Volumen {
         return this.indexDAODDM;
     }
 
-    public Hashtable<String, Double> getValueDAODDM() {
-        return this.valueDAODDM;
-    }
 
 }

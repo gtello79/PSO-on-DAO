@@ -37,7 +37,7 @@ public class Main {
         ArrayList<Integer> maxApertures = new ArrayList<>();
 
         // MLC Configuration
-        int instanceId = 85;
+        int instanceId = 86;
 
         int max_intensity = 5;
         int minIntensity = 0;
@@ -51,7 +51,7 @@ public class Main {
         int diffSetup = 4;
         int nThreads = 3;
         boolean optimizedIntensity = true;
-        boolean postCheck = true;
+        boolean postCheck = false;
 
         /*
          * OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1;

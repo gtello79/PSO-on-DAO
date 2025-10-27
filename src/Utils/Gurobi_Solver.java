@@ -1,4 +1,5 @@
 package Utils;
+
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -7,6 +8,7 @@ import com.gurobi.gurobi.*;
 import SRCDAO.Plan;
 import robust.EscenarioController;
 import source.Volumen;
+import source.Collimator;
 
 /**
  * @author Mauricio Moyano
@@ -30,6 +32,7 @@ public class Gurobi_Solver {
     public double objVal;
 
     public static int[] eud;
+    private Collimator collimator;
     GRBEnv env;
     GRBModel model;
 
@@ -37,31 +40,30 @@ public class Gurobi_Solver {
     // DDM M;
     Plan sol;
 
-    public static void activateModel(double[] dd, ArrayList<Double> w){
+    public static void activateModel(double[] dd, ArrayList<Double> w) {
         System.out.println("Gurobi Model Activated");
         Gurobi_Solver.eud = doubletoint(dd);
         Gurobi_Solver.weight = w;
 
     }
 
-    public Gurobi_Solver(Plan sol)
-            throws GRBException {
+    public Gurobi_Solver(Plan sol) throws GRBException {
 
         this.sol = sol;
-        this.beams = sol.getNBeam();
         int scenarioIndex = sol.getScenarioIndex();
-
+        this.collimator = EscenarioController.getCollimatorFromIndexScenario(scenarioIndex);
+        this.beams = this.collimator.getNbAngles();
         this.M = EscenarioController.getScenarioByIndex(scenarioIndex).getVolumes();
 
         this.organs = this.M.size();
-        this.R = new int[organs];
         this.bmlts = sol.getBeamletsByBeam();
         this.aperture = sol.getTotalApertureByBeam(0);
 
         this.minIntensity = 0;
         this.maxIntensity = sol.getMaxIntensityByAperture() * this.aperture;
 
-        for (int i = 0; i < R.length; i++) {
+        this.R = new int[this.organs];
+       for (int i = 0; i < R.length; i++) {
             this.R[i] = M.get(i).getNb_voxels();
         }
         setEnv();
@@ -105,7 +107,7 @@ public class Gurobi_Solver {
 
         // set variables for intensity an V
         GRBVar[][] intensity = new GRBVar[beams][aperture];// intensity for beam,for aperture
-        GRBVar[][] voxel = new GRBVar[R.length][];
+        GRBVar[][] voxelConstraint = new GRBVar[this.organs][];
         int indexI = 0;
         int indexJ = 0;
 
@@ -121,50 +123,40 @@ public class Gurobi_Solver {
         }
 
         for (int i = 0; i < organs; ++i) {
-
-            voxel[i] = new GRBVar[R[i]];
-            for (int j = 0; j < R[i]; ++j) {
+            int voxelCount = this.M.get(i).getNb_voxels();
+            voxelConstraint[i] = new GRBVar[voxelCount];
+            for (int j = 0; j < voxelCount; ++j) {
                 indexI = i + 1;
                 indexJ = j + 1;
 
                 if (i == 2) {
-                    voxel[i][j] = model.addVar(
+                    voxelConstraint[i][j] = model.addVar(
                             -GRB.INFINITY,
                             GRB.INFINITY,
                             0.0,
                             GRB.CONTINUOUS,
                             "v" + indexI + "[" + indexJ + "]");
                 } else {
-                    voxel[i][j] = model.addVar(0.0, 100.0, 0.0, GRB.CONTINUOUS, "v" + indexI + "[" + indexJ + "]");
+                    voxelConstraint[i][j] = model.addVar(0.0, 100.0, 0.0, GRB.CONTINUOUS, "v" + indexI + "[" + indexJ + "]");
                 }
             }
         }
 
         // set constraints
         Hashtable<Integer, ArrayList<Integer>> aux_index;
-        Hashtable<String, Double> aux_values;
         Enumeration<Integer> keys;
 
         // Beams with effective radiation over voxel
-        ArrayList<Integer> beams;
-        String valueIndexKey;
-        int key;
-        int beamblet;
+        ArrayList<Integer> beamletsProjection;
         int totalBeamblets;
         int beamIndex;
         int count_voxel;
-        double radiation, coefficent;
-        int diffBeamblets = 0;
 
         for (int o = 0; o < organs; o++) {
-            // Recuperacion de index de voxels del organo o. 
+            // Recuperacion de index de voxels del organo o.
             // Por organo (elemento del arrayList) -> id_voxel -> {id_beamlet}
             // Beamlets que impactan al voxel
             aux_index = M.get(o).getIndexDAODDM();
-
-            // Dosis de Voxel-beamlet
-            // Mapa del organo {id_voxel-id_beamlet -> radiacion}
-            aux_values = M.get(o).getValueDAODDM();
 
             // Voxel por organo
             keys = aux_index.keys();
@@ -174,37 +166,34 @@ public class Gurobi_Solver {
 
             while (keys.hasMoreElements()) {
                 GRBLinExpr voxelRadiation = new GRBLinExpr();
-                key = keys.nextElement();
-                beams = aux_index.get(key);
+                int voxel = keys.nextElement();
+                beamletsProjection = aux_index.get(voxel);
 
                 // Vamos a sacar el beam (indice del angulo)
-                for (int b = 0; b < beams.size(); b++) {
-                    valueIndexKey = key + "-" + beams.get(b);
-                    radiation = aux_values.get(valueIndexKey);
-
-                    beamblet = beams.get(b);
-
+                for (int b = 0; b < beamletsProjection.size(); b++) {
+                    int beamletGlobal = beamletsProjection.get(b);
+                    double radiation = this.M.get(o).getDDM().getPos(voxel, beamletGlobal);
                     totalBeamblets = 0;
                     beamIndex = 0;
-                    diffBeamblets = 0;
+                    int diffBeamlets = 0;
 
                     for (int z = 0; z < bmlts.length; z++) {
                         totalBeamblets += bmlts[z];
-                        if (beamblet < totalBeamblets) {
+                        if (beamletGlobal < totalBeamblets) {
                             beamIndex = z;
                             break;
                         }
-                        diffBeamblets += bmlts[z];
+                        diffBeamlets += bmlts[z];
                     }
 
                     for (int a = 0; a < aperture; a++) {
-                        int localBeamLet = beamblet - diffBeamblets;
-                        coefficent = (double) sol.getProyectedBeamLetByApertureOnBeam(beamIndex, a, localBeamLet)
+                        int localBeamLet = beamletGlobal - diffBeamlets;
+                        double coefficent = (double) sol.getProyectedBeamLetByApertureOnBeam(beamIndex, a, localBeamLet)
                                 * radiation;
 
                         if (coefficent != 0 && o == 2) {
                             coefficent = coefficent * -1;
-                        } 
+                        }
                         voxelRadiation.addTerm(coefficent, intensity[beamIndex][a]);
                     }
                 }
@@ -214,9 +203,8 @@ public class Gurobi_Solver {
 
                 voxelRadiation.addConstant(constEud);
 
-
                 GRBLinExpr V = new GRBLinExpr();
-                V.addTerm(1, voxel[o][count_voxel]);
+                V.addTerm(1, voxelConstraint[o][count_voxel]);
 
                 char orgConstraint = (o == 2) ? GRB.EQUAL : GRB.GREATER_EQUAL;
                 model.addConstr(V, orgConstraint, voxelRadiation, "voxelRadiation" + o + "[" + (count_voxel + 1) + "]");
@@ -231,7 +219,7 @@ public class Gurobi_Solver {
             double coef = (double) ((weight.get(o) / R[o]));
 
             for (int j = 0; j < R[o]; ++j) {
-                objFunc.addTerm(coef, voxel[o][j], voxel[o][j]);
+                objFunc.addTerm(coef, voxelConstraint[o][j], voxelConstraint[o][j]);
                 System.out.print("");
             }
         }
