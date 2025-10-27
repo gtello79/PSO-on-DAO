@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import robust.EscenarioController;
+import SRCDAO.ApertureEnum;
 import Test.EvaluationAlg;
 
 public class Main {
@@ -36,7 +37,7 @@ public class Main {
         ArrayList<Integer> maxApertures = new ArrayList<>();
 
         // MLC Configuration
-        int instanceId = 86;
+        int instanceId = 85;
 
         int max_intensity = 5;
         int minIntensity = 0;
@@ -46,7 +47,7 @@ public class Main {
         int max_apertures = 5;
 
         // Particle configuration
-        int setup = 4;
+        int setup = ApertureEnum.RAND_RAND_SETUP.getValue();
         int diffSetup = 4;
         int nThreads = 3;
         boolean optimizedIntensity = true;

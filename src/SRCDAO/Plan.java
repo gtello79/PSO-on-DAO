@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 public class Plan {
     private int nBeam; // Cantidad total de angulos en BAC
-    private int totalBeamLet; // Total de beamlets activos en BAC
     private int maxIntensityByAperture; // Intensidad Maxima por apertura
     private int totalAperturesUnsed; // Cantidad de aperturas inutilizadas
     private double beamOnTime;
@@ -33,7 +32,6 @@ public class Plan {
         setNBeam(collimator.getNbAngles());
 
         this.Angle_beam = new ArrayList<>();
-        this.totalBeamLet = collimator.getNbBeamlets();
 
         this.maxApertures = new ArrayList<>(maxApertures);
         this.maxIntensityByAperture = max_intensity;
@@ -61,7 +59,6 @@ public class Plan {
     public Plan(Plan p) {
 
         setNBeam(p.nBeam);
-        setTotalBeamlet(p.totalBeamLet);
         setTotalAperturesUnUsed(p.totalAperturesUnsed);
 
         setFluenceMap(p.getFluenceMap());
@@ -69,7 +66,6 @@ public class Plan {
         this.Angle_beam = new ArrayList<>();
         this.maxApertures = new ArrayList<>(p.maxApertures);
 
-        this.totalBeamLet = p.totalBeamLet;
         this.maxIntensityByAperture = p.maxIntensityByAperture;
         this.beamIndex = new int[getNBeam()];
         this.totalAperturesUnsed = p.totalAperturesUnsed;
@@ -264,10 +260,6 @@ public class Plan {
 
     public int getNBeam() {
         return nBeam;
-    }
-
-    public void setTotalBeamlet(int totalBeamLet) {
-        this.totalBeamLet = totalBeamLet;
     }
 
     public ArrayList<Beam> getAngle_beam() {

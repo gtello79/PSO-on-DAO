@@ -60,8 +60,11 @@ def parse_arguments():
 def main():
 
     results = []
-    exp_iter = 1
-    nThreads = 3
+    exp_iter = 2
+
+    ## Obtener la cantidad de nthreads disponibles en la maquina mediante las configuraciones del sistema
+    nThreads = os.cpu_count() -1
+    sizeRobust = 200
     N_EVALUATIONS = 40000
     intensityOptimized = True
 
@@ -71,8 +74,8 @@ def main():
     cn_intensity = 1.2389
 
     # PSO PARAMETERS
-    instance = params_args.instance or 85
-    size = params_args.size or 418
+    instance = params_args.instance or 86
+    size = params_args.size or sizeRobust
     c1_aper = params_args.c1Aperture or 1.8751
     c2_aper = params_args.c2Aperture or 0.2134
     wMax_aper = params_args.wMaxAperture or 0.9

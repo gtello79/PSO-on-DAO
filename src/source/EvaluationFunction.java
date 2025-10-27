@@ -94,8 +94,12 @@ public class EvaluationFunction {
                         int beamIndex = b.getId();
                         double ration = b.isUsedInIdeal() ? p.get(beamIndex) : 0.0;
                         //double ration = p.get(beamIndex);
-                        dosis_v += doseDeposition.getPos(v, beamIndex) * ration;
-                        
+                        try{
+
+                            dosis_v += doseDeposition.getPos(v, beamIndex) * ration;
+                        }catch(IndexOutOfBoundsException e){
+                            throw new IndexOutOfBoundsException("Index out of bounds: " + e.getMessage());
+                        }
                     }
                 }
 

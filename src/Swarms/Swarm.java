@@ -161,6 +161,11 @@ public class Swarm {
 
     /*---------------------------------------------------- PSO METHODS--------------------------------------------------------------------------------*/
 
+    /**
+     * Checks all particles in the swarm to find and update the global best particle.
+     *
+     * @return true if the global best particle was updated, false otherwise.
+     */
     public boolean CalculateNewBestGlobal() {
         boolean changeGlobal = false;
 
@@ -174,7 +179,6 @@ public class Swarm {
         }
         return changeGlobal;
     }
-
     public double updateInertiaControl(double wMax, double wMin, int iteration) {
         double w = wMax - ((wMax - wMin) * iteration) / this.iter;
         return w;

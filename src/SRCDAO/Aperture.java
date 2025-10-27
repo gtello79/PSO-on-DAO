@@ -16,13 +16,6 @@ public class Aperture {
     private int openedBeamlets;
     private int collimatorDim;
 
-    public static final int OPEN_MIN_SETUP = 0;
-    public static final int OPEN_MAX_SETUP = 1;
-    public static final int CLOSED_MIN_SETUP = 2;
-    public static final int CLOSED_MAX_SETUP = 3;
-    public static final int RAND_RAND_SETUP = 4;
-    public static final int STATIC_SETUP = 5;
-
     /*--------------------------------------------------METHODS----------------------------------------------------------------------------*/
     public Aperture(Collimator collimator, int angle){
         setAngle(angle);
@@ -48,6 +41,7 @@ public class Aperture {
     }
 
     public void initializeAperture(int type, int open_apertures, int id_aperture, ArrayList<Pair<Integer,Integer>> activeRange){
+
         ArrayList<Pair<Integer,Integer>> aux = new ArrayList<>();
 
         for(int i = 0; i < this.collimatorDim; i++){
@@ -61,15 +55,15 @@ public class Aperture {
                 int fLeaf = activeRange.get(i).getKey() - 1;
                 int sLeaf = activeRange.get(i).getValue() + 1;
 
-                if(type == OPEN_MAX_SETUP || type == OPEN_MIN_SETUP){
+                if(type == ApertureEnum.OPEN_MAX_SETUP.getValue() || type == ApertureEnum.OPEN_MIN_SETUP.getValue()) {
                     //Abierta completamente para los beamlets activos
                     aux.add(new Pair<>(fLeaf,sLeaf));
 
-                }else if(type == CLOSED_MAX_SETUP || type == CLOSED_MIN_SETUP) {
+                }else if(type == ApertureEnum.CLOSED_MAX_SETUP.getValue() || type == ApertureEnum.CLOSED_MIN_SETUP.getValue()) {
                     //Cerrada completamente
                     aux.add(new Pair<>(fLeaf,fLeaf+1));
 
-                }else if(type == RAND_RAND_SETUP){
+                }else if(type == ApertureEnum.RAND_RAND_SETUP.getValue()){
                     ///Se abre aleatoriamente las hojas
                     int middle = Math.floorDiv((fLeaf+sLeaf),2);
                     int index1 = fLeaf + (int)(Math.random()*(middle - fLeaf));
@@ -80,7 +74,7 @@ public class Aperture {
                         int index2 = (middle) + (int)(Math.random()*(sLeaf-middle+1));
                         aux.add(new Pair<>(index1,index2));
                     }
-                }else if(type == STATIC_SETUP){
+                }else if(type == ApertureEnum.STATIC_SETUP.getValue()){
                     // Se posiciona
                     int index_1 = fLeaf;
                     int index_2 = fLeaf + id_aperture + 2;
@@ -108,25 +102,17 @@ public class Aperture {
 
     public void initializeIntensity(int type, int min_intensity, int max_intensity, int initial_intensity, double r_intensity){
         // Usar switch con enum
-        switch (type) {
-            case OPEN_MIN_SETUP:
-            case CLOSED_MIN_SETUP:
-                setIntensity(min_intensity);
-                break;
-            case OPEN_MAX_SETUP:
-            case CLOSED_MAX_SETUP:
-                setIntensity(max_intensity);
-                break;
-            case RAND_RAND_SETUP:
-                setIntensity(r_intensity);
-                break;
-            case STATIC_SETUP:
-                final double STATIC_INTENSITY_VALUE = 1; // Constante con nombre
-                setIntensity(STATIC_INTENSITY_VALUE);
-                break;
-            default:
-                setIntensity(initial_intensity);
-                break;
+        if (type == ApertureEnum.OPEN_MIN_SETUP.getValue() || type == ApertureEnum.CLOSED_MIN_SETUP.getValue()) {
+            setIntensity(min_intensity);
+        }else if (type == ApertureEnum.OPEN_MAX_SETUP.getValue() || type == ApertureEnum.CLOSED_MAX_SETUP.getValue()) {
+            setIntensity(max_intensity);
+        }else if (type == ApertureEnum.RAND_RAND_SETUP.getValue()) {
+            setIntensity(r_intensity);
+        }else if( type == ApertureEnum.STATIC_SETUP.getValue()) {
+            final double STATIC_INTENSITY_VALUE = 1; // Constante con nombre
+            setIntensity(STATIC_INTENSITY_VALUE);
+        }else{
+            setIntensity(initial_intensity);
         }
     }
 
