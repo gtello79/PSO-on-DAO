@@ -60,7 +60,7 @@ def parse_arguments():
 def main():
 
     results = []
-    exp_iter = 2
+    exp_iter = 20
 
     ## Obtener la cantidad de nthreads disponibles en la maquina mediante las configuraciones del sistema
     nThreads = os.cpu_count() -1

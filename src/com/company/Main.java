@@ -61,9 +61,9 @@ public class Main {
 
         // Parametros PSO
         int IRACESIZE = 518;
-        int IRACESIZEROBUST = 200;
+        int IRACESIZEROBUST = 20;
         int size = IRACESIZEROBUST; // SWARM size
-        int iter = 25000 / IRACESIZEROBUST; // Pso Iterations
+        int iter = 40000 / IRACESIZEROBUST; // Pso Iterations
 
         double c1Aperture = 1.8751; // Coef Global
         double c2Aperture = 0.2134; // Coef Personal

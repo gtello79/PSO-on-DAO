@@ -113,7 +113,7 @@ public class Swarm {
         System.out.println("Processing Time: " + df.format(this.swarmMovementTime) + " [seg]");
         System.out.println("Best Fitness - #Ap Unused - Best BoT - Robust Fitness");
         System.out.println(df.format(bestGlobalEval) + " " + totalAperturesUnUsed + " " + df.format(bestBeamOnTime)
-                + " " + this.bestGlobalParticle.getFitness());
+                + " " + this.bestGlobalParticle.getFitnessScenarios());
 
     }
 
@@ -248,6 +248,7 @@ public class Swarm {
         try {
             pool2.invokeAll(tasks);
         } catch (InterruptedException e1) {
+            System.err.println("Thread pool was interrupted: " + e1.getMessage());
             e1.printStackTrace();
         } catch (Exception e) {
             System.err.println("Error during thread pool execution: " + e.getMessage());
@@ -256,13 +257,5 @@ public class Swarm {
         // Permite manejar el termino de los metodos llamados por los threads
         pool2.shutdown();
 
-        // implement a wait until all threads are finished
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Thread.currentThread().interrupt();
-        }
-        
     }
 }
