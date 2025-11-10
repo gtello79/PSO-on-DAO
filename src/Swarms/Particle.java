@@ -178,6 +178,11 @@ public class Particle extends Thread {
         }
     }
 
+    public ArrayList<Double> evaluateInAllScenarios() {
+        Plan p = this.plansScenarios.get(this.indexToScenario);
+        return p.evaluateInAllScenarios();
+    }
+
     /*---------------------------------------------------- GETTER AND SETTERS ----------------------------------------------*/
     public ArrayList<Integer> getTotalUnUsedApertures() {
         Plan currentPlan = this.plansScenarios.get(this.indexToScenario);

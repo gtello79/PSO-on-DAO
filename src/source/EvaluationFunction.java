@@ -92,13 +92,13 @@ public class EvaluationFunction {
                     ArrayList<Beamlet> beamletsAngle = collimator.getBeamletListByAngle(a);
                     for (Beamlet b : beamletsAngle) {
                         int beamIndex = b.getId();
-                        double ration = b.isUsedInIdeal() ? p.get(beamIndex) : 0.0;
-                        //double ration = p.get(beamIndex);
                         try{
-
+                            //double ration = p.get(beamIndex);
+                            double ration = b.isUsedInIdeal() ? p.get(beamIndex) : 0.0;
                             dosis_v += doseDeposition.getPos(v, beamIndex) * ration;
                         }catch(IndexOutOfBoundsException e){
-                            throw new IndexOutOfBoundsException("Index out of bounds: " + e.getMessage());
+                            dosis_v += 0.0;
+                            //throw new IndexOutOfBoundsException("Index out of bounds: " + e.getMessage());
                         }
                     }
                 }

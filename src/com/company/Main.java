@@ -13,7 +13,6 @@ import java.util.HashMap;
 
 import robust.EscenarioController;
 import SRCDAO.ApertureEnum;
-import Test.EvaluationAlg;
 
 public class Main {
 
@@ -61,7 +60,7 @@ public class Main {
 
         // Parametros PSO
         int IRACESIZE = 518;
-        int IRACESIZEROBUST = 20;
+        int IRACESIZEROBUST = 200;
         int size = IRACESIZEROBUST; // SWARM size
         int iter = 40000 / IRACESIZEROBUST; // Pso Iterations
 
@@ -168,6 +167,8 @@ public class Main {
                 nThreads, optimizedIntensity);
 
         swarm.MoveSwarms();
+
+        swarm.evaluateBestParticleInAllScenarios();
 
         if (postCheck) {
 

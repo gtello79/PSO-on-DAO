@@ -109,6 +109,16 @@ public class EscenarioController {
         return totalEval;
     }
 
+    public static ArrayList<Double> evaluateOverAllEscenarios(ArrayList<Double> fluenceMap, int indexScenario) {
+
+        // Evaluate the fluence map over all scenarios and return the average
+        ArrayList<Double> totalEval = new ArrayList<>();
+        for (Escenario escenario : EscenarioController.escenarios) {
+            totalEval.add(escenario.evaluateFluenceMap(fluenceMap));
+        }
+        return totalEval;
+    }
+
     /**
      * Returns the list of angles used in the scenarios.
      *

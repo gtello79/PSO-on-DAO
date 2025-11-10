@@ -158,6 +158,12 @@ public class Swarm {
         this.swarmMovementTime = (System.currentTimeMillis() - initialAlgorithmTime) / 1000.0;
     }
 
+    public void evaluateBestParticleInAllScenarios() {
+        ArrayList<Double> evaluationInScenarios = this.bestGlobalParticle.evaluateInAllScenarios();
+
+        System.out.println(evaluationInScenarios);
+    }
+
 
     /*---------------------------------------------------- PSO METHODS--------------------------------------------------------------------------------*/
 

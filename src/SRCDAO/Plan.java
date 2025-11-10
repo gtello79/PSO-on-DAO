@@ -97,6 +97,13 @@ public class Plan {
         return val;
     }
 
+    public ArrayList<Double> evaluateInAllScenarios(){
+        // Eval objetive function
+        ArrayList<Double> fluenceMap = getFluenceMap();
+        return EscenarioController.evaluateOverAllEscenarios(fluenceMap, this.scenarioIndex);
+
+    }
+
     public void OptimizeIntensities() {
         // Optimizate Intensities
         Gurobi_Solver newModel;
