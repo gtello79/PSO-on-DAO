@@ -4,32 +4,6 @@ import os
 from time import time
 from argparse import ArgumentParser
 
-CURR_DIR = os.getcwd()
-LD_LIBRARY_GUROBI_PATH = '/opt/gurobi1103/linux64/lib/gurobi.jar'
-LB_JAVAX = 'src/com/openjfx-23.0.2_linux-x64_bin-sdk/javafx-sdk-23.0.2/lib/javafx.base.jar'
-
-folder_experiments = './ExperimentsFiles/'
-folder_finals = './FinalResults/'
-
-def UUID_exp() -> str:
-    from datetime import datetime
-
-    # Get current date and time
-    now = datetime.now()
-
-    # Format date as YYYY-MM-DD
-    date_string = now.strftime("%Y%m%d")
-
-    # Format time as HH:MM (24-hour format)
-    time_string = now.strftime("%H%M")
-
-    # Combine date and time strings with a space
-    datetime_string = f"{date_string}_{time_string}"
-
-    return datetime_string
-
-UID = UUID_exp()
-
 def parse_arguments():
     parser = ArgumentParser(description="PSO Algorithm Parameters")
     parser.add_argument("--exp_iter", type=int, help="Experiment iteration")
@@ -57,10 +31,41 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
+# Obtener variables de entorno
+GUROBI_HOME = os.getenv('GUROBI_HOME', '/opt/gurobi1103/linux64/')
+CURR_DIR = os.getcwd()
+
+# Settup library paths
+LD_LIBRARY_GUROBI_PATH = f'{GUROBI_HOME}/lib/gurobi.jar'
+LB_JAVAX = 'src/com/openjfx-23.0.2_linux-x64_bin-sdk/javafx-sdk-23.0.2/lib/javafx.base.jar'
+
+# Setup experiments folders
+folder_experiments = './ExperimentsFiles/'
+folder_finals = './FinalResults/'
+
+def UUID_exp() -> str:
+    from datetime import datetime
+
+    # Get current date and time
+    now = datetime.now()
+
+    # Format date as YYYY-MM-DD
+    date_string = now.strftime("%Y%m%d")
+
+    # Format time as HH:MM (24-hour format)
+    time_string = now.strftime("%H%M")
+
+    # Combine date and time strings with a space
+    datetime_string = f"{date_string}_{time_string}"
+
+    return datetime_string
+
+UID = UUID_exp()
+
 def main():
 
     results = []
-    exp_iter = 20
+    exp_iter = 5
 
     ## Obtener la cantidad de nthreads disponibles en la maquina mediante las configuraciones del sistema
     nThreads = os.cpu_count() -1
@@ -128,7 +133,7 @@ def main():
     print("Experiments ID ", UID)
     print("PARAMS ", config_params)
     for i in range(exp_iter):
-
+        print("Experiment iteration ", i+1)
         #Ejecutar experimento
         name_iter = UID + "-"+str(i)+"+PSOTEST.txt"
         result_path = folder_experiments + name_iter

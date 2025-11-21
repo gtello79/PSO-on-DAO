@@ -23,7 +23,7 @@ public class EscenarioController {
     public static String DATA_FILE = "./data/<instanceID>/Instance.txt";
     private static String COORDINATE_INSTANCE_PATH = "./data/<instanceID>/<ScenarioName>/coordinates_instance.txt";
 
-    private static ArrayList<Escenario> escenarios = new ArrayList<>();;
+    private static ArrayList<Escenario> escenarios = new ArrayList<>();
     private static Vector<Integer> angles = new Vector<>();
 
     private static int nScenarios = 0;
@@ -36,6 +36,8 @@ public class EscenarioController {
      * @throws IOException If an error occurs while reading the instance file.
      */
     public static void startScenario(int indexData) throws IOException {
+        // Clean previous scenarios
+        EscenarioController.SetDefaultValues();
 
         // Gets the instance file path based on the index provided
         getInstanceById(indexData);
@@ -227,6 +229,15 @@ public class EscenarioController {
 
     public static Escenario getScenarioByIndex(int index) {
         return escenarios.get(index);
+    }
+
+    private static void SetDefaultValues(){
+        INSTANCE_FILE = "./data/index_instances.txt";
+        DATA_FILE = "./data/<instanceID>/Instance.txt";
+        COORDINATE_INSTANCE_PATH = "./data/<instanceID>/<ScenarioName>/coordinates_instance.txt";
+        escenarios.clear();
+        angles.clear();
+        nScenarios = 0;
     }
 
 }

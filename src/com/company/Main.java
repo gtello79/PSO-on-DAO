@@ -5,6 +5,8 @@ import Test.EvaluationAlg;
 import source.Collimator;
 import source.EvaluationFunction;
 import Utils.Gurobi_Solver;
+import Utils.ReportType;
+import Utils.Reporter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ public class Main {
         ArrayList<Integer> maxApertures = new ArrayList<>();
 
         // MLC Configuration
-        int instanceId = 86;
+        int instanceId = 87;
 
         int max_intensity = 5;
         int minIntensity = 0;
@@ -62,7 +64,7 @@ public class Main {
         int IRACESIZE = 518;
         int IRACESIZEROBUST = 200;
         int size = IRACESIZEROBUST; // SWARM size
-        int iter = 40000 / IRACESIZEROBUST; // Pso Iterations
+        int iter = 40000 / size; // Pso Iterations
 
         double c1Aperture = 1.8751; // Coef Global
         double c2Aperture = 0.2134; // Coef Personal
@@ -161,19 +163,20 @@ public class Main {
         }
         // Creating the swarm
         Swarm swarm = new Swarm(w, Zmin, Zmax, maxApertures, max_intensity, minIntensity, initial_intensity,
-                step_intensity, open_apertures, setup, diffSetup,
-                c1Aperture, c2Aperture, cnAperture, c1Intensity, c2Intensity, cnIntensity,
-                size, iter, wMaxAperture, wMinAperture, wMaxIntensity, wMinIntensity,
-                nThreads, optimizedIntensity);
+            step_intensity, open_apertures, setup, diffSetup,
+            c1Aperture, c2Aperture, cnAperture, c1Intensity, c2Intensity, cnIntensity,
+            size, iter, wMaxAperture, wMinAperture, wMaxIntensity, wMinIntensity,
+            nThreads, optimizedIntensity
+            
+            );
 
         swarm.MoveSwarms();
-
         swarm.evaluateBestParticleInAllScenarios();
-
+        
         if (postCheck) {
-
+            
             EvaluationAlg evaluationAlgorithm = new EvaluationAlg(
-                    EscenarioController.getDDMFromNominalScenario(), swarm.getBestGlobalParticle(), w, Zmin, Zmax);
+                EscenarioController.getDDMFromNominalScenario(), swarm.getBestGlobalParticle(), w, Zmin, Zmax);
         }
     }
 }

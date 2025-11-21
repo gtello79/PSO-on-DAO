@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.lang.OutOfMemoryError;
 
 public class Swarm {
     private static final Logger logger = Logger.getLogger(Swarm.class.getName());
@@ -103,8 +104,11 @@ public class Swarm {
     /* Running PSO Algorithm */
     public void MoveSwarms() {
         System.out.println(" ------- MOVING SWARMS -------");
-
-        MoveSwarmsOnConcurrent();
+        try{
+            MoveSwarmsOnConcurrent();
+        }catch(OutOfMemoryError e){
+            System.err.println("Error during swarm movement: " + e.getMessage());
+        }
 
         int totalAperturesUnUsed = this.bestGlobalParticle.getAperturesUnUsed();
         double bestBeamOnTime = this.bestGlobalParticle.getBeamOnTime();
