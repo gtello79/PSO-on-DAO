@@ -15,6 +15,7 @@ import SRCDAO.Plan;
 import Swarms.Particle;
 import source.Matrix;
 import javafx.util.Pair;
+import robust.EscenarioController;
 
 public class Reporter {
 
@@ -105,12 +106,15 @@ public class Reporter {
                 break;
 
             case INTENSITY_VECTOR_TXT:
-                if (data instanceof Particle) {
-                    intensityVector(((Particle) data).getCurrentPlan(), effectiveId);
-                } else if (data instanceof Plan) {
-                    intensityVector((Plan) data, effectiveId);
-                } else {
-                    throw new IllegalArgumentException("Unsupported data type for INTENSITY_VECTOR_TXT: " + data.getClass().getSimpleName());
+                for(int i =0; i<EscenarioController.getnScenarios(); i++){
+                    if (data instanceof Particle) {
+                        Plan plan = ((Particle) data).getPlanFromScenario(i);
+                        intensityVector(plan, effectiveId, i);
+                    } else if (data instanceof Plan) {
+                        intensityVector((Plan) data, effectiveId, i);
+                    } else {
+                        throw new IllegalArgumentException("Unsupported data type for INTENSITY_VECTOR_TXT: " + data.getClass().getSimpleName());
+                    }
                 }
                 break;
 
@@ -210,8 +214,8 @@ public class Reporter {
         }
     }
 
-    private static void intensityVector(Plan plan, String uid) throws IOException {
-        String fileName = uid + "-FluenceMap.txt";
+    private static void intensityVector(Plan plan, String uid, int scenario) throws IOException {
+        String fileName = uid + "-" + "FluenceMap_E" + scenario + ".txt";
         String filePath = INTENSITY_FOLDER_PATH + fileName;
 
         writeToFile(filePath, writer -> {
