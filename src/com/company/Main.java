@@ -5,8 +5,6 @@ import Test.EvaluationAlg;
 import source.Collimator;
 import source.EvaluationFunction;
 import Utils.Gurobi_Solver;
-import Utils.ReportType;
-import Utils.Reporter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +36,7 @@ public class Main {
         ArrayList<Integer> maxApertures = new ArrayList<>();
 
         // MLC Configuration
-        int instanceId = 87;
+        int instanceId = 91;
 
         int max_intensity = 5;
         int minIntensity = 0;
@@ -171,7 +169,7 @@ public class Main {
             );
 
         swarm.MoveSwarms();
-        swarm.evaluateBestParticleInAllScenarios();
+        //swarm.evaluateBestParticleInAllScenarios();
         
         if (postCheck) {
             
