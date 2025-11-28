@@ -1,5 +1,6 @@
 package com.company;
 
+import Swarms.Particle;
 import Swarms.Swarm;
 import Test.EvaluationAlg;
 import source.Collimator;
@@ -36,7 +37,7 @@ public class Main {
         ArrayList<Integer> maxApertures = new ArrayList<>();
 
         // MLC Configuration
-        int instanceId = 91;
+        int instanceId = 92;
 
         int max_intensity = 5;
         int minIntensity = 0;
@@ -50,7 +51,7 @@ public class Main {
         int diffSetup = 4;
         int nThreads = 3;
         boolean optimizedIntensity = true;
-        boolean postCheck = false;
+        boolean postCheck = true;
 
         /*
          * OPEN_MIN_SETUP = 0; OPEN_MAX_SETUP = 1;
@@ -169,12 +170,17 @@ public class Main {
             );
 
         swarm.MoveSwarms();
-        //swarm.evaluateBestParticleInAllScenarios();
         
         if (postCheck) {
-            
+            int robustInstance = 85;
             EvaluationAlg evaluationAlgorithm = new EvaluationAlg(
                 EscenarioController.getDDMFromNominalScenario(), swarm.getBestGlobalParticle(), w, Zmin, Zmax);
+
+            Particle p = swarm.getBestGlobalParticle();
+            
+            EscenarioController.startScenario(robustInstance);
+
+            System.out.println(p.evaluateInAllScenarios());
         }
     }
 }
